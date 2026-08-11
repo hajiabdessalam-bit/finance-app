@@ -10,8 +10,6 @@
 <meta name="theme-color" content="#0B0918">
 <meta name="color-scheme" content="dark">
 <title>Plan</title>
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" href="apple-touch-icon.png">
 <style>
 :root{
   --void:#0B0918;--surface:#171531;--surface-2:#1E1B3C;--surface-3:#272348;
@@ -491,10 +489,12 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tab span{font-size:10px;font-weight:600}
 .tab.on{color:var(--majorelle)}
-.view{animation:none}
+.view{animation:in .4s var(--ease) both}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 </head>
 <body>
 <div class="scroll" id="app"></div>
@@ -1170,6 +1170,7 @@ function pageHTML(tab){
   else if(tab==="tools")h+=viewTools();
   else if(tab==="note")h+=viewNote();
   else if(tab==="settings")h+=viewSettings();
+  else if(tab==="export")h+=viewExport();
   else h+=viewHome(k,live);
   return h;
 }
@@ -1524,7 +1525,7 @@ var MENU=[
   {id:"journey",e:"\uD83E\uDDED",t:"Journey",s:"Track your financial progress",col:"#7B72FF",live:true},
   {id:"tools",  e:"\uD83E\uDDEE",t:"Tools",  s:"Calculator and notes",        col:"#2FD4BC",live:true},
   {id:"backup", e:"\uD83D\uDCBE",t:"Backup", s:"Protect your data",           col:"#FFB33D",live:true},
-  {id:"export", e:"\uD83D\uDCC4",t:"Export", s:"Create reports",              col:"#FF7A5C",live:false},
+  {id:"export", e:"\uD83D\uDCC4",t:"Export", s:"Create reports",              col:"#FF7A5C",live:true},
   {id:"settings",e:"\u2699\uFE0F",t:"Settings",s:"When your month starts",     col:"#B08CFF",live:true}
 ];
 function moreSheet(){
@@ -1540,6 +1541,30 @@ function moreSheet(){
   return h+'<div style="height:8px"></div></div>';
 }
 
+function createBackupFile(){
+  var data=JSON.stringify({version:1,created:new Date().toISOString(),data:S},null,2);
+  var blob=new Blob([data],{type:"application/json"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="finance-backup-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+  S.lastBackup=Date.now();save();
+  alert("Backup saved");
+}
+function restoreBackupFile(file){
+  var r=new FileReader();
+  r.onload=function(){try{var x=JSON.parse(r.result);if(!x.data)throw 0;if(!confirm("Restore this backup? Current data will be replaced."))return;S=x.data;save();render();alert("Backup restored")}catch(e){alert("Invalid backup file")}};
+  r.readAsText(file);
+}
+
+function viewExport(){
+  return '<div class="view">'+backLink()+
+    '<div class="card"><div class="card-h"><span class="card-t">Export</span></div>'+
+    '<p class="hint">Create a financial report from your saved data.</p>'+
+    '<button class="btn go" id="exportReport">Export financial report</button>'+
+    '<p class="hint" style="margin-top:16px">PDF export will use your existing months, goals and spending history.</p>'+
+    '</div></div>';
+}
 function viewBackup(){
   return '<div class="view">'+backLink()+backupCard()+'</div>';
 }
@@ -1874,6 +1899,10 @@ function bind(){
       if(MORE_PAGES.indexOf(S.tab)<0)S.returnTab=S.tab;   /* remember where you were */
       S.more=false;S.tab=x.id;save();render();window.scrollTo({top:0,behavior:"smooth"});
     }};});
+  var er=document.getElementById("exportReport");if(er)er.onclick=function(){alert("Export is connected. PDF generation will be added next.");};
+  var dl=document.getElementById("dl");if(dl)dl.onclick=createBackupFile;
+  var paste=document.getElementById("paste");if(paste){paste.onclick=function(){var i=document.createElement("input");i.type="file";i.accept="application/json";i.onchange=function(){if(i.files[0])restoreBackupFile(i.files[0])};i.click();};}
+
   q("[data-card]").forEach(function(i){i.onchange=function(){
     var c=card(),f=i.dataset.card,v=Math.max(0,parseInt(i.value,10)||0);
     if(f==="payDay")c.payDay=Math.min(31,Math.max(1,v||18));
@@ -2295,6 +2324,17 @@ document.addEventListener("click",function(e){
 },true);
 
 render();
+</script>
+
+<script>
+/* Offline/PWA support */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function (err) {
+      console.warn("Offline support could not be registered:", err);
+    });
+  });
+}
 </script>
 </body>
 </html>
