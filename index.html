@@ -25,10 +25,17 @@
   --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
   --ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1);
   --navh:65px;                     /* the bar, without the home indicator */
-  --navtotal:calc(65px + env(safe-area-inset-bottom));
+  /* The strip the home indicator sits over. Installed on the Home Screen
+     the app owns the bottom of the glass and must leave it clear. Inside
+     Safari the browser's own toolbar already covers that strip, but iOS
+     reports the inset anyway — reserving it a second time is what left a
+     dark band under the tabs. `html.in-browser` (set at boot) zeroes it. */
+  --sab:env(safe-area-inset-bottom, 0px);
+  --navtotal:calc(var(--navh) + var(--sab));
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:var(--void);height:100%}
+html.in-browser{--sab:0px}
 body{margin:0;background:var(--void);color:var(--text);font-family:var(--sans);
   -webkit-font-smoothing:antialiased;overscroll-behavior-y:none;
   height:100%;overflow:hidden}
@@ -219,7 +226,7 @@ details.more .eqrow{font-size:13px}
 @keyframes fadein{from{opacity:0}}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;max-width:540px;margin:0 auto;
   background:var(--surface);border-radius:28px 28px 0 0;border-top:1px solid var(--line-2);
-  padding:12px 22px calc(env(safe-area-inset-bottom) + 22px);max-height:86vh;overflow-y:auto;overscroll-behavior:contain;
+  padding:12px 22px calc(var(--sab) + 22px);max-height:86vh;overflow-y:auto;overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
   box-shadow:0 -30px 70px -30px rgba(0,0,0,.9);animation:slideup .34s var(--ease) both}
 @keyframes slideup{from{transform:translateY(101%)}}
@@ -228,7 +235,7 @@ details.more .eqrow{font-size:13px}
   font-size:19px;color:var(--muted);line-height:1;transition:transform .16s var(--spring)}
 .shx:active{transform:scale(.88)}
 .sheet .card-t{font-size:19px}
-.sheet.more{max-height:78vh;padding-bottom:calc(env(safe-area-inset-bottom) + 92px)}
+.sheet.more{max-height:78vh;padding-bottom:calc(var(--sab) + 92px)}
 /* vh freezes at the tallest viewport, so with the toolbars showing the
    sheet was being clipped into a small scroller. dvh follows the real
    one, and the sheet is the same height every time it opens. */
@@ -537,6 +544,18 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .offl.warn .sym{color:var(--saffron)}
 .step .sym{width:15px;height:15px;stroke-width:2.2}
 .pctwrap .step .sym{width:14px;height:14px}
+/* the single Home insight — a line, deliberately not another card */
+.jvs{display:flex;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.jvs>div{flex:1;min-width:0}
+.jvs .k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint)}
+.jvs .v{display:block;margin-top:5px;font-family:var(--round);font-size:17px;font-weight:750;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.oneins{display:flex;gap:11px;align-items:flex-start;margin-top:14px;padding:13px 15px;
+  border-radius:16px;background:var(--surface);border:1px solid var(--line);
+  font-size:13px;line-height:1.5;color:var(--muted)}
+.oneins .sym{width:17px;height:17px;flex:none;margin-top:1px;color:var(--oic)}
+.oneins b{font-weight:700;color:var(--text)}
 .offl{display:flex;gap:9px;align-items:flex-start;margin-top:22px;padding:13px;border-radius:14px;font-size:12.5px;line-height:1.45;
   background:rgba(47,212,188,.07);border:1px solid rgba(47,212,188,.2);color:var(--muted)}
 .offl.warn{background:rgba(255,179,61,.09);border-color:rgba(255,179,61,.24)}
@@ -573,7 +592,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   background:radial-gradient(circle,rgba(255,179,61,.15),transparent 62%)}
 #glow.armed i{opacity:1}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;
-  height:var(--navtotal);padding:8px 12px env(safe-area-inset-bottom);
+  height:var(--navtotal);padding:8px 12px var(--sab);
   background:rgba(11,9,24,.72);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border-top:1px solid var(--line);display:flex;justify-content:center;align-items:flex-start;gap:2px}
 .tab{flex:1;max-width:92px;padding:8px 3px 5px;border-radius:14px;display:flex;flex-direction:column;
@@ -613,7 +632,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b25 \u00B7 drawn icons";
+var BUILD="b26 \u00B7 insights";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -934,8 +953,14 @@ function dueText(g){
   var need=monthsNeeded(g);
   if(need===Infinity)return{t:lbl+" \u00B7 no saving rate yet",c:"var(--faint)"};
   var late=need-away;
-  if(late<=0)return{t:lbl+" \u00B7 on track",c:"var(--teal)"};
-  return{t:lbl+" \u00B7 "+late+" month"+(late===1?"":"s")+" late",c:"var(--coral)"};
+  if(late<=0){
+    var early=-late;
+    if(early<1)return{t:lbl+" \u00B7 on pace",c:"var(--teal)"};
+    if(early>24)return{t:lbl+" \u00B7 well ahead",c:"var(--teal)"};
+    return{t:lbl+" \u00B7 about "+early+" month"+(early===1?"":"s")+" ahead",c:"var(--teal)"};
+  }
+  if(late>24)return{t:lbl+" \u00B7 behind target",c:"var(--coral)"};
+  return{t:lbl+" \u00B7 behind by "+late+" month"+(late===1?"":"s"),c:"var(--coral)"};
 }
 /* ── adding and removing a goal ──
    A new goal takes its share out of the unlocked ones, exactly as
@@ -1084,33 +1109,87 @@ function streak(){
   for(var i=p.length-1;i>=0;i--){if(savedActual(p[i])>=savedPlanned(p[i]))n++;else break;}
   return n;
 }
-/* ═══ 6. INSIGHTS ═══ */
-function insights(k){
-  var out=[],p=prevOf(k);
-  if(!p){out.push({i:"sparkle",t:"This is your first month on record. Once it ends, the app starts comparing months and the advice sharpens."});return out;}
-  var sNow=Math.max(0,savedNow(k)),sPrev=Math.max(0,savedActual(p)),d=sNow-sPrev;
-  if(Math.abs(d)>=100)out.push({i:d>0?"up":"down",
-    t:"Saving <b>\u00A5"+fmt(Math.abs(d))+(d>0?" more":" less")+"</b> than "+mShort(p)+". <em>"+fmt(sPrev)+" \u2192 "+fmt(sNow)+"</em>"});
-  CATS.filter(function(c){return c.type==="variable";}).forEach(function(c){
-    var a=spentOn(k,c.id),b=spentOn(p,c.id);
-    if(b<200&&a<200)return;
-    var diff=a-b;if(Math.abs(diff)<150)return;
-    var pct=b>0?Math.round(diff/b*100):null;
-    out.push({i:CATSYM[c.id],
-      t:"<b>"+c.name+"</b> "+(diff>0?"up":"down")+" "+(pct!==null?Math.abs(pct)+"%":"\u00A5"+fmt(Math.abs(diff)))+
-        " vs "+mShort(p)+". <em>\u00A5"+fmt(b)+" \u2192 \u00A5"+fmt(a)+"</em>"});
-  });
-  var oo=spentOneoff(k);
-  if(oo>0){
-    var r=monthlyRate(),days=r>0?Math.round(oo/r*30):0;
-    out.push({i:"warning",t:"<b>\u00A5"+fmt(oo)+"</b> in one-offs this month"+
-      (days>2?", which pushes your goals back about <b>"+days+" days</b>":"")+"."});
+/* ═══ 6. INSIGHTS ═══
+   Everything below reads figures the app already keeps. Nothing new is
+   calculated about your money, and nothing is claimed when the record
+   is too short to support it — each function returns null instead. */
+
+/* What you have actually put away in recent closed months. Needs at
+   least two, or there is no "usual" to compare against. */
+function recentAverage(exclude){
+  var v=closedMonths().filter(function(k){return k!==exclude;}).slice(-3)
+        .map(function(k){return Math.max(0,savedActual(k));});
+  if(v.length<2)return null;
+  return v.reduce(function(a,b){return a+b;},0)/v.length;
+}
+/* The goal whose deadline is nearest, if any goal has one at all */
+function nearestDeadline(){
+  var due=S.goals.filter(function(g){return g.due&&!jarDone(g)&&monthsUntil(g.due)!==null;});
+  if(!due.length)return null;
+  return due.sort(function(a,b){return monthsUntil(a.due)-monthsUntil(b.due);})[0];
+}
+
+/* One sentence of plain reading for the Journey comparison. It only
+   says what the months on record support. */
+function journeyRead(k,p){
+  var now=Math.max(0,savedActual(k)),was=Math.max(0,savedActual(p));
+  var avg=recentAverage(k);
+  var d=now-was;
+  if(avg!==null&&avg>0){
+    if(now>avg*1.05)return "You are putting away more than your recent average \u2014 your saving rate is improving.";
+    if(now<avg*0.95)return "This month is below your recent average. One month is not a trend, but two would be.";
+    return "This month is in line with your recent average \u2014 steady.";
   }
-  var vb=budgetVariable(k),vs=spentVariable(k);
-  if(monthProgress(k)<1&&vs>vb)out.push({i:"speed",
-    t:"You are <b>\u00A5"+fmt(vs-vb)+"</b> past your spending budget with "+Math.round((1-monthProgress(k))*100)+"% of the month left."});
-  if(!out.length)out.push({i:"\u2696\uFE0F",t:"Nothing has moved much since "+mShort(p)+"."});
-  return out;
+  if(Math.abs(d)<200)return "About the same as "+mShort(p)+".";
+  return d>0
+    ? "Better than "+mShort(p)+". A third month will show whether it is a trend."
+    : "Down on "+mShort(p)+". A third month will show whether it is a trend.";
+}
+
+/* ── one line for Home ──
+   In priority order, first match wins, so the screen never shows two
+   findings that pull against each other. Returns null when there is
+   nothing worth saying, and Home then shows nothing. */
+function headline(k){
+  var sv=savedNow(k),oo=spentOneoff(k),prev=prevOf(k);
+
+  /* 1. money that left the plan unplanned — the most actionable thing */
+  if(oo>0){
+    var days=Math.round(oo/monthlyRate()*30);
+    return{i:"warning",c:"var(--saffron)",
+      t:"Unplanned spending has taken <b>\u00A5"+fmt(oo)+"</b> out of this month\u2019s savings"+
+        (monthlyRate()>0&&days>2?", about <b>"+days+" days</b> off your goals":"")+"."};
+  }
+
+  /* 2. against your own recent record */
+  var avg=recentAverage(k);
+  if(avg!==null&&avg>0){
+    var diff=sv-avg,pct=Math.round(Math.abs(diff)/avg*100);
+    if(pct>=5&&Math.abs(diff)>=200)
+      return{i:diff>0?"up":"down",c:diff>0?"var(--teal)":"var(--coral)",
+        t:"Saving <b>"+pct+"% "+(diff>0?"more":"less")+"</b> than your recent average of \u00A5"+fmt(Math.round(avg))+"."};
+  }
+
+  /* 3. against last month, when there is no average yet */
+  if(prev){
+    var d=sv-Math.max(0,savedActual(prev));
+    if(Math.abs(d)>=200)
+      return{i:d>0?"up":"down",c:d>0?"var(--teal)":"var(--coral)",
+        t:"Saving <b>\u00A5"+fmt(Math.abs(d))+(d>0?" more":" less")+"</b> than "+mShort(prev)+"."};
+  }
+
+  /* 4. the nearest promise you made yourself */
+  var g=nearestDeadline();
+  if(g){
+    var dt=dueText(g);
+    if(dt)return{i:"goals",c:dt.c,t:"<b>"+esc(g.name)+"</b> \u2014 "+dt.t.replace("by ","due ")+"."};
+  }
+
+  /* 5. nothing to compare against yet */
+  if(!prev)return{i:"sparkle",c:"var(--muted)",
+    t:"First month on record. Once it closes, the app starts comparing and the advice sharpens."};
+
+  return null;
 }
 function verdictOf(k){
   var v=healthScore(k);
@@ -1396,6 +1475,10 @@ function liftSheets(app){
 /* Two nodes are "the same node in a new state" if they are the same
    kind of thing with the same identity. Anything with an id or a
    data- attribute carries its own identity; the rest match by position. */
+/* An element's identity, used to decide whether a node on screen and a
+   node in the new HTML are the same thing in a new state. It must not be
+   built from anything that changes as the numbers change — give such an
+   element an id, as #wiCard has, or it will be rebuilt on every edit. */
 function domKey(el){
   if(el.id)return "#"+el.id;
   var a=el.attributes,i;
@@ -1540,6 +1623,9 @@ function viewHome(k,live){
      '<p class="hwhy">'+healthWhy(k,hs)+'</p>'+
      '</div></div>';
 
+  var hl=headline(k);
+  if(hl)h+='<div class="oneins" style="--oic:'+hl.c+'">'+sym(hl.i)+'<span>'+hl.t+'</span></div>';
+
   var spendTotal=fx+assumedSpend(k)+bufferCharge(k)+oneoffOverflow(k);
   h+='<div class="card"><div class="card-h"><span class="card-t">Where it stands</span>'+
      (live?'<span class="lab">day '+periodDay(k)+' of '+periodDays(k)+'</span>':'')+'</div><div class="eq">'+
@@ -1572,7 +1658,7 @@ function viewHome(k,live){
   var pre=Math.max(0,S.wiAmt||0);
   var cap=Math.max(1000,Math.round((pl||1000)/100)*100,Math.ceil(pre/100)*100),rate=monthlyRate();
 
-  h+='<div class="card" data-wi-saved="'+Math.max(0,sv)+'" data-wi-planned="'+pl+'"'+
+  h+='<div class="card" id="wiCard" data-wi-saved="'+Math.max(0,sv)+'" data-wi-planned="'+pl+'"'+
      ' data-wi-salary="'+m.salary+'" data-wi-rate="'+Math.round(monthlyRate())+'" data-wi-base="'+hs+'">'+
      '<div class="card-h"><span class="card-t">Before you buy it</span></div>'+
      '<span class="lab">Considering spending</span>'+
@@ -1855,7 +1941,17 @@ function viewJourney(){
        '<div class="sc"><div class="k">spending</div><div class="v" style="color:'+(spD<=0?"var(--teal)":"var(--coral)")+'">'+
          (spD===0?"same":(spD<0?"\u2193 ":"\u2191 ")+"\u00A5"+fmt(Math.abs(spD)))+'</div></div>'+
        '<div class="sc"><div class="k">kept</div><div class="v">'+Math.round(rateOf(k))+'%</div></div>'+
-       '</div></div>';
+       '</div>'+
+       '<div class="jvs">'+
+         '<div><span class="k">'+mShort(k)+'</span><span class="v">\u00A5'+fmt(saved)+'</span></div>'+
+         '<div><span class="k">'+mShort(p)+'</span><span class="v">\u00A5'+fmt(prevSaved)+'</span></div>'+
+         (function(){
+           var avg=recentAverage(k);
+           return avg===null?"":'<div><span class="k">recent average</span><span class="v">\u00A5'+fmt(Math.round(avg))+'</span></div>';
+         })()+
+       '</div>'+
+       '<p class="hint" style="margin-top:14px">'+journeyRead(k,p)+'</p>'+
+       '</div>';
   }
 
   /* how each jar has grown */
@@ -2666,6 +2762,30 @@ function reportPDF(){
    which GitHub Pages gives you, so opening the file from Files has
    no worker and simply says so.                                    */
 var SW_READY=false;
+/* Installed as a Home Screen app, the app draws all the way to the edge
+   of the glass and must keep the home-indicator strip clear itself. In a
+   browser tab the toolbar already occupies it. Ask which one this is,
+   rather than guessing with a fixed number of pixels. */
+function fitShell(){
+  var standalone=false;
+  try{
+    standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)
+      ||(window.matchMedia&&window.matchMedia("(display-mode: fullscreen)").matches)
+      ||navigator.standalone===true;
+  }catch(e){}
+  document.documentElement.classList.toggle("in-browser",!standalone);
+}
+function watchShell(){
+  fitShell();
+  try{
+    var mq=window.matchMedia("(display-mode: standalone)");
+    if(mq.addEventListener)mq.addEventListener("change",fitShell);
+    else if(mq.addListener)mq.addListener(fitShell);
+  }catch(e){}
+  window.addEventListener("resize",fitShell);
+  window.addEventListener("orientationchange",fitShell);
+}
+
 function initSW(){
   if(!("serviceWorker" in navigator))return;
   if(location.protocol!=="https:"&&location.hostname!=="localhost")return;
@@ -2922,8 +3042,7 @@ function bind(){
 
   /* notes */
   var nq=document.getElementById("noteQ");
-  if(nq)nq.oninput=function(){S.noteQ=nq.value;var v=nq.value;render();
-    var n2=document.getElementById("noteQ");if(n2){n2.focus();n2.value=v;}};
+  if(nq)nq.oninput=function(){S.noteQ=nq.value;updateViewDOM();};
   q("[data-note]").forEach(function(b){b.onclick=function(){
     if(b.dataset.note==="new"){
       var id=newId();
@@ -3004,7 +3123,7 @@ function bind(){
   var dl=document.getElementById("dl");
   if(dl)dl.onclick=function(){
     saveFile("finance-backup-"+isoDay(new Date())+".json","application/json",backupText(),
-      function(){S.lastBackup=Date.now();save();toast("Backup saved");render();},
+      function(){S.lastBackup=Date.now();save();toast("Backup saved");updateViewDOM();},
       function(){alert(VIEWER_HINT);});};
 
   var cp=document.getElementById("copy");
@@ -3335,6 +3454,7 @@ document.addEventListener("click",function(e){
   if(document.activeElement===t){try{t.select();}catch(err){}}
 },true);
 
+watchShell();
 render();
 initSW();
 </script>
