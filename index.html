@@ -24,21 +24,30 @@
   --round:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
   --ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1);
+  --navh:65px;                     /* the bar, without the home indicator */
+  --navtotal:calc(65px + env(safe-area-inset-bottom));
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:var(--void)}
+html{background:var(--void);height:100%}
 body{margin:0;background:var(--void);color:var(--text);font-family:var(--sans);
-  -webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+  -webkit-font-smoothing:antialiased;overscroll-behavior-y:none;
+  height:100%;overflow:hidden}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(58% 32% at 16% 0%,rgba(123,114,255,.19),transparent 70%),
   radial-gradient(46% 28% at 96% 10%,rgba(47,212,188,.09),transparent 70%),
   radial-gradient(70% 38% at 50% 103%,rgba(255,179,61,.06),transparent 70%)}
 .scroll{position:relative;z-index:1;max-width:540px;margin:0 auto;
-  padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 106px)}
-/* A short page must scroll like a long one, or Safari keeps its own
-   toolbar open and shoves the fixed nav bar up the screen. */
-#app{min-height:calc(100vh + 1px)}
-@supports(height:100dvh){#app{min-height:calc(100dvh + 1px)}}
+  padding:calc(env(safe-area-inset-top) + 20px) 20px calc(var(--navtotal) + 28px)}
+/* ── the app shell ──
+   The document itself never scrolls. #app is the one scrolling box and
+   it is pinned to the four edges, so its height is the app viewport and
+   nothing about page content can reach the bar. The bar is a fixed
+   strip of a fixed height at the bottom, and the scroller reserves
+   exactly that height plus the home indicator, so the last card clears
+   it on a full page and a short page ends in the same place.        */
+#app{position:fixed;top:0;left:0;right:0;bottom:0;
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain}
 input,select,button,textarea{font-family:inherit;color:var(--text)}
 input,textarea{background:transparent;border:none}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
@@ -530,7 +539,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .advbtn{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 0;
   color:var(--faint);font-family:var(--sans);font-size:13px;font-weight:600}
 .advbtn:active{opacity:.6}
-#toast{position:fixed;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));
+#toast{position:fixed;left:50%;bottom:calc(var(--navtotal) + 14px);
   transform:translateX(-50%) translateY(10px);max-width:80%;text-align:center;
   background:rgba(30,27,60,.97);border:1px solid var(--line-2);color:var(--text);
   padding:12px 20px;border-radius:16px;font-size:13.5px;font-weight:600;
@@ -554,9 +563,10 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   transition:opacity .26s var(--ease);
   background:radial-gradient(circle,rgba(255,179,61,.15),transparent 62%)}
 #glow.armed i{opacity:1}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px 12px calc(env(safe-area-inset-bottom) + 8px);
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;
+  height:var(--navtotal);padding:8px 12px env(safe-area-inset-bottom);
   background:rgba(11,9,24,.72);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
-  border-top:1px solid var(--line);display:flex;justify-content:center;gap:2px}
+  border-top:1px solid var(--line);display:flex;justify-content:center;align-items:flex-start;gap:2px}
 .tab{flex:1;max-width:92px;padding:8px 3px 5px;border-radius:14px;display:flex;flex-direction:column;
   align-items:center;gap:4px;color:var(--faint);transition:color .25s var(--ease),transform .18s var(--spring)}
 .tab:active{transform:scale(.93)}
@@ -565,11 +575,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .tab.on{color:var(--majorelle)}
 .view{animation:in .4s var(--ease) both}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-/* Redrawing after a +/- is not arriving on a page. While this class is
-   on, every entrance animation is skipped, so a value changes without
-   the screen fading, sliding or blooming behind it. */
-body.noanim .view,body.noanim .sheet,body.noanim .shbg,
-body.noanim .aura,body.noanim .hdot{animation:none!important}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -592,7 +598,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b23 \u00B7 smooth updates";
+var BUILD="b24 \u00B7 in-place updates";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -995,12 +1001,14 @@ function dragEnd(){
   var moved=DRAG.on,el=DRAG.el;
   DRAG.el=null;DRAG.on=false;
   if(el){el.style.transform="";el.classList.remove("dragging");}
-  if(moved){save();renderQuiet();}
+  if(moved){save();updateGoalEditorDOM();}
 }
 function bindGoalDrag(){
   var cards=dragCards();
   if(!cards.length)return;
   cards.forEach(function(el){
+    if(el.__dragBound)return;                /* the node may have survived a patch */
+    el.__dragBound=true;
     el.addEventListener("touchstart",function(e){dragStart(e,el);},{passive:true});
     el.addEventListener("mousedown",function(e){dragStart(e,el);});
   });
@@ -1234,7 +1242,7 @@ function areaChart(vals,labels,color){
 /* The body of a page, built for any tab and written nowhere. render()
    uses it for the tab you are on; the gesture layer uses it for the tab
    you are swiping towards. One builder, so the two can never diverge. */
-function pageHTML(tab){
+function pageHTML(tab,noSheets){
   var k=cur(),live=isLive(k),editable=k>=thisMonth(),h="";
   var months=allMonths(),idx=months.indexOf(k);
   if(MORE_PAGES.indexOf(tab)<0)h+='<div class="mbar"><button class="mnav" data-m="-1"'+(idx<=0?" disabled":"")+' aria-label="Previous month">'+ICON.l+'</button>'+
@@ -1253,7 +1261,7 @@ function pageHTML(tab){
   if(tab==="home")h+=viewHome(k,live);
   else if(tab==="plan")h+=viewPlan(k,live);
   else if(tab==="log")h+=viewLog(k);
-  else if(tab==="goals")h+=viewGoals();
+  else if(tab==="goals")h+=viewGoals(noSheets);
   else if(tab==="journey")h+=viewJourney();
   else if(tab==="backup")h+=viewBackup();
   else if(tab==="export")h+=viewExport();
@@ -1263,62 +1271,6 @@ function pageHTML(tab){
   else h+=viewHome(k,live);
   return h;
 }
-/* ── quiet redraws ──
-   Changing a number redraws the page, because every figure on it may
-   depend on that number. What it must not do is behave like arriving
-   on the page: no fade-in, no sheet sliding up from the bottom, no
-   jump to the top, no losing the field under your finger.
-
-   renderQuiet() does the same redraw with the entrance animations
-   suppressed and the position of things put back afterwards.       */
-var QUIET=false;
-function renderQuiet(){
-  QUIET=true;
-  try{render();}finally{QUIET=false;}
-}
-/* How to find the same element again in the freshly written HTML */
-function uiKey(el){
-  if(!el||el===document.body||!el.tagName)return null;
-  if(el.id)return "#"+el.id;
-  var d=el.dataset||{},k;
-  for(k in d){
-    if(k==="selall")continue;
-    return "["+"data-"+k.replace(/[A-Z]/g,function(c){return "-"+c.toLowerCase();})+
-      '="'+String(d[k]).replace(/"/g,'\\"')+'"]';
-  }
-  return null;
-}
-function uiSnapshot(){
-  var a=document.activeElement,sh=document.querySelector(".sheet");
-  return{
-    key:uiKey(a),
-    typing:!!(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")),
-    start:(a&&a.selectionStart!=null)?a.selectionStart:null,
-    end:(a&&a.selectionEnd!=null)?a.selectionEnd:null,
-    sheetTop:sh?sh.scrollTop:null,
-    pageTop:window.pageYOffset||0
-  };
-}
-function uiRestore(u){
-  if(!u)return;
-  var sh=document.querySelector(".sheet");
-  if(sh&&u.sheetTop!=null)sh.scrollTop=u.sheetTop;
-  if((window.pageYOffset||0)!==u.pageTop)window.scrollTo(0,u.pageTop);
-  if(!u.key)return;
-  var el;
-  try{el=document.querySelector(u.key);}catch(e){el=null;}
-  if(!el)return;
-  if(u.typing){
-    /* focus would trip select-on-tap, so put the caret back by hand */
-    el.dataset.noselect="1";
-    try{
-      el.focus({preventScroll:true});
-      if(u.start!=null&&el.setSelectionRange)el.setSelectionRange(u.start,u.end);
-    }catch(e){}
-    delete el.dataset.noselect;
-  }
-}
-
 /* Anything fixed to the screen must not live inside an animated box */
 function detachSheets(){
   var old=document.querySelectorAll("body > .sheet, body > .shbg"),i;
@@ -1329,10 +1281,137 @@ function liftSheets(app){
   for(i=0;i<found.length;i++)document.body.appendChild(found[i]);
 }
 
+/* ══ IN-PLACE UPDATES ══
+   A value edit is not a new page. Rebuilding #app.innerHTML for one
+   changed number throws away every node on the screen and builds it
+   again, which is what the eye sees as a flash — the browser really is
+   painting a blank box and then a fresh one.
+
+   So: generate the same HTML as before, but instead of assigning it,
+   walk it against what is already on screen and change only the parts
+   that differ. Nodes that are unchanged are never touched, which means
+   the caret stays in its field, the sheet stays mounted, the scroll
+   position never moves, and no animation restarts, because none of
+   those elements was ever destroyed.                                */
+
+/* Two nodes are "the same node in a new state" if they are the same
+   kind of thing with the same identity. Anything with an id or a
+   data- attribute carries its own identity; the rest match by position. */
+function domKey(el){
+  if(el.id)return "#"+el.id;
+  var a=el.attributes,i;
+  if(a)for(i=0;i<a.length;i++)if(a[i].name.indexOf("data-")===0)return a[i].name+"\u0000"+a[i].value;
+  return null;
+}
+function domSame(a,b){
+  if(a.nodeType!==b.nodeType)return false;
+  if(a.nodeType!==1)return true;
+  if(a.tagName!==b.tagName)return false;
+  return domKey(a)===domKey(b);
+}
+var FIELDS={INPUT:1,TEXTAREA:1,SELECT:1};
+function domAttrs(live,next){
+  var i,a,n=next.attributes,o=live.attributes;
+  for(i=0;i<n.length;i++){
+    a=n[i];
+    if(live.getAttribute(a.name)!==a.value)live.setAttribute(a.name,a.value);
+  }
+  for(i=o.length-1;i>=0;i--){
+    a=o[i];
+    if(!next.hasAttribute(a.name))live.removeAttribute(a.name);
+  }
+  if(FIELDS[live.tagName]){
+    /* never reach into the field the finger is in */
+    if(document.activeElement===live)return;
+    var v=next.tagName==="TEXTAREA"?next.textContent:(next.getAttribute("value")||"");
+    if(next.hasAttribute("value")||next.tagName==="TEXTAREA"){
+      if(String(live.value)!==String(v))live.value=v;
+    }
+    if(live.tagName==="INPUT"&&live.type!=="checkbox"&&!next.hasAttribute("value")&&live.value!==""){
+      live.value="";
+    }
+  }
+}
+function domPatch(live,next){
+  if(!domSame(live,next)){
+    live.parentNode.replaceChild(next.cloneNode(true),live);
+    return;
+  }
+  if(live.nodeType!==1){
+    if(live.nodeValue!==next.nodeValue)live.nodeValue=next.nodeValue;
+    return;
+  }
+  domAttrs(live,next);
+  domChildren(live,next);
+}
+function domChildren(live,next){
+  var lk=live.firstChild,nx=next.firstChild,lnext,keep;
+  while(nx){
+    if(!lk){
+      live.appendChild(nx.cloneNode(true));
+      nx=nx.nextSibling;continue;
+    }
+    if(domSame(lk,nx)){
+      lnext=lk.nextSibling;
+      domPatch(lk,nx);
+      lk=lnext;nx=nx.nextSibling;continue;
+    }
+    /* the expected node is not here: look ahead for it before giving up,
+       so a reorder moves a node instead of rebuilding it */
+    keep=null;
+    for(var c=lk.nextSibling;c;c=c.nextSibling){if(domSame(c,nx)){keep=c;break;}}
+    if(keep){
+      live.insertBefore(keep,lk);
+      domPatch(keep,nx);
+      nx=nx.nextSibling;continue;
+    }
+    live.insertBefore(nx.cloneNode(true),lk);
+    nx=nx.nextSibling;
+  }
+  while(lk){lnext=lk.nextSibling;live.removeChild(lk);lk=lnext;}
+}
+/* Patch the children of a live element from freshly generated HTML.
+   `unwrap` takes the children of the first element instead, for view
+   functions that return their own wrapper. */
+function domSync(live,html,unwrap){
+  if(!live)return false;
+  var tmp=document.createElement("div");
+  tmp.innerHTML=html;
+  var src=tmp;
+  if(unwrap){
+    src=tmp.firstElementChild;
+    if(!src)return false;
+  }
+  domChildren(live,src);
+  return true;
+}
+
+/* ── the three update paths ──
+   Each one regenerates only its own region and reconciles it. None of
+   them touches #app.innerHTML, and none of them calls render().     */
+function updatePlanDOM(){return updateViewDOM();}
+function updateCreditCardDOM(){return updateViewDOM();}
+function updateGoalEditorDOM(){
+  var done=updateViewDOM();
+  var sh=document.querySelector("body > .sheet");
+  if(sh&&S.sheet)domSync(sh,editGoalsSheet(),true);       /* the sheet is never unmounted */
+  else if(sh&&S.newg)domSync(sh,newGoalSheet(),true);
+  return done;
+}
+/* the page body, minus any sheet — those live under <body> and are
+   patched separately so they stay mounted */
+function updateViewDOM(){
+  var app=appEl();
+  if(!app||!app.firstChild)return render();
+  domSync(app,pageHTML(S.tab,true));
+  bind();
+  return true;
+}
+
+/* A full rebuild. Reserved for arriving on a different page — every
+   in-page value edit goes through the patching path above instead. */
 function render(){
   ensureMonth();
-  var quiet=QUIET,snap=quiet?uiSnapshot():null;
-  if(quiet)document.body.classList.add("noanim");
   var h=pageHTML(S.tab);
   if(S.more)h+=moreSheet();
   var app=document.getElementById("app");
@@ -1345,13 +1424,6 @@ function render(){
     bar+='<button class="tab'+(on?" on":"")+'" data-t="'+t[0]+'">'+t[2]+'<span>'+t[1]+'</span></button>';});
   document.getElementById("bar").innerHTML=bar;
   bind();
-  if(quiet){
-    uiRestore(snap);
-    /* let the new nodes paint once with animations still off */
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){document.body.classList.remove("noanim");});
-    });
-  }
 }
 
 function viewHome(k,live){
@@ -1540,7 +1612,79 @@ function viewLog(k){
   return h+'</div>';
 }
 
-function viewGoals(){
+/* The two sheets are built apart from the page so they can be patched
+   on their own. They are appended to <body> after each render, and a
+   value edit reconciles the open one in place instead of remaking it. */
+function editGoalsSheetPair(){
+  var h="",tot=pctTotal();
+    h+='<div class="shbg" data-sheet="0"></div><div class="sheet"><div class="grab"></div>'+
+       '<div class="shhead"><span class="card-t">Edit goals</span>'+
+       '<span class="lab" style="color:'+(tot!==100?"var(--coral)":"var(--teal)")+'">'+tot+'%</span>'+
+       '<button class="shx" data-sheet="0" aria-label="Close">'+ICON.x+'</button></div>'+
+       '<p class="hint" style="margin-bottom:6px">Rename a goal by typing over it. Arrows set priority. Change one share and the unlocked ones follow. Lock a goal to hold its share while you move the others.</p>';
+    S.goals.forEach(function(g,i){
+      var armed=S.delArm===g.id;
+      h+='<div class="ablock"><div class="atop"><span class="amove">'+
+         '<button data-mv="'+g.id+'" data-dir="-1"'+(i===0?" disabled":"")+' aria-label="Move up">'+ICON.up+'</button>'+
+         '<button data-mv="'+g.id+'" data-dir="1"'+(i===S.goals.length-1?" disabled":"")+' aria-label="Move down">'+ICON.down+'</button></span>'+
+         '<span class="ico" style="background:'+tint(g.col)+'">'+g.e+'</span>'+
+         '<input class="nmin" type="text" maxlength="24" data-gn="'+g.id+'" value="'+esc(g.name)+'" aria-label="Goal name">'+
+         '<button class="lockbtn'+(jarLocked(g)?" on":"")+'" data-gl="'+g.id+'" aria-label="'+(jarLocked(g)?"Unlock ":"Lock ")+esc(g.name)+'">'+
+         (jarLocked(g)?ICON.lock:ICON.open)+'</button></div>'+
+         '<div class="aline"><span class="lab">Share of savings'+
+         (jarLocked(g)?' <span style="color:var(--saffron)">\u00B7 locked</span>':'')+'</span>'+
+         '<span class="pctwrap"><button class="step" data-gp="'+g.id+'" data-by="-5" aria-label="Less">\u2212</button>'+
+         '<input class="pctin" type="number" inputmode="numeric" data-gv="'+g.id+'" value="'+jarPct(g)+'" aria-label="Share">'+
+         '<span class="pctsign">%</span>'+
+         '<button class="step" data-gp="'+g.id+'" data-by="5" aria-label="More">+</button></span></div>'+
+         '<div class="aline"><span class="lab">Target</span>'+
+         '<input class="atgtin" type="number" inputmode="numeric" data-jt="'+g.id+'" value="'+g.target+'" aria-label="Target"></div>'+
+         '<div class="aline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
+         '<input class="duein" type="month" data-gd="'+g.id+'" value="'+(g.due||"")+'" aria-label="Deadline"></div>'+
+         (S.goals.length>1?'<div class="aline" style="justify-content:flex-end;margin-top:12px">'+
+           '<button class="delg" data-gdel="'+g.id+'">'+(armed?"Tap again to remove":"Remove goal")+'</button></div>':'')+
+         '</div>';
+    });
+    h+='<button class="btn go" data-sheet="0" style="margin-top:20px">Done</button></div>';
+    return h;
+}
+
+function newGoalSheetPair(){
+  var h="";
+    var room=lockedRoom();
+    h+='<div class="shbg" data-newg="0"></div><div class="sheet"><div class="grab"></div>'+
+       '<div class="shhead"><span class="card-t">New goal</span>'+
+       '<button class="shx" data-newg="0" aria-label="Close">'+ICON.x+'</button></div>'+
+       '<div class="ablock" style="margin-top:16px">'+
+       '<div class="atop"><input class="nmin" type="text" maxlength="24" id="ngName" placeholder="Car, Vacation, Business\u2026" aria-label="Goal name"></div>'+
+       '<div class="emrow">'+GEMO.map(function(e,i){
+         return '<button data-ne="'+e+'"'+(i===0?' class="on"':'')+'>'+e+'</button>';}).join("")+'</div>'+
+       '<div class="ngline"><span class="lab">Target</span>'+
+       '<input class="atgtin" type="number" inputmode="numeric" id="ngTarget" placeholder="0" aria-label="Target amount"></div>'+
+       '<div class="ngline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
+       '<input class="duein" type="month" id="ngDue" aria-label="Deadline"></div>'+
+       '<div class="ngline"><span class="lab">Share of savings</span>'+
+       '<span class="pctwrap"><input class="pctin" type="number" inputmode="numeric" id="ngPct" value="10" aria-label="Share">'+
+       '<span class="pctsign">%</span></span></div></div>'+
+       '<p class="hint" style="margin-top:12px">'+
+       (room<=0?'Every other goal is locked, so a new one would start at 0%. Unlock one first.'
+              :'It takes its share from the unlocked goals. Months already closed keep the split they froze.')+'</p>'+
+       '<button class="btn go" id="ngAdd" style="margin-top:16px">Create goal</button>'+
+       '<button class="btn" data-newg="0" style="margin-top:10px">Cancel</button></div>';
+    return h;
+}
+
+/* just the sheet element, for patching a mounted one */
+function editGoalsSheet(){
+  var pair=editGoalsSheetPair(),i=pair.indexOf('<div class="sheet">');
+  return i<0?pair:pair.slice(i);
+}
+function newGoalSheet(){
+  var pair=newGoalSheetPair(),i=pair.indexOf('<div class="sheet">');
+  return i<0?pair:pair.slice(i);
+}
+
+function viewGoals(noSheets){
   var k=cur(),plan=savedPlanned(k),tot=pctTotal(),h='<div class="view">';
   var open=S.goals.filter(function(g){return !jarDone(g);});
   var next=open.slice().sort(function(a,b){var ra=jarRate(a),rb=jarRate(b);
@@ -1577,60 +1721,8 @@ function viewGoals(){
   h+='<button class="btn" data-sheet="1" style="margin-top:22px">Edit goals</button>';
   h+='<button class="btn ghost" data-newg="1" style="margin-top:10px">+  Add a goal</button>';
 
-  if(S.sheet){
-    h+='<div class="shbg" data-sheet="0"></div><div class="sheet"><div class="grab"></div>'+
-       '<div class="shhead"><span class="card-t">Edit goals</span>'+
-       '<span class="lab" style="color:'+(tot!==100?"var(--coral)":"var(--teal)")+'">'+tot+'%</span>'+
-       '<button class="shx" data-sheet="0" aria-label="Close">'+ICON.x+'</button></div>'+
-       '<p class="hint" style="margin-bottom:6px">Rename a goal by typing over it. Arrows set priority. Change one share and the unlocked ones follow. Lock a goal to hold its share while you move the others.</p>';
-    S.goals.forEach(function(g,i){
-      var armed=S.delArm===g.id;
-      h+='<div class="ablock"><div class="atop"><span class="amove">'+
-         '<button data-mv="'+g.id+'" data-dir="-1"'+(i===0?" disabled":"")+' aria-label="Move up">'+ICON.up+'</button>'+
-         '<button data-mv="'+g.id+'" data-dir="1"'+(i===S.goals.length-1?" disabled":"")+' aria-label="Move down">'+ICON.down+'</button></span>'+
-         '<span class="ico" style="background:'+tint(g.col)+'">'+g.e+'</span>'+
-         '<input class="nmin" type="text" maxlength="24" data-gn="'+g.id+'" value="'+esc(g.name)+'" aria-label="Goal name">'+
-         '<button class="lockbtn'+(jarLocked(g)?" on":"")+'" data-gl="'+g.id+'" aria-label="'+(jarLocked(g)?"Unlock ":"Lock ")+esc(g.name)+'">'+
-         (jarLocked(g)?ICON.lock:ICON.open)+'</button></div>'+
-         '<div class="aline"><span class="lab">Share of savings'+
-         (jarLocked(g)?' <span style="color:var(--saffron)">\u00B7 locked</span>':'')+'</span>'+
-         '<span class="pctwrap"><button class="step" data-gp="'+g.id+'" data-by="-5" aria-label="Less">\u2212</button>'+
-         '<input class="pctin" type="number" inputmode="numeric" data-gv="'+g.id+'" value="'+jarPct(g)+'" aria-label="Share">'+
-         '<span class="pctsign">%</span>'+
-         '<button class="step" data-gp="'+g.id+'" data-by="5" aria-label="More">+</button></span></div>'+
-         '<div class="aline"><span class="lab">Target</span>'+
-         '<input class="atgtin" type="number" inputmode="numeric" data-jt="'+g.id+'" value="'+g.target+'" aria-label="Target"></div>'+
-         '<div class="aline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
-         '<input class="duein" type="month" data-gd="'+g.id+'" value="'+(g.due||"")+'" aria-label="Deadline"></div>'+
-         (S.goals.length>1?'<div class="aline" style="justify-content:flex-end;margin-top:12px">'+
-           '<button class="delg" data-gdel="'+g.id+'">'+(armed?"Tap again to remove":"Remove goal")+'</button></div>':'')+
-         '</div>';
-    });
-    h+='<button class="btn go" data-sheet="0" style="margin-top:20px">Done</button></div>';
-  }
-
-  if(S.newg){
-    var room=lockedRoom();
-    h+='<div class="shbg" data-newg="0"></div><div class="sheet"><div class="grab"></div>'+
-       '<div class="shhead"><span class="card-t">New goal</span>'+
-       '<button class="shx" data-newg="0" aria-label="Close">'+ICON.x+'</button></div>'+
-       '<div class="ablock" style="margin-top:16px">'+
-       '<div class="atop"><input class="nmin" type="text" maxlength="24" id="ngName" placeholder="Car, Vacation, Business\u2026" aria-label="Goal name"></div>'+
-       '<div class="emrow">'+GEMO.map(function(e,i){
-         return '<button data-ne="'+e+'"'+(i===0?' class="on"':'')+'>'+e+'</button>';}).join("")+'</div>'+
-       '<div class="ngline"><span class="lab">Target</span>'+
-       '<input class="atgtin" type="number" inputmode="numeric" id="ngTarget" placeholder="0" aria-label="Target amount"></div>'+
-       '<div class="ngline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
-       '<input class="duein" type="month" id="ngDue" aria-label="Deadline"></div>'+
-       '<div class="ngline"><span class="lab">Share of savings</span>'+
-       '<span class="pctwrap"><input class="pctin" type="number" inputmode="numeric" id="ngPct" value="10" aria-label="Share">'+
-       '<span class="pctsign">%</span></span></div></div>'+
-       '<p class="hint" style="margin-top:12px">'+
-       (room<=0?'Every other goal is locked, so a new one would start at 0%. Unlock one first.'
-              :'It takes its share from the unlocked goals. Months already closed keep the split they froze.')+'</p>'+
-       '<button class="btn go" id="ngAdd" style="margin-top:16px">Create goal</button>'+
-       '<button class="btn" data-newg="0" style="margin-top:10px">Cancel</button></div>';
-  }
+  if(S.sheet&&!noSheets)h+=editGoalsSheetPair();
+  if(S.newg&&!noSheets)h+=newGoalSheetPair();
   return h+'</div>';
 }
 
@@ -2526,26 +2618,26 @@ function bind(){
   q("[data-t]").forEach(function(b){b.onclick=function(){
     S.delArm=null;
     if(b.dataset.t==="more"){S.more=!S.more;save();render();return;}
-    S.more=false;S.tab=b.dataset.t;save();render();window.scrollTo({top:0,behavior:"smooth"});};});
+    S.more=false;S.tab=b.dataset.t;save();render();appScrollTo(0,true);};});
   q("[data-now]").forEach(function(b){b.onclick=function(){
-    S.monthCursor=thisMonth();save();render();window.scrollTo({top:0,behavior:"smooth"});};});
+    S.monthCursor=thisMonth();save();render();appScrollTo(0,true);};});
   q("[data-m]").forEach(function(b){b.onclick=function(){
     var ms=allMonths(),i=ms.indexOf(cur())+ +b.dataset.m;
     if(i>=0&&i<ms.length){S.monthCursor=ms[i];save();render();return;}
     if(i>=ms.length){S.monthCursor=makeNext(ms[ms.length-1]);save();render();}};});
 
   var sal=document.getElementById("sal");
-  if(sal)sal.onchange=function(){m.salary=Math.max(0,+this.value||0);balance(k,null);save();renderQuiet();};
+  if(sal)sal.onchange=function(){m.salary=Math.max(0,+this.value||0);balance(k,null);save();updatePlanDOM();};
 
-  q("[data-lock]").forEach(function(b){b.onclick=function(){m.locks[b.dataset.lock]=!m.locks[b.dataset.lock];save();renderQuiet();};});
+  q("[data-lock]").forEach(function(b){b.onclick=function(){m.locks[b.dataset.lock]=!m.locks[b.dataset.lock];save();updatePlanDOM();};});
   q("[data-n]").forEach(function(b){b.onclick=function(){
     var id=b.dataset.n,from=m.alloc[id]||0;
     m.alloc[id]=Math.max(0,from+(+b.dataset.by));
-    recordChange(k,id,from,m.alloc[id]);balance(k,id);save();renderQuiet();};});
+    recordChange(k,id,from,m.alloc[id]);balance(k,id);save();updatePlanDOM();};});
   q("[data-a]").forEach(function(i){i.onchange=function(){
     var id=i.dataset.a,from=m.alloc[id]||0;
     m.alloc[id]=Math.max(0,+i.value||0);
-    recordChange(k,id,from,m.alloc[id]);balance(k,id);save();renderQuiet();};});
+    recordChange(k,id,from,m.alloc[id]);balance(k,id);save();updatePlanDOM();};});
   q("[data-r]").forEach(function(r){
     var id=r.dataset.r,start=null;
     r.oninput=function(){
@@ -2554,7 +2646,7 @@ function bind(){
       var segs=q(".seg"),i=0;
       CATS.forEach(function(c){var a=m.alloc[c.id]||0;if(a>0&&segs[i]){segs[i].style.flexGrow=a;i++;}});
       q("[data-a]").forEach(function(x){x.value=m.alloc[x.dataset.a]||0;});};
-    r.onchange=function(){if(start!==null)recordChange(k,id,start,m.alloc[id]);save();renderQuiet();};});
+    r.onchange=function(){if(start!==null)recordChange(k,id,start,m.alloc[id]);save();updatePlanDOM();};});
 
   var wi=document.getElementById("wiSlider");
   if(wi){
@@ -2587,9 +2679,9 @@ function bind(){
   }
 
   var ovr=document.getElementById("ovr");
-  if(ovr)ovr.onchange=function(){var v=String(this.value).trim();m.override=v===""?null:Math.max(0,+v||0);save();renderQuiet();};
+  if(ovr)ovr.onchange=function(){var v=String(this.value).trim();m.override=v===""?null:Math.max(0,+v||0);save();updatePlanDOM();};
   var co=document.getElementById("clearov");
-  if(co)co.onclick=function(){m.override=null;save();renderQuiet();};
+  if(co)co.onclick=function(){m.override=null;save();updatePlanDOM();};
 
 
   var add=document.getElementById("eadd");
@@ -2620,32 +2712,32 @@ function bind(){
     }
     m.spend.unshift({id:newId(),ts:entryTime(k),cat:"oneoff",amount:v,method:meth,
       note:nf?String(nf.value).trim():""});
-    save();renderQuiet();};
+    save();updateViewDOM();};
   q("[data-d]").forEach(function(b){b.onclick=function(){
     var id=+b.dataset.d;
     allMonths().forEach(function(x){
       S.months[x].spend=S.months[x].spend.filter(function(e){
         if(e.id===id&&e.method==="card")card().used=Math.max(0,card().used-e.amount);
         return e.id!==id;});});
-    save();renderQuiet();};});
+    save();updateViewDOM();};});
 
   q("[data-jt]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.jt;});
-    if(g){g.target=Math.max(0,+i.value||0);save();renderQuiet();}};});
+    if(g){g.target=Math.max(0,+i.value||0);save();updateGoalEditorDOM();}};});
   q("[data-more]").forEach(function(b){b.onclick=function(){
     if(b.dataset.more==="close"){S.more=false;save();render();return;}
     var x=MENU.find(function(y){return y.id===b.dataset.more;});
     if(x&&x.live){
       if(MORE_PAGES.indexOf(S.tab)<0)S.returnTab=S.tab;   /* remember where you were */
-      S.more=false;S.tab=x.id;save();render();window.scrollTo({top:0,behavior:"smooth"});
+      S.more=false;S.tab=x.id;save();render();appScrollTo(0,true);
     }};});
   q("[data-card]").forEach(function(i){i.onchange=function(){
     var c=card(),f=i.dataset.card,v=Math.max(0,parseInt(i.value,10)||0);
     if(f==="payDay")c.payDay=Math.min(31,Math.max(1,v||18));
     else{c[f]=v;if(f==="limit"&&v>0&&!c.lastPaid)c.lastPaid=thisMonth();}
-    save();renderQuiet();};});
+    save();updateCreditCardDOM();};});
   q("[data-cday]").forEach(function(b){b.onclick=function(){
-    var c=card();c.payDay=Math.min(31,Math.max(1,(c.payDay||18)+(+b.dataset.cday)));save();renderQuiet();};});
+    var c=card();c.payDay=Math.min(31,Math.max(1,(c.payDay||18)+(+b.dataset.cday)));save();updateCreditCardDOM();};});
 
   /* live credit check while typing an amount */
   var wBox=document.getElementById("cardWarn"),amtF=document.getElementById("eamt");
@@ -2654,7 +2746,8 @@ function bind(){
     if(!purse)return;
     purse.innerHTML=purseHTML(cur(),parseFloat(amtF&&amtF.value)||0);
   }
-  if(purse){paintPurse();if(amtF)amtF.addEventListener("input",paintPurse);}
+  if(purse){paintPurse();
+    if(amtF&&!amtF.__purseBound){amtF.__purseBound=true;amtF.addEventListener("input",paintPurse);}}
   function creditCheck(){
     if(!wBox)return;
     var v=parseFloat(amtF&&amtF.value)||0;
@@ -2681,24 +2774,25 @@ function bind(){
     }
     wBox.innerHTML=out;
   }
-  if(amtF&&wBox){amtF.addEventListener("input",creditCheck);creditCheck();}
+  if(amtF&&wBox){
+    if(!amtF.__creditBound){amtF.__creditBound=true;amtF.addEventListener("input",creditCheck);}
+    creditCheck();}
 
   q("[data-cyc]").forEach(function(b){b.onclick=function(){
-    S.cycleStart=Math.min(31,Math.max(1,cycleStart()+(+b.dataset.cyc)));save();renderQuiet();};});
+    S.cycleStart=Math.min(31,Math.max(1,cycleStart()+(+b.dataset.cyc)));save();updateViewDOM();};});
   var cyc=document.getElementById("cycIn");
-  if(cyc)cyc.onchange=function(){S.cycleStart=Math.min(31,Math.max(1,parseInt(cyc.value,10)||1));save();renderQuiet();};
+  if(cyc)cyc.onchange=function(){S.cycleStart=Math.min(31,Math.max(1,parseInt(cyc.value,10)||1));save();updateViewDOM();};
   /* Every number field, everywhere: tap it and the old value is already
      selected, so the first digit you type replaces it instead of joining
      it. iOS puts the caret in on focus and again on the tap that follows,
      so both are answered.                                              */
   q("[data-alloc]").forEach(function(b){b.onclick=function(){
-    S.allocInfo=!S.allocInfo;save();renderQuiet();};});
+    S.allocInfo=!S.allocInfo;save();updatePlanDOM();};});
 
   q('input[type="number"]').forEach(function(i){
-    if(i.dataset.selall)return;
-    i.dataset.selall="1";
+    if(i.__selBound)return;              /* a property, not an attribute: */
+    i.__selBound=true;                   /* patching cannot strip it      */
     var grab=function(){setTimeout(function(){
-      if(i.dataset.noselect)return;
       try{i.select();i.setSelectionRange(0,i.value.length);}catch(e){}
     },0);};
     i.addEventListener("focus",grab);
@@ -2706,9 +2800,9 @@ function bind(){
   });
 
   q("[data-back]").forEach(function(b){b.onclick=function(){
-    if(b.dataset.back==="tools"){S.tab="tools";S.noteId=null;save();render();window.scrollTo({top:0,behavior:"smooth"});return;}
-    if(b.dataset.back==="settings"){S.tab="settings";save();render();window.scrollTo({top:0,behavior:"smooth"});return;}
-    S.tab=S.returnTab||"home";S.more=true;save();render();window.scrollTo({top:0,behavior:"smooth"});};});
+    if(b.dataset.back==="tools"){S.tab="tools";S.noteId=null;save();render();appScrollTo(0,true);return;}
+    if(b.dataset.back==="settings"){S.tab="settings";save();render();appScrollTo(0,true);return;}
+    S.tab=S.returnTab||"home";S.more=true;save();render();appScrollTo(0,true);};});
 
   /* calculator: update in place, no full re-render per keypress */
   var cOut=document.getElementById("calcOut"),cMemo=document.getElementById("calcMemo");
@@ -2734,7 +2828,7 @@ function bind(){
       S.noteId=id;
     }else S.noteId=+b.dataset.note;
     S.delArm=null;
-    S.tab="note";save();render();window.scrollTo({top:0,behavior:"smooth"});};});
+    S.tab="note";save();render();appScrollTo(0,true);};});
 
   var nT=document.getElementById("nTitle"),nB=document.getElementById("nBody");
   function grow(){if(!nB)return;nB.style.height="auto";nB.style.height=Math.max(220,nB.scrollHeight)+"px";}
@@ -2755,37 +2849,37 @@ function bind(){
     nB.selectionStart=nB.selectionEnd=p0+b.dataset.ins.length;
     nB.focus();grow();touchNote();};});
 
-  q("[data-wg]").forEach(function(b){b.onclick=function(){S.wiGoal=b.dataset.wg;save();renderQuiet();};});
+  q("[data-wg]").forEach(function(b){b.onclick=function(){S.wiGoal=b.dataset.wg;save();updateViewDOM();};});
   q("[data-sheet]").forEach(function(b){b.onclick=function(){S.sheet=b.dataset.sheet==="1";save();render();};});
   q("[data-gl]").forEach(function(b){b.onclick=function(){
     var g=S.goals.find(function(x){return x.id===b.dataset.gl;});
-    if(g){g.lock=!g.lock;save();renderQuiet();}};});
-  q("[data-mv]").forEach(function(b){b.onclick=function(){moveGoal(b.dataset.mv,+b.dataset.dir);stampSplit();save();renderQuiet();};});
+    if(g){g.lock=!g.lock;save();updateGoalEditorDOM();}};});
+  q("[data-mv]").forEach(function(b){b.onclick=function(){moveGoal(b.dataset.mv,+b.dataset.dir);stampSplit();save();updateGoalEditorDOM();};});
   q("[data-gp]").forEach(function(b){b.onclick=function(){
     var g=S.goals.find(function(x){return x.id===b.dataset.gp;});
     if(!g)return;
     g.pct=Math.max(0,Math.min(100,jarPct(g)+(+b.dataset.by)));
-    balanceGoals(g.id);stampSplit();save();renderQuiet();};});
+    balanceGoals(g.id);stampSplit();save();updateGoalEditorDOM();};});
   q("[data-gv]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.gv;});
     if(!g)return;
     g.pct=Math.max(0,Math.min(100,+i.value||0));
-    balanceGoals(g.id);stampSplit();save();renderQuiet();};});
+    balanceGoals(g.id);stampSplit();save();updateGoalEditorDOM();};});
   /* rename: the name is read live everywhere, so this is the only edit */
   q("[data-gn]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.gn;});
     if(!g)return;
     var v=String(i.value||"").trim().slice(0,24);
-    g.name=v||g.name;save();renderQuiet();};});
+    g.name=v||g.name;save();updateGoalEditorDOM();};});
   q("[data-gd]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.gd;});
     if(!g)return;
-    g.due=i.value||"";save();renderQuiet();};});
+    g.due=i.value||"";save();updateGoalEditorDOM();};});
   q("[data-gdel]").forEach(function(b){b.onclick=function(){
     var id=b.dataset.gdel;
     if(S.delArm===id){S.delArm=null;removeGoal(id);}
     else S.delArm=id;
-    save();renderQuiet();};});
+    save();updateGoalEditorDOM();};});
   q("[data-newg]").forEach(function(b){b.onclick=function(){
     S.newg=b.dataset.newg==="1";NEWE=GEMO[0];S.delArm=null;save();render();};});
   q("[data-ne]").forEach(function(b){b.onclick=function(){
@@ -2835,7 +2929,7 @@ function bind(){
     restoreFrom(s);};
 
   var av=document.getElementById("adv");
-  if(av)av.onclick=function(){S.bkAdv=!S.bkAdv;save();renderQuiet();};
+  if(av)av.onclick=function(){S.bkAdv=!S.bkAdv;save();updateViewDOM();};
 
   var fr=document.getElementById("fresh2");
   if(fr)fr.onclick=function(){
@@ -2843,7 +2937,7 @@ function bind(){
     refreshApp(function(msg){fr.disabled=false;if(msg)alert(msg);});};
 
   q("[data-go]").forEach(function(b){b.onclick=function(){
-    S.tab=b.dataset.go;save();render();window.scrollTo({top:0,behavior:"smooth"});};});
+    S.tab=b.dataset.go;save();render();appScrollTo(0,true);};});
 
   paintOffline();
 
@@ -2925,7 +3019,7 @@ function slideTo(tab,dir){
   app.style.opacity="0";
   setTimeout(function(){
     S.delArm=null;S.more=false;S.tab=tab;save();render();
-    window.scrollTo(0,0);
+    appScrollTo(0);
     var a=document.getElementById("app");
     if(!a)return;
     a.style.transition="none";
@@ -2959,6 +3053,16 @@ function navSwipe(dir){
    mind costs nothing. */
 var THRESH=.28;
 var G={live:false,axis:null,x0:0,y0:0,t0:0,dir:0,target:null,W:360,p:0,armed:false,busy:false};
+/* #app is the scrolling box now, so scroll questions go to it and not
+   to the window, which no longer moves at all. */
+function appEl(){return document.getElementById("app");}
+function appScrollTop(){var a=appEl();return a?a.scrollTop:0;}
+function appScrollTo(top,smooth){
+  var a=appEl();if(!a)return;
+  try{a.scrollTo({top:top,behavior:smooth?"smooth":"auto"});}
+  catch(e){a.scrollTop=top;}
+}
+
 function gEls(){return{wrap:document.getElementById("slide"),page:document.getElementById("slideIn"),
   glow:document.getElementById("glow"),app:document.getElementById("app")};}
 function gPrepare(dir){
@@ -3030,7 +3134,7 @@ function gSettle(commit){
       var a=gEls();
       if(a.app){a.app.style.transition="none";a.app.style.transform="";a.app.style.opacity="";}
       S.delArm=null;S.more=false;S.tab=tab;save();render();
-      window.scrollTo(0,0);
+      appScrollTo(0);
       gReset();
     },280);
   }else{
@@ -3106,10 +3210,10 @@ document.addEventListener("click",function(e){
       S.delArm=null;
       if(S.noteId===id){S.noteId=null;S.tab="tools";}
     }else S.delArm=id;
-    save();renderQuiet();return;
+    save();updateViewDOM();return;
   }
-  if(t.dataset.pm){S.payMethod=t.dataset.pm;save();renderQuiet();return;}
-  if(t.dataset.p){S.pick=t.dataset.p;save();renderQuiet();}
+  if(t.dataset.pm){S.payMethod=t.dataset.pm;save();updateViewDOM();return;}
+  if(t.dataset.p){S.pick=t.dataset.p;save();updateViewDOM();}
 });
 
 /* Tap any number field and the whole value is selected, so you can type
