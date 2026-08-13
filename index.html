@@ -88,7 +88,7 @@ button{background:none;border:none;cursor:pointer;padding:0}
 
 .ins{display:flex;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .ins:last-child{border-bottom:none;padding-bottom:0}
-.ins .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:14px;flex:none;
+.ins .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex:none;color:var(--muted);
   background:rgba(255,255,255,.05)}
 .ins .tx{flex:1;font-size:13.5px;line-height:1.5}
 .ins .tx em{font-style:normal;color:var(--faint);font-family:var(--mono);font-size:11px}
@@ -170,7 +170,7 @@ details.more .eqrow{font-size:13px}
 .jarcard.quiet{background:rgba(21,19,44,.86);box-shadow:0 12px 28px -28px rgba(0,0,0,.8)}
 .jarcard.quiet .jname{color:#E4E1F5}
 .jhead{display:flex;align-items:center;gap:12px}
-.jico{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:21px;flex:none;
+.jico{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:23px;flex:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
 .jarcard.quiet .jico{opacity:.84}
 .jmeta{flex:1;min-width:0}
@@ -206,8 +206,9 @@ details.more .eqrow{font-size:13px}
 .delg{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
   color:var(--coral);opacity:.8;padding:4px 0}
 .emrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.emrow button{width:42px;height:42px;border-radius:14px;background:var(--surface-3);font-size:20px;
-  display:grid;place-items:center;transition:transform .16s var(--spring)}
+.emrow button{width:42px;height:42px;border-radius:14px;background:var(--surface-3);font-size:21px;
+  color:var(--muted);display:grid;place-items:center;transition:transform .16s var(--spring)}
+.emrow button.on{color:var(--majorelle)}
 .emrow button.on{box-shadow:inset 0 0 0 1.5px var(--majorelle)}
 .emrow button:active{transform:scale(.88)}
 .ngline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
@@ -268,7 +269,7 @@ details.more .eqrow{font-size:13px}
   transition:transform .18s var(--spring),border-color .25s var(--ease)}
 .menucard:active{transform:scale(.985)}
 .menucard.soon{opacity:.62}
-.menuico{width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:23px;flex:none;
+.menuico{width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:25px;flex:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 .menutxt{flex:1;min-width:0;text-align:left}
 .menut{display:block;font-family:var(--round);font-size:17px;font-weight:700;letter-spacing:-.022em;
@@ -362,7 +363,7 @@ details.more .eqrow{font-size:13px}
 .row:last-child{border-bottom:none;padding-bottom:2px}
 .row.locked{opacity:.6}
 .row-t{display:flex;align-items:center;gap:9px}
-.ico{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:14px;flex:none}
+.ico{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex:none}
 .nm{font-size:15px;font-weight:600;letter-spacing:-.01em;flex:1}
 .tag{font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
   border:1px solid var(--line-2);padding:2px 5px;border-radius:5px}
@@ -528,7 +529,15 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .pursebig{font-family:var(--round);font-size:24px;font-weight:800;letter-spacing:-.035em;
   font-variant-numeric:tabular-nums;line-height:1;transition:color .2s var(--ease)}
 .pursesub{font-size:12px;color:var(--muted);line-height:1.35;flex:1}
-.offl{margin-top:22px;padding:13px;border-radius:14px;font-size:12.5px;line-height:1.45;
+.vs .sym,.chip .sym,.log em .sym{display:inline-block;vertical-align:-.2em;width:15px;height:15px}
+.log em .sym{width:13px;height:13px;vertical-align:-.18em}
+.bkwarn .sym,.offl .sym{width:16px;height:16px;flex:none;margin-top:1px}
+.bkwarn .sym{color:var(--saffron)}
+.offl .sym{color:var(--teal)}
+.offl.warn .sym{color:var(--saffron)}
+.step .sym{width:15px;height:15px;stroke-width:2.2}
+.pctwrap .step .sym{width:14px;height:14px}
+.offl{display:flex;gap:9px;align-items:flex-start;margin-top:22px;padding:13px;border-radius:14px;font-size:12.5px;line-height:1.45;
   background:rgba(47,212,188,.07);border:1px solid rgba(47,212,188,.2);color:var(--muted)}
 .offl.warn{background:rgba(255,179,61,.09);border-color:rgba(255,179,61,.24)}
 .xlist{margin-top:18px}
@@ -570,7 +579,13 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .tab{flex:1;max-width:92px;padding:8px 3px 5px;border-radius:14px;display:flex;flex-direction:column;
   align-items:center;gap:4px;color:var(--faint);transition:color .25s var(--ease),transform .18s var(--spring)}
 .tab:active{transform:scale(.93)}
-.tab svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* ── the drawn symbol set ──
+   One weight, one cap, one join, everywhere. Symbols take the colour of
+   whatever they sit in, so the tinted boxes stay exactly as they were
+   and the glyph inside simply picks up the same hue. */
+.sym{stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
+  width:1em;height:1em;display:block;flex:none}
+.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .tab span{font-size:10px;font-weight:600}
 .tab.on{color:var(--majorelle)}
 .view{animation:in .4s var(--ease) both}
@@ -598,13 +613,14 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b24 \u00B7 in-place updates";
+var BUILD="b25 \u00B7 drawn icons";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
            personal:"#FF5C8A",us:"#FF7A5C",installments:"#5A52D9",buffer:"#8DA88F",oneoff:"#FF5C8A"};
-var EMOJI={savings:"\uD83D\uDCB0",rent:"\uD83C\uDFE0",utilities:"\u26A1",household:"\uD83D\uDED2",
-           personal:"\uD83D\uDC64",us:"\u2764\uFE0F",installments:"\uD83D\uDCB3",buffer:"\uD83D\uDEDF",oneoff:"\u26A0\uFE0F"};
+/* which drawn symbol stands for each category */
+var CATSYM={savings:"savings",rent:"house",utilities:"bolt",household:"cart",
+            personal:"person",us:"heart",installments:"card",buffer:"buffer",oneoff:"warning"};
 /* fixed = paid automatically, never logged · variable = you log it
    savings = the target · buffer = slack, becomes savings if unused */
 var CATS=[
@@ -622,10 +638,10 @@ var CATS=[
 var BASE_ALLOC={savings:2000,rent:3000,utilities:300,household:2000,personal:1000,us:800,installments:0,buffer:900};
 var BASE_LOCK={rent:true,utilities:true,installments:true};
 var BASE_GOALS=[
-  {id:"emergency",name:"Emergency Fund",e:"\uD83D\uDEE1\uFE0F",target:40000,pct:40,col:"#2FD4BC",lock:false},
-  {id:"morocco",name:"House Deposit",e:"\uD83C\uDFE0",target:168000,pct:40,col:"#7B72FF",lock:false},
-  {id:"study",name:"Wife Study",e:"\uD83C\uDF93",target:10000,pct:10,col:"#FFB33D",lock:false},
-  {id:"travel",name:"Travel Fund",e:"\u2708\uFE0F",target:20000,pct:10,col:"#FF7A5C",lock:false}
+  {id:"emergency",name:"Emergency Fund",e:"shield",target:40000,pct:40,col:"#2FD4BC",lock:false},
+  {id:"morocco",name:"House Deposit",e:"house",target:168000,pct:40,col:"#7B72FF",lock:false},
+  {id:"study",name:"Wife Study",e:"graduation",target:10000,pct:10,col:"#FFB33D",lock:false},
+  {id:"travel",name:"Travel Fund",e:"plane",target:20000,pct:10,col:"#FF7A5C",lock:false}
 ];
 function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)),months:{},
   tab:"home",monthCursor:null,weekIdx:null,pick:"household",lastBackup:null,name:"",wiGoal:null,more:false,returnTab:"home",wiAmt:0,cycleStart:15,clamp:null,card:{limit:0,used:0,payDay:18,lastPaid:null},payMethod:"bank",
@@ -926,7 +942,7 @@ function dueText(g){
    moving a slider does. Closed months keep the split they froze, so
    nothing already banked is re-cut. */
 var GCOL=["#7B72FF","#2FD4BC","#FFB33D","#FF7A5C","#5AC8FA","#C77DFF","#4ADE80","#F472B6"];
-var GEMO=["\u2B50","\uD83D\uDE97","\uD83C\uDFD6\uFE0F","\uD83D\uDCBC","\uD83C\uDF81","\uD83D\uDCBB","\uD83C\uDFE5","\uD83D\uDC8D"];
+var GEMO=["shield","house","graduation","plane","car","gift","laptop","star"];
 function nextCol(){
   var used=S.goals.map(function(g){return g.col;});
   for(var i=0;i<GCOL.length;i++)if(used.indexOf(GCOL[i])<0)return GCOL[i];
@@ -1071,27 +1087,27 @@ function streak(){
 /* ═══ 6. INSIGHTS ═══ */
 function insights(k){
   var out=[],p=prevOf(k);
-  if(!p){out.push({i:"\uD83D\uDC4B",t:"This is your first month on record. Once it ends, the app starts comparing months and the advice sharpens."});return out;}
+  if(!p){out.push({i:"sparkle",t:"This is your first month on record. Once it ends, the app starts comparing months and the advice sharpens."});return out;}
   var sNow=Math.max(0,savedNow(k)),sPrev=Math.max(0,savedActual(p)),d=sNow-sPrev;
-  if(Math.abs(d)>=100)out.push({i:d>0?"\uD83D\uDCC8":"\uD83D\uDCC9",
+  if(Math.abs(d)>=100)out.push({i:d>0?"up":"down",
     t:"Saving <b>\u00A5"+fmt(Math.abs(d))+(d>0?" more":" less")+"</b> than "+mShort(p)+". <em>"+fmt(sPrev)+" \u2192 "+fmt(sNow)+"</em>"});
   CATS.filter(function(c){return c.type==="variable";}).forEach(function(c){
     var a=spentOn(k,c.id),b=spentOn(p,c.id);
     if(b<200&&a<200)return;
     var diff=a-b;if(Math.abs(diff)<150)return;
     var pct=b>0?Math.round(diff/b*100):null;
-    out.push({i:EMOJI[c.id],
+    out.push({i:CATSYM[c.id],
       t:"<b>"+c.name+"</b> "+(diff>0?"up":"down")+" "+(pct!==null?Math.abs(pct)+"%":"\u00A5"+fmt(Math.abs(diff)))+
         " vs "+mShort(p)+". <em>\u00A5"+fmt(b)+" \u2192 \u00A5"+fmt(a)+"</em>"});
   });
   var oo=spentOneoff(k);
   if(oo>0){
     var r=monthlyRate(),days=r>0?Math.round(oo/r*30):0;
-    out.push({i:"\u26A0\uFE0F",t:"<b>\u00A5"+fmt(oo)+"</b> in one-offs this month"+
+    out.push({i:"warning",t:"<b>\u00A5"+fmt(oo)+"</b> in one-offs this month"+
       (days>2?", which pushes your goals back about <b>"+days+" days</b>":"")+"."});
   }
   var vb=budgetVariable(k),vs=spentVariable(k);
-  if(monthProgress(k)<1&&vs>vb)out.push({i:"\uD83D\uDD34",
+  if(monthProgress(k)<1&&vs>vb)out.push({i:"speed",
     t:"You are <b>\u00A5"+fmt(vs-vb)+"</b> past your spending budget with "+Math.round((1-monthProgress(k))*100)+"% of the month left."});
   if(!out.length)out.push({i:"\u2696\uFE0F",t:"Nothing has moved much since "+mShort(p)+"."});
   return out;
@@ -1153,20 +1169,103 @@ function fmt(n){return Math.round(n).toLocaleString("en-US");}
 function catOf(id){return CATS.find(function(c){return c.id===id;})||{id:"oneoff",name:"One-off",type:"oneoff"};}
 function esc(s){return String(s==null?"":s).replace(/[<>&"]/g,function(c){return{"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c];});}
 function tint(c){return c+"1f";}
+/* ═══ 9b. SYMBOLS ═══
+   One drawn set, in one style, for the whole app: 24×24 box, stroke
+   only, 1.7 weight, round caps and joins, no fill and no colour of
+   their own — every symbol takes the colour of the text around it.
+
+   Drawn here rather than pulled from an icon library on purpose: the
+   app is a single file that has to open with no signal, so it cannot
+   fetch a font or a sprite sheet, and bundling a whole library to use
+   thirty glyphs would cost more than it is worth. */
+var SYM={
+  /* money and the categories */
+  savings:'<rect x="2.2" y="6.8" width="19.6" height="10.4" rx="2.2"/><circle cx="12" cy="12" r="2.5"/><path d="M5.6 12h.6M17.8 12h.6"/>',
+  house:'<path d="M3.7 10.4 12 4l8.3 6.4"/><path d="M5.9 9.1v9.9a1.4 1.4 0 0 0 1.4 1.4h9.4a1.4 1.4 0 0 0 1.4-1.4V9.1"/>',
+  bolt:'<path d="M13.1 3.2 6.4 13.1a.5.5 0 0 0 .4.8h3.7l-.5 6.9 6.9-9.9a.5.5 0 0 0-.4-.8h-3.8z"/>',
+  cart:'<path d="M2.6 4h2.1a1 1 0 0 1 1 .8l2.2 9.9a1.6 1.6 0 0 0 1.6 1.3h7.7a1.6 1.6 0 0 0 1.6-1.2l1.5-6.3H6.2"/><circle cx="10" cy="19.6" r="1.3"/><circle cx="17.4" cy="19.6" r="1.3"/>',
+  person:'<circle cx="12" cy="7.9" r="3.7"/><path d="M4.9 20.3a7.1 7.1 0 0 1 14.2 0"/>',
+  heart:'<path d="M12 20.3C8.8 18 3.7 14.3 3.7 9.9a4.3 4.3 0 0 1 8.3-1.6 4.3 4.3 0 0 1 8.3 1.6c0 4.4-5.1 8.1-8.3 10.4z"/>',
+  card:'<rect x="2.4" y="5.2" width="19.2" height="13.6" rx="2.8"/><path d="M2.4 9.9h19.2M6 14.6h4.2"/>',
+  buffer:'<circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.3"/><path d="M6 6l3 3M18 6l-3 3M18 18l-3-3M6 18l3-3"/>',
+  warning:'<path d="M10.6 4.5 2.7 18.2a1.6 1.6 0 0 0 1.4 2.4h15.8a1.6 1.6 0 0 0 1.4-2.4L13.4 4.5a1.6 1.6 0 0 0-2.8 0z"/><path d="M12 9.6v4.1"/><circle cx="12" cy="17.2" r=".55" fill="currentColor" stroke="none"/>',
+
+  /* goals */
+  shield:'<path d="M12 3.3 4.9 5.9v5.4c0 4.3 2.9 7.5 7.1 9.2 4.2-1.7 7.1-4.9 7.1-9.2V5.9z"/>',
+  plane:'<path d="M12 2.7a1.8 1.8 0 0 1 1.8 1.8v4.8l7 4.1v2.2l-7-2.1v4.1l2.3 1.7v1.5L12 19.7l-4.1 1.1v-1.5l2.3-1.7v-4.1l-7 2.1v-2.2l7-4.1V4.5A1.8 1.8 0 0 1 12 2.7z"/>',
+  graduation:'<path d="M2.7 9.1 12 5l9.3 4.1L12 13.2z"/><path d="M6.6 11v4.7c0 1.6 2.4 2.8 5.4 2.8s5.4-1.2 5.4-2.8V11"/><path d="M21.3 9.4v5"/>',
+  car:'<path d="M5.4 11.5 6.9 7.6A2.2 2.2 0 0 1 9 6.2h6a2.2 2.2 0 0 1 2.1 1.4l1.5 3.9"/><rect x="2.6" y="11.5" width="18.8" height="6.1" rx="1.8"/><path d="M6.6 17.6v1.6M17.4 17.6v1.6M5.6 14.5h1.8M16.6 14.5h1.8"/>',
+  gift:'<path d="M3.4 12.3h17.2v6.9a1.4 1.4 0 0 1-1.4 1.4H4.8a1.4 1.4 0 0 1-1.4-1.4z"/><rect x="2.5" y="8.3" width="19" height="4" rx="1.2"/><path d="M12 8.3v12.3"/><path d="M12 8.3S10.8 4 8.6 4a2.2 2.2 0 0 0 0 4.3zM12 8.3S13.2 4 15.4 4a2.2 2.2 0 0 1 0 4.3z"/>',
+  laptop:'<path d="M5.2 6.4h13.6a1 1 0 0 1 1 1v8.2H4.2V7.4a1 1 0 0 1 1-1z"/><path d="M2.4 15.6h19.2l-1.1 2.3a1.4 1.4 0 0 1-1.3.8H4.8a1.4 1.4 0 0 1-1.3-.8z"/>',
+  star:'<path d="m12 3.7 2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 10l6-.8z"/>',
+  umbrella:'<path d="M12 4.1a8.4 8.4 0 0 0-8.4 8.4h16.8A8.4 8.4 0 0 0 12 4.1z"/><path d="M12 12.5v5.6a2.1 2.1 0 0 0 4.2 0"/><path d="M12 4.1V2.6"/>',
+  briefcase:'<rect x="2.8" y="7.5" width="18.4" height="11.7" rx="2"/><path d="M8.6 7.5V6a1.6 1.6 0 0 1 1.6-1.6h3.6A1.6 1.6 0 0 1 15.4 6v1.5"/><path d="M2.8 12.4h18.4"/>',
+  cross:'<rect x="3.4" y="3.4" width="17.2" height="17.2" rx="4.4"/><path d="M12 8.2v7.6M8.2 12h7.6"/>',
+  ring:'<circle cx="12" cy="14.7" r="5"/><path d="M9.1 9.5 10.6 5.6h2.8l1.5 3.9"/>',
+
+  /* the tab bar */
+  home:'<path d="M3.7 10.4 12 4l8.3 6.4"/><path d="M5.9 9.1v9.9a1.4 1.4 0 0 0 1.4 1.4h9.4a1.4 1.4 0 0 0 1.4-1.4V9.1"/>',
+  plan:'<path d="M4.4 20V10.6M9.6 20V4.6M14.8 20v-6.4M20 20V8"/>',
+  log:'<rect x="3.4" y="5" width="17.2" height="15.6" rx="3.2"/><path d="M3.4 9.8h17.2M8.2 3.4v3.2M15.8 3.4v3.2"/>',
+  goals:'<path d="M12 20.6s6.9-5.6 6.9-10.8a6.9 6.9 0 1 0-13.8 0c0 5.2 6.9 10.8 6.9 10.8z"/><circle cx="12" cy="9.6" r="2.4"/>',
+  more:'<circle cx="5.2" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18.8" cy="12" r="1.5"/>',
+
+  /* the More menu and Settings */
+  compass:'<circle cx="12" cy="12" r="8.6"/><path d="m15.3 8.7-2 4.6-4.6 2 2-4.6z"/>',
+  calculator:'<rect x="5" y="2.8" width="14" height="18.4" rx="2.8"/><rect x="8" y="6" width="8" height="3.2" rx="1"/><path d="M8.6 13h.01M12 13h.01M15.4 13h.01M8.6 17h.01M12 17h.01M15.4 17h.01" stroke-width="2.2"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M18.9 14.6a1.5 1.5 0 0 0 .3 1.7l.1.1a1.7 1.7 0 1 1-2.4 2.4l-.1-.1a1.5 1.5 0 0 0-1.7-.3 1.5 1.5 0 0 0-.9 1.4v.2a1.7 1.7 0 0 1-3.4 0v-.1a1.5 1.5 0 0 0-1-1.4 1.5 1.5 0 0 0-1.7.3l-.1.1a1.7 1.7 0 1 1-2.4-2.4l.1-.1a1.5 1.5 0 0 0 .3-1.7 1.5 1.5 0 0 0-1.4-.9h-.2a1.7 1.7 0 0 1 0-3.4h.1a1.5 1.5 0 0 0 1.4-1 1.5 1.5 0 0 0-.3-1.7l-.1-.1a1.7 1.7 0 1 1 2.4-2.4l.1.1a1.5 1.5 0 0 0 1.7.3h.1a1.5 1.5 0 0 0 .9-1.4v-.2a1.7 1.7 0 0 1 3.4 0v.1a1.5 1.5 0 0 0 .9 1.4 1.5 1.5 0 0 0 1.7-.3l.1-.1a1.7 1.7 0 1 1 2.4 2.4l-.1.1a1.5 1.5 0 0 0-.3 1.7v.1a1.5 1.5 0 0 0 1.4.9h.2a1.7 1.7 0 0 1 0 3.4h-.1a1.5 1.5 0 0 0-1.4.9z"/>',
+  save:'<path d="M5.4 3.6h9.9l5.1 5.1v10.3a1.4 1.4 0 0 1-1.4 1.4H5.4A1.4 1.4 0 0 1 4 19V5a1.4 1.4 0 0 1 1.4-1.4z"/><path d="M8.4 3.6v5.2h6.2V3.6M7.6 20.4v-6.2h8.8v6.2"/>',
+  doc:'<path d="M13.6 3.6H7.2a1.6 1.6 0 0 0-1.6 1.6v13.6a1.6 1.6 0 0 0 1.6 1.6h9.6a1.6 1.6 0 0 0 1.6-1.6V8.6z"/><path d="M13.6 3.6v5h4.8"/><path d="M8.8 13.2h6.4M8.8 16.6h4.4"/>',
+  refresh:'<path d="M20.4 6.8v5.1h-5.1"/><path d="M19.6 11.9a7.6 7.6 0 1 1-2-5.7l2.8 2.6"/>',
+
+  /* the small print */
+  up:'<path d="M7.2 16.8 16.8 7.2"/><path d="M9.6 7.2h7.2v7.2"/>',
+  down:'<path d="M7.2 7.2 16.8 16.8"/><path d="M16.8 9.6v7.2H9.6"/>',
+  sparkle:'<path d="m10.4 3.4 1.5 4.1 4.1 1.5-4.1 1.5-1.5 4.1-1.5-4.1L4.8 9l4.1-1.5z"/><path d="m17.8 14.2.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
+  flame:'<path d="M12 3.2s5.5 3.9 5.5 8.6a5.5 5.5 0 0 1-11 0c0-1.6.6-3 1.4-4.1.4 1 1 1.7 1.9 2.1 0-2.6.9-5 2.2-6.6z"/>',
+  speed:'<path d="M4.4 17.6a8.6 8.6 0 1 1 15.2 0"/><path d="m12 12.4 3.7-3.1"/><circle cx="12" cy="13.6" r="1.2" fill="currentColor" stroke="none"/>',
+  check:'<path d="m5.4 12.6 4.4 4.4 8.8-10"/>',
+  plus:'<path d="M12 5.6v12.8M5.6 12h12.8"/>',
+  minus:'<path d="M5.6 12h12.8"/>'
+};
+/* Goals made before this build stored an emoji in `e`. Those are still
+   in the saved data, so they keep working: the old character maps onto
+   the symbol that means the same thing. */
+var GLEGACY={
+  "\uD83D\uDEE1\uFE0F":"shield","\uD83D\uDEE1":"shield",
+  "\uD83C\uDFE0":"house","\uD83C\uDF93":"graduation",
+  "\u2708\uFE0F":"plane","\u2708":"plane",
+  "\u2B50":"star","\uD83D\uDE97":"car",
+  "\uD83C\uDFD6\uFE0F":"umbrella","\uD83C\uDFD6":"umbrella",
+  "\uD83D\uDCBC":"briefcase","\uD83C\uDF81":"gift",
+  "\uD83D\uDCBB":"laptop","\uD83C\uDFE5":"cross",
+  "\uD83D\uDC8D":"ring","\uD83D\uDCB0":"savings","\u2764\uFE0F":"heart"
+};
+/* one symbol, at whatever size the box around it asks for */
+function sym(name){
+  var d=SYM[name];
+  if(!d)return "";
+  return '<svg class="sym" viewBox="0 0 24 24" aria-hidden="true">'+d+'</svg>';
+}
+/* the symbol for a goal, whatever generation of the app filed it */
+function gSym(e){
+  var n=(e&&SYM[e])?e:(GLEGACY[e]||"star");
+  return sym(n);
+}
+
+/* ICON is kept as the name the rest of the app already calls, now
+   pointing at the drawn set instead of its own one-off paths. */
 var ICON={
-  lock:'<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg>',
-  open:'<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 7.5-1.8"/></svg>',
-  l:'<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
-  up:'<svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg>',
-  down:'<svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg>',
-  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-  r:'<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
-  home:'<svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
-  plan:'<svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V4M16 19v-7M22 19H2"/></svg>',
-  log:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
-  goals:'<svg viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
-  journey:'<svg viewBox="0 0 24 24"><path d="M3 17c4-9 6 3 9-3s5 1 9-6"/></svg>',
-  more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>'
+  lock:'<svg class="sym" viewBox="0 0 24 24"><rect x="4.8" y="10.6" width="14.4" height="10.2" rx="2.8"/><path d="M7.9 10.6V7.4a4.1 4.1 0 0 1 8.2 0v3.2"/></svg>',
+  open:'<svg class="sym" viewBox="0 0 24 24"><rect x="4.8" y="10.6" width="14.4" height="10.2" rx="2.8"/><path d="M7.9 10.6V7.4a4.1 4.1 0 0 1 7.7-1.9"/></svg>',
+  l:'<svg class="sym" viewBox="0 0 24 24"><path d="M15 4.8 7.8 12l7.2 7.2"/></svg>',
+  r:'<svg class="sym" viewBox="0 0 24 24"><path d="M9 4.8 16.2 12 9 19.2"/></svg>',
+  up:'<svg class="sym" viewBox="0 0 24 24"><path d="M4.8 15 12 7.8l7.2 7.2"/></svg>',
+  down:'<svg class="sym" viewBox="0 0 24 24"><path d="M4.8 9 12 16.2 19.2 9"/></svg>',
+  x:'<svg class="sym" viewBox="0 0 24 24"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8"/></svg>',
+  plus:sym("plus"),minus:sym("minus"),
+  home:sym("home"),plan:sym("plan"),log:sym("log"),goals:sym("goals"),
+  journey:sym("compass"),more:sym("more")
 };
 
 /* ═══ 10. CHARTS ═══ */
@@ -1451,7 +1550,7 @@ function viewHome(k,live){
      '<div class="vs '+(d>=0?"up":"down")+'">'+(d>=0?"+":"\u2212")+fmt(Math.abs(d))+' vs the '+fmt(pl)+' you planned</div>';
   var bA=bufferAmount(k),bU=bufferUsed(k),bR=bufferReturned(k),bOv=oneoffOverflow(k);
   if(bA>0){
-    h+='<div class="vs" style="margin-top:6px;color:'+(bOv>0?"var(--coral)":"var(--teal)")+'">\uD83D\uDEDF '+
+    h+='<div class="vs" style="margin-top:6px;color:'+(bOv>0?"var(--coral)":"var(--teal)")+'">'+sym("buffer")+' '+
       (isLive(k)
         ? (bU===0?"buffer untouched \u00B7 \u00A5"+fmt(bA)+" still yours"
           :bOv>0?"buffer absorbed \u00A5"+fmt(bU)+" \u00B7 \u00A5"+fmt(bOv)+" hit savings"
@@ -1460,7 +1559,7 @@ function viewHome(k,live){
           :bOv>0?"buffer absorbed \u00A5"+fmt(bU)+" \u00B7 \u00A5"+fmt(bOv)+" hit savings"
                 :"buffer absorbed \u00A5"+fmt(bU)+" \u00B7 \u00A5"+fmt(bR)+" returned to savings"))+'</div>';
   }
-  if(oo>0)h+='<div class="vs down" style="margin-top:6px">\u26A0\uFE0F \u00A5'+fmt(oo)+' unplanned \u00B7 '+
+  if(oo>0)h+='<div class="vs down" style="margin-top:6px">'+sym("warning")+' \u00A5'+fmt(oo)+' unplanned \u00B7 '+
     (pl>0?Math.round(Math.min(100,oo/pl*100))+'% of this month\u2019s savings':'over your savings')+'</div>';
   h+='<details class="more"><summary>Breakdown</summary><div class="eq">'+
      '<div class="eqrow"><span class="k">Fixed bills</span><span class="v" style="color:var(--muted)">\u2212'+fmt(fx)+'</span></div>'+
@@ -1524,13 +1623,13 @@ function viewPlan(k,live){
   CATS.forEach(function(c){
     var a=m.alloc[c.id]||0,lk=!!m.locks[c.id];
     h+='<div class="row'+(lk?" locked":"")+'"><div class="row-t">'+
-       '<span class="ico" style="background:'+tint(COLOR[c.id])+'">'+EMOJI[c.id]+'</span>'+
+       '<span class="ico" style="background:'+tint(COLOR[c.id])+';color:'+COLOR[c.id]+'">'+sym(CATSYM[c.id])+'</span>'+
        '<span class="nm">'+c.name+'</span>'+
        (c.type==="variable"?'<span class="tag">tracked</span>':c.type==="fixed"?'<span class="tag">auto</span>':c.type==="buffer"?'<span class="tag">rolls over</span>':'')+
        '<button class="lockbtn'+(lk?" on":"")+'" data-lock="'+c.id+'"'+(ed?"":" disabled")+' aria-label="Lock">'+(lk?ICON.lock:ICON.open)+'</button>'+
-       '<span class="stepper"><button class="step" data-n="'+c.id+'" data-by="-100"'+(ed?"":" disabled")+'>\u2212</button>'+
+       '<span class="stepper"><button class="step" data-n="'+c.id+'" data-by="-100"'+(ed?"":" disabled")+' aria-label="Less">'+ICON.minus+'</button>'+
        '<input class="amtin" type="number" inputmode="numeric" data-a="'+c.id+'" value="'+a+'"'+(ed?"":" disabled")+'>'+
-       '<button class="step" data-n="'+c.id+'" data-by="100"'+(ed?"":" disabled")+'>+</button></span></div>'+
+       '<button class="step" data-n="'+c.id+'" data-by="100"'+(ed?"":" disabled")+' aria-label="More">'+ICON.plus+'</button></span></div>'+
        '<input class="slider" type="range" min="0" max="'+Math.max(m.salary,a)+'" step="100" value="'+a+'" data-r="'+c.id+'"'+((ed&&!lk)?"":" disabled")+'>'+
        (c.id==="savings"&&oo>0?'<div class="note" style="color:var(--coral)">\u2212\u00A5'+fmt(oo)+' of one-offs comes out of this \u2192 <b>\u00A5'+fmt(Math.max(0,effSavings(k)))+'</b> actually saved</div>':'')+
        (c.note?'<div class="note">'+c.note+'</div>':'')+'</div>';
@@ -1580,8 +1679,8 @@ function viewLog(k){
   var onCard=S.payMethod==="card"&&cardOn();
   h+='<div class="card"><div class="card-h"><span class="card-t">Add unplanned spending</span></div>'+
      '<div class="methodrow">'+
-     '<button class="chip'+(!onCard?" on":"")+'" data-pm="bank" style="'+(!onCard?"color:"+COLOR.oneoff+";background:"+tint(COLOR.oneoff):"")+'">\u26A0\uFE0F One-off</button>'+
-     (cardOn()?'<button class="chip'+(onCard?" on":"")+'" data-pm="card" style="'+(onCard?"color:var(--saffron);background:rgba(255,179,61,.14)":"")+'">\uD83D\uDCB3 Credit card</button>':'')+
+     '<button class="chip'+(!onCard?" on":"")+'" data-pm="bank" style="'+(!onCard?"color:"+COLOR.oneoff+";background:"+tint(COLOR.oneoff):"")+'">'+sym("warning")+' One-off</button>'+
+     (cardOn()?'<button class="chip'+(onCard?" on":"")+'" data-pm="card" style="'+(onCard?"color:var(--saffron);background:rgba(255,179,61,.14)":"")+'">'+sym("card")+' Credit card</button>':'')+
      '</div>'+
      '<input class="notefield" id="enote" style="margin-top:0" placeholder="What was it? e.g. TV, taxi, repair">'+
      '<div class="entry" style="margin-top:8px"><input class="amtfield" id="eamt" type="number" inputmode="decimal" placeholder="How much?">'+
@@ -1603,8 +1702,8 @@ function viewLog(k){
   if(!list.length)h+='<div class="empty">Nothing unplanned in '+mName(k).split(" ")[0]+'.<br>That is the goal.</div>';
   else list.forEach(function(e){
     var dt=new Date(e.ts),isB=e.cat==="buffer";
-    h+='<div class="log"><span class="ico" style="background:'+tint(isB?COLOR.buffer:COLOR.oneoff)+'">'+(isB?"\uD83D\uDEDF":"\u26A0\uFE0F")+'</span>'+
-       '<span class="n">'+(e.note?esc(e.note):"Unnamed")+'<em>'+dt.getDate()+" "+MOS[dt.getMonth()]+' \u00B7 '+(isB?"from buffer":"out of savings")+(e.method==="card"?" \u00B7 \uD83D\uDCB3 card":"")+'</em></span>'+
+    h+='<div class="log"><span class="ico" style="background:'+tint(isB?COLOR.buffer:COLOR.oneoff)+';color:'+(isB?COLOR.buffer:COLOR.oneoff)+'">'+sym(isB?"buffer":"warning")+'</span>'+
+       '<span class="n">'+(e.note?esc(e.note):"Unnamed")+'<em>'+dt.getDate()+" "+MOS[dt.getMonth()]+' \u00B7 '+(isB?"from buffer":"out of savings")+(e.method==="card"?' \u00B7 '+sym("card")+' card':"")+'</em></span>'+
        '<span class="a" style="color:'+(isB?"var(--sage)":"var(--coral)")+'">\u00A5'+fmt(e.amount)+'</span>'+
        '<button class="del" data-d="'+e.id+'" aria-label="Delete">\u00D7</button></div>';});
   h+='</div>';
@@ -1627,16 +1726,16 @@ function editGoalsSheetPair(){
       h+='<div class="ablock"><div class="atop"><span class="amove">'+
          '<button data-mv="'+g.id+'" data-dir="-1"'+(i===0?" disabled":"")+' aria-label="Move up">'+ICON.up+'</button>'+
          '<button data-mv="'+g.id+'" data-dir="1"'+(i===S.goals.length-1?" disabled":"")+' aria-label="Move down">'+ICON.down+'</button></span>'+
-         '<span class="ico" style="background:'+tint(g.col)+'">'+g.e+'</span>'+
+         '<span class="ico" style="background:'+tint(g.col)+';color:'+g.col+'">'+gSym(g.e)+'</span>'+
          '<input class="nmin" type="text" maxlength="24" data-gn="'+g.id+'" value="'+esc(g.name)+'" aria-label="Goal name">'+
          '<button class="lockbtn'+(jarLocked(g)?" on":"")+'" data-gl="'+g.id+'" aria-label="'+(jarLocked(g)?"Unlock ":"Lock ")+esc(g.name)+'">'+
          (jarLocked(g)?ICON.lock:ICON.open)+'</button></div>'+
          '<div class="aline"><span class="lab">Share of savings'+
          (jarLocked(g)?' <span style="color:var(--saffron)">\u00B7 locked</span>':'')+'</span>'+
-         '<span class="pctwrap"><button class="step" data-gp="'+g.id+'" data-by="-5" aria-label="Less">\u2212</button>'+
+         '<span class="pctwrap"><button class="step" data-gp="'+g.id+'" data-by="-5" aria-label="Less">'+ICON.minus+'</button>'+
          '<input class="pctin" type="number" inputmode="numeric" data-gv="'+g.id+'" value="'+jarPct(g)+'" aria-label="Share">'+
          '<span class="pctsign">%</span>'+
-         '<button class="step" data-gp="'+g.id+'" data-by="5" aria-label="More">+</button></span></div>'+
+         '<button class="step" data-gp="'+g.id+'" data-by="5" aria-label="More">'+ICON.plus+'</button></span></div>'+
          '<div class="aline"><span class="lab">Target</span>'+
          '<input class="atgtin" type="number" inputmode="numeric" data-jt="'+g.id+'" value="'+g.target+'" aria-label="Target"></div>'+
          '<div class="aline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
@@ -1658,7 +1757,7 @@ function newGoalSheetPair(){
        '<div class="ablock" style="margin-top:16px">'+
        '<div class="atop"><input class="nmin" type="text" maxlength="24" id="ngName" placeholder="Car, Vacation, Business\u2026" aria-label="Goal name"></div>'+
        '<div class="emrow">'+GEMO.map(function(e,i){
-         return '<button data-ne="'+e+'"'+(i===0?' class="on"':'')+'>'+e+'</button>';}).join("")+'</div>'+
+         return '<button data-ne="'+e+'"'+(i===0?' class="on"':'')+' aria-label="'+e+'">'+sym(e)+'</button>';}).join("")+'</div>'+
        '<div class="ngline"><span class="lab">Target</span>'+
        '<input class="atgtin" type="number" inputmode="numeric" id="ngTarget" placeholder="0" aria-label="Target amount"></div>'+
        '<div class="ngline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
@@ -1704,7 +1803,7 @@ function viewGoals(noSheets){
     var bal=jarBalance(g),pc=g.target>0?Math.min(100,bal/g.target*100):0,done=jarDone(g);
     var dt=dueText(g);
     h+='<div class="jarcard'+(done?"":" quiet")+'" data-gid="'+g.id+'" style="--jc:'+g.col+';--jc-soft:'+g.col+'26;--jc-line:'+g.col+'3d">'+
-       '<div class="jhead"><span class="jico" style="background:'+tint(g.col)+'">'+g.e+'</span>'+
+       '<div class="jhead"><span class="jico" style="background:'+tint(g.col)+';color:'+g.col+'">'+gSym(g.e)+'</span>'+
        '<span class="jmeta"><div class="jname">'+esc(g.name)+'</div>'+
        '<div class="jsub">'+(done?"complete":"priority "+(i+1)+" \u00B7 "+jarPct(g)+"% allocation")+'</div></span>'+
        '<span class="jpc" style="color:'+(done?"var(--teal)":g.col)+'">'+Math.round(pc)+'%</span></div>'+
@@ -1778,7 +1877,7 @@ function viewJourney(){
   var notes=journeyNotes(k,p);
   if(notes.length){
     h+='<div class="card" style="padding:22px"><div class="card-h"><span class="card-t">What changed</span></div>';
-    notes.forEach(function(n){h+='<div class="ins"><span class="ic">'+n.i+'</span><span class="tx">'+n.t+'</span></div>';});
+    notes.forEach(function(n){h+='<div class="ins"><span class="ic">'+sym(n.i)+'</span><span class="tx">'+n.t+'</span></div>';});
     h+='</div>';
   }
   return h+'</div>';
@@ -1791,7 +1890,7 @@ function journeyNotes(k,p){
     var a=Math.max(0,savedActual(k)),b=Math.max(0,savedActual(p));
     if(b>0&&Math.abs(a-b)>=100){
       var d=Math.round((a-b)/b*100);
-      out.push({i:d>0?"\uD83D\uDCC8":"\uD83D\uDCC9",
+      out.push({i:d>0?"up":"down",
         t:"Your savings "+(d>0?"rose":"fell")+" <b>"+Math.abs(d)+"%</b> against "+mShort(p)+"."});
     }
   }
@@ -1803,19 +1902,19 @@ function journeyNotes(k,p){
     var faster=jarLeft(lead)/(jarRate(lead)+monthlyRate()*0.05);
     if(jarRate(lead)>0&&isFinite(faster)){
       var now=Math.ceil(jarLeft(lead)/jarRate(lead)),then=Math.ceil(faster);
-      if(now-then>=1)out.push({i:"\u26A1",
+      if(now-then>=1)out.push({i:"bolt",
         t:"Give <b>"+lead.name+"</b> 5% more and it arrives "+ahead(then)+" instead of "+ahead(now)+"."});
     }
   }
-  if(out.length<3&&st>=2)out.push({i:"\uD83D\uDD25",t:"You have hit your target <b>"+st+" months</b> running."});
+  if(out.length<3&&st>=2)out.push({i:"flame",t:"You have hit your target <b>"+st+" months</b> running."});
   return out.slice(0,3);
 }
 
 var MORE_PAGES=["journey","backup","export","tools","note","settings"];
 var MENU=[
-  {id:"journey",e:"\uD83E\uDDED",t:"Journey",s:"Track your financial progress",col:"#7B72FF",live:true},
-  {id:"tools",  e:"\uD83E\uDDEE",t:"Tools",  s:"Calculator and notes",        col:"#2FD4BC",live:true},
-  {id:"settings",e:"\u2699\uFE0F",t:"Settings",s:"Your month, your card, your data",col:"#B08CFF",live:true}
+  {id:"journey",e:"compass",t:"Journey",s:"Track your financial progress",col:"#7B72FF",live:true},
+  {id:"tools",  e:"calculator",t:"Tools",  s:"Calculator and notes",        col:"#2FD4BC",live:true},
+  {id:"settings",e:"gear",t:"Settings",s:"Your month, your card, your data",col:"#B08CFF",live:true}
 ];
 function moreSheet(){
   var h='<div class="shbg" data-more="close"></div><div class="sheet more"><div class="grab"></div>'+
@@ -1823,7 +1922,7 @@ function moreSheet(){
         '<button class="shx" data-more="close" aria-label="Close">'+ICON.x+'</button></div>';
   MENU.forEach(function(x){
     h+='<button class="menucard'+(x.live?"":" soon")+'" data-more="'+x.id+'"'+(x.live?"":" disabled")+'>'+
-       '<span class="menuico" style="background:'+tint(x.col)+'">'+x.e+'</span>'+
+       '<span class="menuico" style="background:'+tint(x.col)+';color:'+x.col+'">'+sym(x.e)+'</span>'+
        '<span class="menutxt"><span class="menut">'+x.t+'</span><span class="menus">'+x.s+'</span></span>'+
        (x.live?'<span class="menuchev"></span>':'<span class="menusoon">soon</span>')+'</button>';
   });
@@ -2029,9 +2128,9 @@ function viewSettings(){
   h+='<div class="card"><div class="card-h"><span class="card-t">Financial timeline</span></div>'+
      '<p class="hint">Your month should start when your money arrives, not on the 1st.</p>'+
      '<div class="aline" style="margin-top:18px"><span class="lab">Month starts on</span>'+
-     '<span class="pctwrap"><button class="step" data-cyc="-1" aria-label="Earlier">\u2212</button>'+
+     '<span class="pctwrap"><button class="step" data-cyc="-1" aria-label="Earlier">'+ICON.minus+'</button>'+
      '<input class="pctin" type="number" inputmode="numeric" id="cycIn" value="'+d+'" aria-label="Start day">'+
-     '<button class="step" data-cyc="1" aria-label="Later">+</button></span></div>'+
+     '<button class="step" data-cyc="1" aria-label="Later">'+ICON.plus+'</button></span></div>'+
      '<div class="lab" style="margin-top:22px">This period</div>'+
      '<div class="jamt" style="margin-top:8px;font-size:26px">'+periodStart(k).getDate()+' '+MOS[periodStart(k).getMonth()]+
        ' \u2013 '+periodEnd(k).getDate()+' '+MOS[periodEnd(k).getMonth()]+'</div>'+
@@ -2052,9 +2151,9 @@ function viewSettings(){
      '<div class="aline"><span class="lab">Currently used</span>'+
      '<input class="atgtin" type="number" inputmode="numeric" data-card="used" value="'+(c.used||"")+'" placeholder="0"></div>'+
      '<div class="aline"><span class="lab">Payment day</span>'+
-     '<span class="pctwrap"><button class="step" data-cday="-1" aria-label="Earlier">\u2212</button>'+
+     '<span class="pctwrap"><button class="step" data-cday="-1" aria-label="Earlier">'+ICON.minus+'</button>'+
      '<input class="pctin" type="number" inputmode="numeric" data-card="payDay" value="'+(c.payDay||18)+'" aria-label="Payment day">'+
-     '<button class="step" data-cday="1" aria-label="Later">+</button></span></div>';
+     '<button class="step" data-cday="1" aria-label="Later">'+ICON.plus+'</button></span></div>';
   if(cardOn()){
     h+='<p class="hint" style="margin-top:18px">\u00A5'+fmt(cardAvail())+' free now. '+
        (nextPayment()>0
@@ -2068,22 +2167,22 @@ function viewSettings(){
   var past=closedMonths().length;
   h+='<div class="sect">Data</div>';
   h+='<button class="srow" data-go="backup">'+
-     '<span class="ico" style="background:'+tint(COLOR.buffer)+'">\uD83D\uDCBE</span>'+
+     '<span class="ico" style="background:'+tint(COLOR.buffer)+';color:'+COLOR.buffer+'">'+sym("save")+'</span>'+
      '<span class="st"><b>Backup and restore</b><span>'+
      (days===null?'Never backed up \u2014 everything is only on this phone'
       :days===0?'Backed up today'
       :'Backed up '+days+' day'+(days>1?'s':'')+' ago')+'</span></span>'+
      '<span class="chev"></span></button>';
   h+='<button class="srow" data-go="export">'+
-     '<span class="ico" style="background:'+tint(COLOR.oneoff)+'">\uD83D\uDCC4</span>'+
+     '<span class="ico" style="background:'+tint(COLOR.oneoff)+';color:'+COLOR.oneoff+'">'+sym("doc")+'</span>'+
      '<span class="st"><b>Export financial report</b><span>A PDF of this month, your goals'+
      (past?' and '+past+' closed month'+(past===1?'':'s'):'')+'</span></span>'+
      '<span class="chev"></span></button>';
   h+='<button class="srow" id="fresh2">'+
-     '<span class="ico" style="background:'+tint("#7B72FF")+'">\u21BB</span>'+
+     '<span class="ico" style="background:'+tint("#7B72FF")+';color:#7B72FF">'+sym("refresh")+'</span>'+
      '<span class="st"><b>Reload the newest version</b><span>Fetches the latest code from the web. Your data is not touched.</span></span>'+
      '<span class="chev"></span></button>';
-  h+='<div id="offline" class="offl"></div>';
+  h+=offlineHTML();
 
   /* ── About ── */
   h+='<div class="sect">About</div>';
@@ -2099,8 +2198,8 @@ function viewSettings(){
 function backupCard(){
   var days=S.lastBackup?Math.floor((Date.now()-S.lastBackup)/864e5):null;
   var h='<div class="card"><div class="card-h"><span class="card-t">Your data</span></div>';
-  if(days===null)h+='<div class="bkwarn"><span>\u26A0\uFE0F</span><span>You have never backed up. Everything lives only on this phone.</span></div>';
-  else if(days>=30)h+='<div class="bkwarn"><span>\u26A0\uFE0F</span><span>Last backup was '+days+' days ago. Worth doing again.</span></div>';
+  if(days===null)h+='<div class="bkwarn">'+sym("warning")+'<span>You have never backed up. Everything lives only on this phone.</span></div>';
+  else if(days>=30)h+='<div class="bkwarn">'+sym("warning")+'<span>Last backup was '+days+' days ago. Worth doing again.</span></div>';
   else h+='<p class="hint">Last backup '+(days===0?"today":days+" day"+(days>1?"s":"")+" ago")+'.</p>';
   h+='<p class="hint" style="margin-top:10px">Nothing leaves the phone. A backup is a copy of your months, goals and entries that survives if the phone does not.</p>';
 
@@ -2585,12 +2684,17 @@ function offlineState(){
     return{warn:true,t:"Setting up the offline copy. Stay online for a moment, then reopen the app."};
   return{warn:false,t:"Saved for offline use. The app opens with no signal, and picks up any update by itself next time you are online."};
 }
+/* the whole line, markup and all, so the page can be generated in one go */
+function offlineHTML(){
+  var st=offlineState();
+  return '<div id="offline" class="offl'+(st.warn?" warn":"")+'">'+
+    sym(st.warn?"warning":"check")+'<span>'+esc(st.t)+'</span></div>';
+}
+/* used only when the service worker finishes registering after the page
+   has already been drawn */
 function paintOffline(){
   var el=document.getElementById("offline");
-  if(!el)return;
-  var st=offlineState();
-  el.className="offl"+(st.warn?" warn":"");
-  el.textContent=(st.warn?"\u26A0\uFE0F  ":"\u2713  ")+st.t;
+  if(el)el.outerHTML=offlineHTML();
 }
 /* Pull the newest code down and restart. Data lives in localStorage,
    which is a different store from the cache, so it is never at risk. */
@@ -2939,7 +3043,8 @@ function bind(){
   q("[data-go]").forEach(function(b){b.onclick=function(){
     S.tab=b.dataset.go;save();render();appScrollTo(0,true);};});
 
-  paintOffline();
+  /* the offline line is part of the generated page now, so binding does
+     not need to draw it — only the service worker finishing does */
 
   var rs=document.getElementById("reset");
   if(rs)rs.onclick=function(){
