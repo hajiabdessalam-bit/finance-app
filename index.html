@@ -151,16 +151,14 @@ details.more .eqrow{font-size:13px}
 .jarcard{position:relative;margin-top:22px;padding:19px 20px;border-radius:28px;
   background:var(--surface);border:1px solid var(--line);
   box-shadow:0 16px 34px -30px rgba(0,0,0,.85)}
-.jarcard.lead{
-  background:linear-gradient(168deg,rgba(255,255,255,.05),rgba(255,255,255,.006) 60%),var(--surface);
-  border-color:var(--jc-line);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 22px 52px -32px var(--jc)}
+/* At rest every goal card looks the same. Rank is said in words on the
+   card, not shouted in light — the glow is reserved for the one thing
+   the finger is actually holding.                                     */
 .jarcard.quiet{background:rgba(21,19,44,.86);box-shadow:0 12px 28px -28px rgba(0,0,0,.8)}
 .jarcard.quiet .jname{color:#E4E1F5}
 .jhead{display:flex;align-items:center;gap:12px}
 .jico{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:21px;flex:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
-.jarcard.lead .jico{box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 9px 22px -13px var(--jc)}
 .jarcard.quiet .jico{opacity:.84}
 .jmeta{flex:1;min-width:0}
 .jname{font-family:var(--round);font-size:16px;font-weight:700;letter-spacing:-.022em;
@@ -182,7 +180,11 @@ details.more .eqrow{font-size:13px}
 .jarcard{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
 .jarcard.dragging{transition:none;z-index:8;opacity:.97;
-  box-shadow:0 30px 60px -26px rgba(0,0,0,.95),0 0 0 1px var(--jc-line)}
+  background:linear-gradient(168deg,rgba(255,255,255,.05),rgba(255,255,255,.006) 60%),var(--surface);
+  border-color:var(--jc-line);
+  box-shadow:0 30px 60px -26px rgba(0,0,0,.95),0 0 0 1px var(--jc-line),
+             0 22px 54px -26px var(--jc),inset 0 1px 0 rgba(255,255,255,.08)}
+.jarcard.dragging .jico{box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 9px 22px -13px var(--jc)}
 .btn.ghost{background:transparent;border:1px dashed var(--line-2);color:var(--muted)}
 .nmin{flex:1;min-width:0;font-family:var(--round);font-size:16px;font-weight:700;letter-spacing:-.02em;
   background:var(--surface-3);border-radius:11px;padding:9px 11px}
@@ -471,6 +473,44 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .bkstep{margin-top:22px}
 .bkstep>b{display:block;font-size:15.5px;font-weight:650;letter-spacing:-.01em;margin-bottom:4px}
 .bkstep .hint{margin:0}
+/* A section title you can press. The underline carries the app's own
+   light: majorelle into teal, with the glow sitting under the bar
+   rather than around the text, so it stays legible.                 */
+.bigt{display:flex;align-items:center;gap:10px;width:100%;padding:2px 0 12px;
+  background:none;border:0;text-align:left;color:var(--text);
+  font-family:var(--round);font-size:21px;font-weight:800;letter-spacing:-.032em}
+.bigt:active{opacity:.65}
+.bigt-w{position:relative;padding-bottom:11px}
+.bigt-w::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.5px;border-radius:3px;
+  background:linear-gradient(90deg,var(--majorelle),var(--teal));
+  box-shadow:0 3px 16px -1px rgba(123,114,255,.7),0 3px 22px -2px rgba(47,212,188,.45)}
+.bigt-c{width:9px;height:9px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);
+  transform:rotate(45deg) translate(-3px,-3px);transition:transform .25s var(--ease)}
+.bigt.open .bigt-c{transform:rotate(225deg) translate(-1px,-1px)}
+.sect{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--faint);margin:34px 4px 12px}
+.view>.sect:first-of-type{margin-top:26px}
+.srow{display:flex;align-items:center;gap:14px;width:100%;padding:16px 18px;text-align:left;
+  background:var(--surface);border:1px solid var(--line);border-radius:20px;margin-top:10px;
+  color:var(--text);font-family:var(--sans)}
+.srow:active{background:var(--surface-2)}
+.srow .ico{flex:none}
+.srow .st{flex:1;min-width:0}
+.srow .st b{display:block;font-family:var(--round);font-size:15.5px;font-weight:700;letter-spacing:-.02em}
+.srow .st span{display:block;font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
+.srow .chev{flex:none;width:8px;height:8px;border-right:2px solid var(--faint);
+  border-bottom:2px solid var(--faint);transform:rotate(-45deg)}
+.card.hero{background:linear-gradient(168deg,rgba(123,114,255,.10),rgba(47,212,188,.03) 62%),var(--surface);
+  border-color:rgba(123,114,255,.26);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 24px 56px -34px rgba(123,114,255,.9)}
+.heroamt{font-family:var(--round);font-size:34px;font-weight:800;letter-spacing:-.042em;
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 0 28px rgba(123,114,255,.55),0 0 60px rgba(47,212,188,.22)}
+.purse{display:flex;align-items:baseline;gap:10px;margin-top:14px;padding:13px 15px;
+  border-radius:16px;background:var(--surface-2);border:1px solid var(--line)}
+.pursebig{font-family:var(--round);font-size:24px;font-weight:800;letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums;line-height:1;transition:color .2s var(--ease)}
+.pursesub{font-size:12px;color:var(--muted);line-height:1.35;flex:1}
 .offl{margin-top:22px;padding:13px;border-radius:14px;font-size:12.5px;line-height:1.45;
   background:rgba(47,212,188,.07);border:1px solid rgba(47,212,188,.2);color:var(--muted)}
 .offl.warn{background:rgba(255,179,61,.09);border-color:rgba(255,179,61,.24)}
@@ -528,12 +568,18 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 <script>
 "use strict";
 /* ═══ 1. STORAGE ═══ */
+var MEMONLY=false;
 var store=(function(){
   try{localStorage.setItem("_t","1");localStorage.removeItem("_t");return localStorage;}
-  catch(e){var m={};return{getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=v}};}
+  catch(e){
+    /* private browsing, or storage full: the app still runs, but only
+       until the tab closes. Settings says so rather than pretending. */
+    MEMONLY=true;
+    var m={};return{getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=v}};
+  }
 })();
 var KEY="plan.v4";
-var BUILD="b21 \u00B7 backup + report";
+var BUILD="b22 \u00B7 buffer lock + settings";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -564,7 +610,7 @@ var BASE_GOALS=[
 ];
 function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)),months:{},
   tab:"home",monthCursor:null,weekIdx:null,pick:"household",lastBackup:null,name:"",wiGoal:null,more:false,returnTab:"home",wiAmt:0,cycleStart:15,clamp:null,card:{limit:0,used:0,payDay:18,lastPaid:null},payMethod:"bank",
-  notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false};}
+  notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false};}
 
 var S=(function(){
   try{var r=store.getItem(KEY);if(r){var p=JSON.parse(r);if(p&&p.months)return p;}}catch(e){}
@@ -665,16 +711,22 @@ function spentOneoff(k){return M(k).spend.reduce(function(s,e){return e.cat==="o
    that month's frozen split. The allowance itself never carries over. */
 function bufferAmount(k){return M(k).alloc.buffer||0;}
 /* Order money is taken in: the buffer first, savings only for what is
-   left over. That is what the buffer is for — it protects the plan. */
-function bufferUsed(k){return Math.min(spentOneoff(k),bufferAmount(k));}
+   left over. That is what the buffer is for — it protects the plan.
+
+   Unless you lock it. A lock anywhere in this app means the same thing:
+   this money does not move. So a locked buffer is not offered to a
+   one-off at all, and the whole purchase lands on savings.          */
+function bufferOpen(k){return !M(k).locks.buffer;}
+function bufferUsed(k){return bufferOpen(k)?Math.min(spentOneoff(k),bufferAmount(k)):0;}
 function bufferLeft(k){return Math.max(0,bufferAmount(k)-bufferUsed(k));}
-function oneoffOverflow(k){return Math.max(0,spentOneoff(k)-bufferAmount(k));}
+function bufferFree(k){return bufferOpen(k)?bufferLeft(k):0;}
+function oneoffOverflow(k){return Math.max(0,spentOneoff(k)-bufferUsed(k));}
 function bufferCharge(k){return isSettled(k)?bufferUsed(k):Math.max(bufferAmount(k),bufferUsed(k));}
 function bufferReturned(k){return isSettled(k)?bufferLeft(k):0;}
 /* where the next ¥x would come from, and whether it can be covered */
 function sourceCheck(k,extra){
   if(!extra||extra<=0)return null;
-  var free=bufferLeft(k),fromBuf=Math.min(extra,free),fromSav=extra-fromBuf;
+  var free=bufferFree(k),fromBuf=Math.min(extra,free),fromSav=extra-fromBuf;
   var savLeft=Math.max(0,savedActual(k));
   if(fromSav>savLeft)return{ok:false,buf:fromBuf,sav:fromSav,short:fromSav-savLeft,savLeft:savLeft};
   return{ok:true,buf:fromBuf,sav:fromSav,bufAfter:free-fromBuf,savAfter:savLeft-fromSav};
@@ -1296,8 +1348,11 @@ function viewPlan(k,live){
   var ed=!isSettled(k);   /* the past is read-only, now and later are not */
   var h='<div class="view">';
 
-  h+='<div class="card"><div class="card-h"><span class="card-t">Allocation</span></div>'+
-     '<p class="hint">Locked amounts never move. Unlocked ones share what is left, so the total always matches your salary. Every change is recorded in your monthly report.</p>'+
+  h+='<div class="card"><button class="bigt'+(S.allocInfo?" open":"")+'" data-alloc="1">'+
+       '<span class="bigt-w">Allocation</span><span class="bigt-c"></span></button>'+
+     (S.allocInfo
+       ? '<p class="hint" style="margin-top:16px">Locked amounts never move. Unlocked ones share what is left, so the total always matches your salary. Every change is recorded in your monthly report.</p>'
+       : '')+
      (S.clamp&&Date.now()-S.clamp.ts<120000
        ? '<div class="warnbox over" style="margin-top:14px"><b>Capped at \u00A5'+fmt(S.clamp.got)+'.</b> '+
          'You asked for \u00A5'+fmt(S.clamp.want)+', but \u00A5'+fmt(S.clamp.locked)+' of your \u00A5'+fmt(m.salary)+
@@ -1328,6 +1383,31 @@ function viewPlan(k,live){
   return h+'</div></div>';
 }
 
+/* What you have to spend, shown before anything is typed and moved as
+   you type. Standing still it answers "can I afford this?"; while you
+   type it answers "what will be left?".                              */
+function purseHTML(k,amt){
+  var sav=Math.max(0,savedActual(k)),buf=bufferFree(k);
+  var take=Math.max(0,amt||0);
+  var fromBuf=Math.min(take,buf),fromSav=Math.min(take-fromBuf,sav);
+  var savAfter=sav-fromSav,bufAfter=buf-fromBuf;
+  var short=take-fromBuf-fromSav;
+
+  var big=take>0?savAfter:sav;
+  var col=short>0?"var(--coral)":(big<=0?"var(--saffron)":"var(--teal)");
+  var sub;
+  if(take<=0)
+    sub="saved this month"+(buf>0?" \u00B7 plus \u00A5"+fmt(buf)+" of buffer":"")+
+        (bufferOpen(k)?"":" \u00B7 buffer locked");
+  else if(short>0)
+    sub="\u00A5"+fmt(short)+" more than you have";
+  else
+    sub="left after this"+(bufAfter>0?" \u00B7 buffer \u00A5"+fmt(bufAfter):"");
+
+  return '<div class="pursebig" style="color:'+col+'">\u00A5'+fmt(Math.max(0,big))+'</div>'+
+         '<div class="pursesub">'+sub+'</div>';
+}
+
 function viewLog(k){
   var m=M(k),h='<div class="view">';
   var oo=spentOneoff(k);
@@ -1343,12 +1423,15 @@ function viewLog(k){
      '<input class="notefield" id="enote" style="margin-top:0" placeholder="What was it? e.g. TV, taxi, repair">'+
      '<div class="entry" style="margin-top:8px"><input class="amtfield" id="eamt" type="number" inputmode="decimal" placeholder="How much?">'+
      '<button class="addb" id="eadd">Add</button></div>'+
+     '<div id="purse" class="purse"></div>'+
      '<div id="cardWarn"></div>'+
      '<p class="hint" style="margin-top:11px">'+
      (onCard
        ? "Goes on the card. \u00A5"+fmt(cardAvail())+" of \u00A5"+fmt(card().limit)+" credit is free right now."
-       : "Comes out of your buffer first \u2014 \u00A5"+fmt(bufferLeft(k))+" of \u00A5"+fmt(bufferAmount(k))+
-         " left \u2014 then out of "+mName(k).split(" ")[0]+"\u2019s savings.")+
+       : bufferOpen(k)
+         ? "Comes out of your buffer first \u2014 \u00A5"+fmt(bufferLeft(k))+" of \u00A5"+fmt(bufferAmount(k))+
+           " left \u2014 then out of "+mName(k).split(" ")[0]+"\u2019s savings."
+         : "Your buffer is locked, so this comes straight out of "+mName(k).split(" ")[0]+"\u2019s savings.")+
      '</p></div>';
 
   /* the list */
@@ -1373,18 +1456,19 @@ function viewGoals(){
     return (ra>0?jarLeft(a)/ra:1e9)-(rb>0?jarLeft(b)/rb:1e9);})[0];
 
   /* minimal summary — no charts, no allocation repeated */
-  h+='<div class="card"><div class="card-h"><span class="card-t">Your goals</span>'+
+  h+='<div class="card hero"><div class="card-h" style="align-items:flex-start">'+
+     '<span class="bigt-w" style="font-family:var(--round);font-size:21px;font-weight:800;letter-spacing:-.032em;flex:1">Your goals</span>'+
      '<span class="lab">'+open.length+' active</span></div>'+
-     '<div class="salary-line"><span class="cur">\u00A5</span>'+
-     '<span style="font-family:var(--round);font-size:34px;font-weight:800;letter-spacing:-.042em;font-variant-numeric:tabular-nums">'+fmt(plan)+'</span></div>'+
+     '<div class="salary-line" style="margin-top:20px"><span class="cur">\u00A5</span>'+
+     '<span class="heroamt">'+fmt(plan)+'</span></div>'+
      '<p class="hint" style="margin-top:8px">saved this month'+
      (next?' \u00B7 next to land is <b style="color:'+next.col+'">'+esc(next.name)+'</b>':'')+'</p></div>';
 
   /* one card per jar, with room to breathe */
   S.goals.forEach(function(g,i){
     var bal=jarBalance(g),pc=g.target>0?Math.min(100,bal/g.target*100):0,done=jarDone(g);
-    var lead=i===0&&!done,dt=dueText(g);
-    h+='<div class="jarcard'+(lead?" lead":done?"":" quiet")+'" data-gid="'+g.id+'" style="--jc:'+g.col+';--jc-soft:'+g.col+'26;--jc-line:'+g.col+'3d">'+
+    var dt=dueText(g);
+    h+='<div class="jarcard'+(done?"":" quiet")+'" data-gid="'+g.id+'" style="--jc:'+g.col+';--jc-soft:'+g.col+'26;--jc-line:'+g.col+'3d">'+
        '<div class="jhead"><span class="jico" style="background:'+tint(g.col)+'">'+g.e+'</span>'+
        '<span class="jmeta"><div class="jname">'+esc(g.name)+'</div>'+
        '<div class="jsub">'+(done?"complete":"priority "+(i+1)+" \u00B7 "+jarPct(g)+"% allocation")+'</div></span>'+
@@ -1548,9 +1632,7 @@ var MORE_PAGES=["journey","backup","export","tools","note","settings"];
 var MENU=[
   {id:"journey",e:"\uD83E\uDDED",t:"Journey",s:"Track your financial progress",col:"#7B72FF",live:true},
   {id:"tools",  e:"\uD83E\uDDEE",t:"Tools",  s:"Calculator and notes",        col:"#2FD4BC",live:true},
-  {id:"backup", e:"\uD83D\uDCBE",t:"Backup", s:"Protect your data",           col:"#FFB33D",live:true},
-  {id:"export", e:"\uD83D\uDCC4",t:"Export", s:"A PDF of where you stand",    col:"#FF7A5C",live:true},
-  {id:"settings",e:"\u2699\uFE0F",t:"Settings",s:"When your month starts",     col:"#B08CFF",live:true}
+  {id:"settings",e:"\u2699\uFE0F",t:"Settings",s:"Your month, your card, your data",col:"#B08CFF",live:true}
 ];
 function moreSheet(){
   var h='<div class="shbg" data-more="close"></div><div class="sheet more"><div class="grab"></div>'+
@@ -1566,13 +1648,13 @@ function moreSheet(){
 }
 
 function viewBackup(){
-  return '<div class="view">'+backLink()+backupCard()+'</div>';
+  return '<div class="view">'+backLink("settings")+backupCard()+'</div>';
 }
 /* Export lives on its own page rather than buried in Settings, because it
    is something you do, not something you configure. The page says what is
    in the report before you make one, so the button is never a mystery. */
 function viewExport(){
-  var k=thisMonth(),past=closedMonths(),h='<div class="view">'+backLink();
+  var k=thisMonth(),past=closedMonths(),h='<div class="view">'+backLink("settings");
 
   h+='<div class="card"><div class="card-h"><span class="card-t">Financial report</span></div>'+
      '<p class="hint">A PDF of where you stand. Built on this phone from your own numbers \u2014 nothing is sent anywhere.</p>'+
@@ -1596,8 +1678,9 @@ function viewExport(){
   return h+'</div>';
 }
 
-function backLink(){
-  return '<button class="backlink" data-back="1">'+ICON.l+'Back to More</button>';
+function backLink(to){
+  return '<button class="backlink" data-back="'+(to||"1")+'">'+ICON.l+
+         'Back to '+(to==="settings"?"Settings":to==="tools"?"Tools":"More")+'</button>';
 }
 /* ═══ TOOLS ═══
    Two things the phone's own apps can't do: run a number against the
@@ -1755,7 +1838,11 @@ function ordinal(n){
   return n+({1:"st",2:"nd",3:"rd"}[n%10]||"th");
 }
 function viewSettings(){
-  var d=cycleStart(),k=thisMonth(),h='<div class="view">'+backLink();
+  var d=cycleStart(),k=thisMonth(),c=card();
+  var h='<div class="view">'+backLink();
+
+  /* ── Month ── */
+  h+='<div class="sect">Month</div>';
   h+='<div class="card"><div class="card-h"><span class="card-t">Financial timeline</span></div>'+
      '<p class="hint">Your month should start when your money arrives, not on the 1st.</p>'+
      '<div class="aline" style="margin-top:18px"><span class="lab">Month starts on</span>'+
@@ -1769,11 +1856,12 @@ function viewSettings(){
      '<p class="hint" style="margin-top:18px">'+
      (d===1?'Set to the 1st, so periods follow the calendar month.'
            :'Every summary, comparison and projection uses '+ordinal(d)+' \u2192 '+ordinal(d)+' of the next month.')+
-     '</p></div>';
-  h+='<div class="card"><p class="hint">Changing this re-labels the periods ahead. Anything already recorded stays in the month it was filed under.</p></div>';
+     '</p></div>'+
+     '<div class="card"><p class="hint">Changing this re-labels the periods ahead. Anything already recorded stays in the month it was filed under.</p></div>';
 
-  var c=card();
-  h+='<div class="card"><div class="card-h"><span class="card-t">Credit card</span>'+
+  /* ── Credit card ── */
+  h+='<div class="sect">Credit card</div>';
+  h+='<div class="card"><div class="card-h"><span class="card-t">Your card</span>'+
      (cardOn()?'<span class="lab" style="color:'+(cardUsage()>=100?"var(--coral)":"var(--muted)")+'">'+Math.round(cardUsage())+'% used</span>':'')+'</div>'+
      '<p class="hint">Credit is borrowed, not income. The app only tracks it so you know what is really free.</p>'+
      '<div class="aline" style="margin-top:18px"><span class="lab">Credit limit</span>'+
@@ -1791,6 +1879,36 @@ function viewSettings(){
          : 'Set an Installments amount on Plan and the app will know when credit returns.')+'</p>';
   }
   h+='</div>';
+
+  /* ── Data ── everything that saves, restores or exports lives together */
+  var days=S.lastBackup?Math.floor((Date.now()-S.lastBackup)/864e5):null;
+  var past=closedMonths().length;
+  h+='<div class="sect">Data</div>';
+  h+='<button class="srow" data-go="backup">'+
+     '<span class="ico" style="background:'+tint(COLOR.buffer)+'">\uD83D\uDCBE</span>'+
+     '<span class="st"><b>Backup and restore</b><span>'+
+     (days===null?'Never backed up \u2014 everything is only on this phone'
+      :days===0?'Backed up today'
+      :'Backed up '+days+' day'+(days>1?'s':'')+' ago')+'</span></span>'+
+     '<span class="chev"></span></button>';
+  h+='<button class="srow" data-go="export">'+
+     '<span class="ico" style="background:'+tint(COLOR.oneoff)+'">\uD83D\uDCC4</span>'+
+     '<span class="st"><b>Export financial report</b><span>A PDF of this month, your goals'+
+     (past?' and '+past+' closed month'+(past===1?'':'s'):'')+'</span></span>'+
+     '<span class="chev"></span></button>';
+  h+='<button class="srow" id="fresh2">'+
+     '<span class="ico" style="background:'+tint("#7B72FF")+'">\u21BB</span>'+
+     '<span class="st"><b>Reload the newest version</b><span>Fetches the latest code from the web. Your data is not touched.</span></span>'+
+     '<span class="chev"></span></button>';
+  h+='<div id="offline" class="offl"></div>';
+
+  /* ── About ── */
+  h+='<div class="sect">About</div>';
+  h+='<div class="card"><div class="aline"><span class="lab">Build</span>'+
+     '<span class="lab" style="color:var(--text)">'+BUILD+'</span></div>'+
+     '<div class="aline"><span class="lab">Storage</span>'+
+     '<span class="lab" style="color:var(--text)">'+(MEMONLY?"this session only":"on this phone")+'</span></div>'+
+     '<p class="hint" style="margin-top:16px">Everything you enter stays on this phone. Nothing is sent anywhere, and there is no account.</p></div>';
 
   return h+'</div>';
 }
@@ -1817,14 +1935,10 @@ function backupCard(){
      '<button class="btn" id="pick">Restore from file</button>'+
      '<button class="btn ghost" id="paste">Paste backup text instead</button></div>';
 
-  h+='<div id="offline" class="offl"></div>';
-
   h+='<div class="adv"><button class="advbtn" id="adv">'+(S.bkAdv?"\u25BE":"\u25B8")+' Advanced</button>';
   if(S.bkAdv){
     h+='<p class="hint">The backup exactly as it would be written. You never need to read this.</p>'+
        '<textarea class="dump" id="dump" readonly>'+esc(backupText())+'</textarea>'+
-       '<button class="btn" id="fresh">Reload the newest version</button>'+
-       '<p class="hint" style="margin-top:8px">Fetches the latest code from the web. Your data is not touched.</p>'+
        '<button class="btn warn" id="reset" style="margin-top:20px">Erase everything</button>';
   }
   h+='</div>';
@@ -2405,8 +2519,10 @@ function bind(){
     var sc=sourceCheck(k,v);
     if(sc&&!sc.ok){
       var wb2=document.getElementById("cardWarn");
-      if(wb2)wb2.innerHTML='<div class="warnbox over"><b>Your plan cannot cover this.</b> \u00A5'+
-        fmt(sc.buf)+' buffer + \u00A5'+fmt(sc.savLeft)+' savings leaves you \u00A5'+fmt(sc.short)+' short. '+
+      if(wb2)wb2.innerHTML='<div class="warnbox over"><b>Your plan cannot cover this.</b> '+
+        (bufferOpen(k)
+          ? '\u00A5'+fmt(sc.buf)+' buffer + \u00A5'+fmt(sc.savLeft)+' savings leaves you \u00A5'+fmt(sc.short)+' short. '
+          : 'Only \u00A5'+fmt(sc.savLeft)+' is saved, leaving you \u00A5'+fmt(sc.short)+' short. Your buffer is locked, so it cannot help. ')+
         'Lower the amount, or free money up on Plan.</div>';
       if(meth==="card")card().used=Math.max(0,card().used-v);
       f.focus();return;
@@ -2442,6 +2558,12 @@ function bind(){
 
   /* live credit check while typing an amount */
   var wBox=document.getElementById("cardWarn"),amtF=document.getElementById("eamt");
+  var purse=document.getElementById("purse");
+  function paintPurse(){
+    if(!purse)return;
+    purse.innerHTML=purseHTML(cur(),parseFloat(amtF&&amtF.value)||0);
+  }
+  if(purse){paintPurse();if(amtF)amtF.addEventListener("input",paintPurse);}
   function creditCheck(){
     if(!wBox)return;
     var v=parseFloat(amtF&&amtF.value)||0;
@@ -2453,23 +2575,47 @@ function bind(){
     }
     var sc=sourceCheck(mk2,v);
     if(sc){
+      var lockedBuf=!bufferOpen(mk2);
       out+=sc.ok
         ? '<div class="warnbox '+(sc.sav>0?"tight":"clear")+'">'+
           (sc.buf>0?'<b>\u00A5'+fmt(sc.buf)+'</b> from your buffer':'')+
           (sc.buf>0&&sc.sav>0?', ':'')+
           (sc.sav>0?'<b>\u00A5'+fmt(sc.sav)+'</b> from savings':'')+
-          '. Leaves \u00A5'+fmt(sc.bufAfter)+' buffer and \u00A5'+fmt(sc.savAfter)+' saved.</div>'
+          '. Leaves \u00A5'+fmt(sc.savAfter)+' saved'+
+          (lockedBuf?'':' and \u00A5'+fmt(sc.bufAfter)+' buffer')+'.</div>'
         : '<div class="warnbox over"><b>Your plan cannot cover this.</b> '+
-          '\u00A5'+fmt(sc.buf)+' buffer + \u00A5'+fmt(sc.savLeft)+' savings leaves you \u00A5'+fmt(sc.short)+' short.</div>';
+          (lockedBuf
+            ? 'Only \u00A5'+fmt(sc.savLeft)+' is saved, leaving you \u00A5'+fmt(sc.short)+' short. Your buffer is locked, so it cannot help.'
+            : '\u00A5'+fmt(sc.buf)+' buffer + \u00A5'+fmt(sc.savLeft)+' savings leaves you \u00A5'+fmt(sc.short)+' short.')+'</div>';
     }
     wBox.innerHTML=out;
   }
-  if(amtF&&wBox){amtF.addEventListener("input",creditCheck);creditCheck();}(function(b){b.onclick=function(){
+  if(amtF&&wBox){amtF.addEventListener("input",creditCheck);creditCheck();}
+
+  q("[data-cyc]").forEach(function(b){b.onclick=function(){
     S.cycleStart=Math.min(31,Math.max(1,cycleStart()+(+b.dataset.cyc)));save();render();};});
   var cyc=document.getElementById("cycIn");
   if(cyc)cyc.onchange=function(){S.cycleStart=Math.min(31,Math.max(1,parseInt(cyc.value,10)||1));save();render();};
+  /* Every number field, everywhere: tap it and the old value is already
+     selected, so the first digit you type replaces it instead of joining
+     it. iOS puts the caret in on focus and again on the tap that follows,
+     so both are answered.                                              */
+  q("[data-alloc]").forEach(function(b){b.onclick=function(){
+    S.allocInfo=!S.allocInfo;save();render();};});
+
+  q('input[type="number"]').forEach(function(i){
+    if(i.dataset.selall)return;
+    i.dataset.selall="1";
+    var grab=function(){setTimeout(function(){
+      try{i.select();i.setSelectionRange(0,i.value.length);}catch(e){}
+    },0);};
+    i.addEventListener("focus",grab);
+    i.addEventListener("click",function(){if(document.activeElement===i)grab();});
+  });
+
   q("[data-back]").forEach(function(b){b.onclick=function(){
     if(b.dataset.back==="tools"){S.tab="tools";S.noteId=null;save();render();window.scrollTo({top:0,behavior:"smooth"});return;}
+    if(b.dataset.back==="settings"){S.tab="settings";save();render();window.scrollTo({top:0,behavior:"smooth"});return;}
     S.tab=S.returnTab||"home";S.more=true;save();render();window.scrollTo({top:0,behavior:"smooth"});};});
 
   /* calculator: update in place, no full re-render per keypress */
@@ -2599,11 +2745,13 @@ function bind(){
   var av=document.getElementById("adv");
   if(av)av.onclick=function(){S.bkAdv=!S.bkAdv;save();render();};
 
-  var fr=document.getElementById("fresh");
+  var fr=document.getElementById("fresh2");
   if(fr)fr.onclick=function(){
-    fr.disabled=true;fr.textContent="Fetching\u2026";
-    refreshApp(function(msg){fr.disabled=false;fr.textContent="Reload the newest version";
-      if(msg)alert(msg);});};
+    fr.disabled=true;
+    refreshApp(function(msg){fr.disabled=false;if(msg)alert(msg);});};
+
+  q("[data-go]").forEach(function(b){b.onclick=function(){
+    S.tab=b.dataset.go;save();render();window.scrollTo({top:0,behavior:"smooth"});};});
 
   paintOffline();
 
