@@ -545,6 +545,13 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .step .sym{width:15px;height:15px;stroke-width:2.2}
 .pctwrap .step .sym{width:14px;height:14px}
 /* the single Home insight — a line, deliberately not another card */
+/* the share you have not given to any goal — stated, never absorbed */
+.unal{margin-top:16px;padding:12px 14px;border-radius:14px;
+  background:rgba(255,179,61,.08);border:1px solid rgba(255,179,61,.22)}
+.unal .u1{display:block;font-family:var(--round);font-size:14px;font-weight:750;
+  letter-spacing:-.02em;color:var(--saffron)}
+.unal .u2{display:block;margin-top:4px;font-size:12px;line-height:1.5;color:var(--muted)}
+.pctin:disabled,.step:disabled{opacity:.4}
 .jvs{display:flex;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 .jvs>div{flex:1;min-width:0}
 .jvs .k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
@@ -632,7 +639,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b26 \u00B7 insights";
+var BUILD="b27 \u00B7 goal pools";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -678,6 +685,20 @@ if(!S.goals){
     if(S.targets.morocco)S.goals[1].target=S.targets.morocco;
   }
 }
+/* A closed month with no split of its own used to fall back to today's
+   percentages, which meant editing a share rewrote history. Now closed
+   months never look at today — so any month that was saved without a
+   split gets one written once, from the percentages in force right now,
+   and from then on it is fixed like every other month. */
+(function migrateSplits(){
+  var t=thisMonth(),k,changed=false;
+  for(k in S.months){
+    if(!Object.prototype.hasOwnProperty.call(S.months,k))continue;
+    if(S.months[k]&&!S.months[k].split){S.months[k].split=currentSplit();changed=true;}
+  }
+  if(changed)try{store.setItem(KEY,JSON.stringify(S));}catch(e){}
+})();
+
 function save(){try{store.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
 /* ═══ 3. CALENDAR ═══ */
@@ -869,32 +890,68 @@ function loggingThin(k){
 /* ═══ 5. GOALS · STREAK · MILESTONES ═══ */
 function closedMonths(){var t=thisMonth();return allMonths().filter(function(k){return k<t;});}
 function banked(){return closedMonths().reduce(function(s,k){return s+Math.max(0,savedActual(k));},0);}
-/* Each jar holds its share of everything banked. Change an allocation
-   and the split recalculates — the shares always add to what you saved. */
-function jarPct(j){return Math.max(0,j.pct||0);}
+/* ── how a month's saving is divided ──
+   A goal is a pool. Its percentage decides how much of THIS month's
+   saving joins the pool; the pool itself is the sum of every month's
+   contribution and never resets.
+
+   A percentage means what it says. 40% is 40% of what you saved, not
+   "40 parts of however many were handed out" — so if the shares add up
+   to 80%, the remaining 20% is simply unallocated, and the app says so
+   instead of quietly pushing it somewhere. */
+function jarPct(j){return Math.max(0,Math.min(100,j.pct||0));}
 function pctTotal(){return S.goals.reduce(function(s,g){return s+jarPct(g);},0);}
+function freeRoom(){return Math.max(0,100-pctTotal());}   /* still unclaimed */
 /* ── monthly snapshots ──
    Each month freezes the split that was in force while it was live.
    A month that has ended never changes again, so moving an allocation
    today shapes future contributions without rewriting your history. */
 function currentSplit(){var o={};S.goals.forEach(function(g){o[g.id]=jarPct(g);});return o;}
-function splitOf(k){var m=M(k);return (m&&m.split)?m.split:currentSplit();}
-function stampSplit(){var m=M(thisMonth());if(m)m.split=currentSplit();}
-function contribution(k,id){
-  var sp=splitOf(k),t=0;
-  for(var i in sp)t+=sp[i]||0;
-  return t>0?Math.max(0,savedActual(k))*(sp[id]||0)/t:0;
+
+/* A month that has ended keeps the split it was living under, full stop.
+   It never borrows today's percentages — that is what would rewrite
+   July when you edit August. Only the live month and months still ahead
+   follow a change made now. */
+function splitOf(k){
+  var m=M(k);
+  if(!m)return {};
+  if(m.split)return m.split;
+  return k<thisMonth()?{}:currentSplit();
 }
+function stampSplit(){
+  var t=thisMonth();
+  allMonths().forEach(function(k){
+    if(k>=t)S.months[k].split=currentSplit();   /* now and everything planned after */
+  });
+}
+/* What this month actually puts into one goal */
+function contribution(k,id){
+  var sp=splitOf(k);
+  return Math.max(0,savedActual(k))*(sp[id]||0)/100;
+}
+/* What a month saved but handed to no goal */
+function unallocatedPctOf(k){
+  var sp=splitOf(k),t=0,i;
+  for(i in sp)t+=sp[i]||0;
+  return Math.max(0,100-t);
+}
+function unallocatedOf(k){return Math.max(0,savedActual(k))*unallocatedPctOf(k)/100;}
 /* what a jar held at the end of month k */
 function jarBalanceAt(k,g){
   return closedMonths().filter(function(x){return x<=k;})
     .reduce(function(s,x){return s+contribution(x,g.id);},0);
 }
-function jarBalance(g){
+/* Everything carried in from months that have closed */
+function jarBanked(g){
   return closedMonths().reduce(function(s,k){return s+contribution(k,g.id);},0);
 }
+/* What the live month has added so far */
+function jarThisMonth(g){return contribution(thisMonth(),g.id);}
+/* The pool: what was already there, plus what this month has added.
+   This is the number progress and "remaining" are measured against. */
+function jarBalance(g){return jarBanked(g)+jarThisMonth(g);}
 function jarLeft(j){return Math.max(0,j.target-jarBalance(j));}
-function jarRate(j){var t=pctTotal();return t>0?monthlyRate()*jarPct(j)/t:0;}
+function jarRate(j){return monthlyRate()*jarPct(j)/100;}
 function jarETA(j){return etaFor(jarLeft(j),jarRate(j));}
 function jarDone(j){return jarBalance(j)>=j.target;}
 function topJar(){
@@ -905,24 +962,17 @@ function topJar(){
    A locked goal is never touched by someone else's change — it only
    moves when you change it yourself. */
 function jarLocked(g){return !!g.lock;}
-function balanceGoals(pinId){
-  var pinned=S.goals.find(function(g){return g.id===pinId;});
-  if(!pinned)return;
-  var others=S.goals.filter(function(g){return g.id!==pinId;});
-  var pool=others.filter(function(g){return !jarLocked(g);});
-  var lockedSum=others.filter(jarLocked).reduce(function(s,g){return s+jarPct(g);},0);
-  var room=Math.max(0,100-lockedSum);          /* what is actually free to divide */
-  pinned.pct=Math.min(jarPct(pinned),room);    /* can never claim locked ground */
-  if(!pool.length){pinned.pct=room;return;}    /* everything else pinned down */
-  var target=Math.max(0,room-jarPct(pinned));
-  var sum=pool.reduce(function(s,g){return s+jarPct(g);},0);
-  if(sum<=0){var e=target/pool.length;pool.forEach(function(g){g.pct=Math.round(e);});}
-  else{var r=target/sum;pool.forEach(function(g){g.pct=Math.max(0,Math.round(jarPct(g)*r));});}
-  var drift=100-pctTotal();
-  if(drift!==0){
-    var big=pool.reduce(function(a,b){return jarPct(a)>=jarPct(b)?a:b;});
-    big.pct=Math.max(0,jarPct(big)+drift);
-  }
+/* Setting one goal's share leaves every other goal exactly as it was.
+   The only limit is arithmetic: the shares cannot add to more than the
+   money you saved, so a share is capped by whatever is still unclaimed.
+   Whatever you leave over stays unallocated, visibly. */
+function setPct(g,want){
+  if(!g)return 0;
+  if(jarLocked(g))return jarPct(g);            /* a locked share is not moved */
+  var others=S.goals.reduce(function(s,x){return x.id===g.id?s:s+jarPct(x);},0);
+  var ceiling=Math.max(0,100-others);
+  g.pct=Math.max(0,Math.min(ceiling,Math.round(want||0)));
+  return g.pct;
 }
 function moveGoal(id,dir){
   var i=S.goals.findIndex(function(g){return g.id===id;}),j=i+dir;
@@ -973,16 +1023,13 @@ function nextCol(){
   for(var i=0;i<GCOL.length;i++)if(used.indexOf(GCOL[i])<0)return GCOL[i];
   return GCOL[S.goals.length%GCOL.length];
 }
-function lockedRoom(){
-  var lk=S.goals.filter(jarLocked).reduce(function(s,g){return s+jarPct(g);},0);
-  return Math.max(0,100-lk);
-}
+function lockedRoom(){return freeRoom();}   /* what a new goal may claim */
 function addGoal(name,target,pct,due,emo){
   var g={id:"g"+Date.now().toString(36),name:name,e:emo||GEMO[0],target:target,
          pct:0,col:nextCol(),lock:false,due:due||""};
   S.goals.push(g);
-  g.pct=Math.max(0,Math.min(100,pct||0));
-  balanceGoals(g.id);stampSplit();
+  setPct(g,pct||0);          /* takes only what is unclaimed; nothing else moves */
+  stampSplit();
   return g;
 }
 function removeGoal(id){
@@ -990,8 +1037,8 @@ function removeGoal(id){
   var i=S.goals.findIndex(function(g){return g.id===id;});
   if(i<0)return false;
   S.goals.splice(i,1);
-  var pin=S.goals.find(function(g){return !jarLocked(g);})||S.goals[0];
-  balanceGoals(pin.id);stampSplit();
+  /* its share becomes unallocated rather than being pushed onto others */
+  stampSplit();
   return true;
 }
 /* ── hold a card, then drag it ──
@@ -1574,11 +1621,14 @@ function domSync(live,html,unwrap){
 function updatePlanDOM(){return updateViewDOM();}
 function updateCreditCardDOM(){return updateViewDOM();}
 function updateGoalEditorDOM(){
-  var done=updateViewDOM();
+  var app=appEl();
+  if(!app||!app.firstChild)return render();
+  domSync(app,pageHTML(S.tab,true));
   var sh=document.querySelector("body > .sheet");
   if(sh&&S.sheet)domSync(sh,editGoalsSheet(),true);       /* the sheet is never unmounted */
   else if(sh&&S.newg)domSync(sh,newGoalSheet(),true);
-  return done;
+  bind();          /* after both, or nodes the sheet patch made get no handler */
+  return true;
 }
 /* the page body, minus any sheet — those live under <body> and are
    patched separately so they stay mounted */
@@ -1804,9 +1854,15 @@ function editGoalsSheetPair(){
   var h="",tot=pctTotal();
     h+='<div class="shbg" data-sheet="0"></div><div class="sheet"><div class="grab"></div>'+
        '<div class="shhead"><span class="card-t">Edit goals</span>'+
-       '<span class="lab" style="color:'+(tot!==100?"var(--coral)":"var(--teal)")+'">'+tot+'%</span>'+
+       '<span class="lab" style="color:'+(tot===100?"var(--teal)":"var(--saffron)")+'">'+tot+'% allocated</span>'+
        '<button class="shx" data-sheet="0" aria-label="Close">'+ICON.x+'</button></div>'+
-       '<p class="hint" style="margin-bottom:6px">Rename a goal by typing over it. Arrows set priority. Change one share and the unlocked ones follow. Lock a goal to hold its share while you move the others.</p>';
+       '<p class="hint" style="margin-bottom:6px">Each share is a slice of what you save that month, and setting one never moves the others. '+
+       'Rename a goal by typing over it, arrows set priority, and a lock holds a share so you cannot change it by accident. '+
+       'Months already closed keep the split they were living under.</p>'+
+       (freeRoom()>0
+         ? '<div class="unal" style="margin-bottom:4px"><span class="u1">'+freeRoom()+'% unallocated</span>'+
+           '<span class="u2">That part of each month\u2019s saving joins no goal. Raise a share to use it.</span></div>'
+         : '');
     S.goals.forEach(function(g,i){
       var armed=S.delArm===g.id;
       h+='<div class="ablock"><div class="atop"><span class="amove">'+
@@ -1818,10 +1874,10 @@ function editGoalsSheetPair(){
          (jarLocked(g)?ICON.lock:ICON.open)+'</button></div>'+
          '<div class="aline"><span class="lab">Share of savings'+
          (jarLocked(g)?' <span style="color:var(--saffron)">\u00B7 locked</span>':'')+'</span>'+
-         '<span class="pctwrap"><button class="step" data-gp="'+g.id+'" data-by="-5" aria-label="Less">'+ICON.minus+'</button>'+
-         '<input class="pctin" type="number" inputmode="numeric" data-gv="'+g.id+'" value="'+jarPct(g)+'" aria-label="Share">'+
+         '<span class="pctwrap"><button class="step" data-gp="'+g.id+'" data-by="-5"'+(jarLocked(g)?" disabled":"")+' aria-label="Less">'+ICON.minus+'</button>'+
+         '<input class="pctin" type="number" inputmode="numeric" data-gv="'+g.id+'" value="'+jarPct(g)+'"'+(jarLocked(g)?" disabled":"")+' aria-label="Share">'+
          '<span class="pctsign">%</span>'+
-         '<button class="step" data-gp="'+g.id+'" data-by="5" aria-label="More">'+ICON.plus+'</button></span></div>'+
+         '<button class="step" data-gp="'+g.id+'" data-by="5"'+(jarLocked(g)?" disabled":"")+' aria-label="More">'+ICON.plus+'</button></span></div>'+
          '<div class="aline"><span class="lab">Target</span>'+
          '<input class="atgtin" type="number" inputmode="numeric" data-jt="'+g.id+'" value="'+g.target+'" aria-label="Target"></div>'+
          '<div class="aline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
@@ -1852,8 +1908,9 @@ function newGoalSheetPair(){
        '<span class="pctwrap"><input class="pctin" type="number" inputmode="numeric" id="ngPct" value="10" aria-label="Share">'+
        '<span class="pctsign">%</span></span></div></div>'+
        '<p class="hint" style="margin-top:12px">'+
-       (room<=0?'Every other goal is locked, so a new one would start at 0%. Unlock one first.'
-              :'It takes its share from the unlocked goals. Months already closed keep the split they froze.')+'</p>'+
+       (room<=0?'All 100% is already allocated, so a new goal would start at 0%. Lower another share first.'
+              :'There is '+room+'% unallocated, so a new goal can take up to that without moving any other goal. '+
+               'Months already closed keep the split they were living under.')+'</p>'+
        '<button class="btn go" id="ngAdd" style="margin-top:16px">Create goal</button>'+
        '<button class="btn" data-newg="0" style="margin-top:10px">Cancel</button></div>';
     return h;
@@ -1882,19 +1939,28 @@ function viewGoals(noSheets){
      '<div class="salary-line" style="margin-top:20px"><span class="cur">\u00A5</span>'+
      '<span class="heroamt">'+fmt(plan)+'</span></div>'+
      '<p class="hint" style="margin-top:8px">saved this month'+
-     (next?' \u00B7 next to land is <b style="color:'+next.col+'">'+esc(next.name)+'</b>':'')+'</p></div>';
+     (next?' \u00B7 next to land is <b style="color:'+next.col+'">'+esc(next.name)+'</b>':'')+'</p>'+
+     (function(){
+       var free=freeRoom();
+       if(free<=0)return '';
+       var amt=Math.max(0,savedNow(k))*free/100;
+       return '<div class="unal"><span class="u1">'+free+'% unallocated</span>'+
+              '<span class="u2">\u00A5'+fmt(amt)+' of this month\u2019s saving is going to no goal. '+
+              'It stays in your savings \u2014 raise a share to put it to work.</span></div>';
+     })()+'</div>';
 
   /* one card per jar, with room to breathe */
   S.goals.forEach(function(g,i){
     var bal=jarBalance(g),pc=g.target>0?Math.min(100,bal/g.target*100):0,done=jarDone(g);
-    var dt=dueText(g);
+    var dt=dueText(g),added=jarThisMonth(g);
     h+='<div class="jarcard'+(done?"":" quiet")+'" data-gid="'+g.id+'" style="--jc:'+g.col+';--jc-soft:'+g.col+'26;--jc-line:'+g.col+'3d">'+
        '<div class="jhead"><span class="jico" style="background:'+tint(g.col)+';color:'+g.col+'">'+gSym(g.e)+'</span>'+
        '<span class="jmeta"><div class="jname">'+esc(g.name)+'</div>'+
        '<div class="jsub">'+(done?"complete":"priority "+(i+1)+" \u00B7 "+jarPct(g)+"% allocation")+'</div></span>'+
        '<span class="jpc" style="color:'+(done?"var(--teal)":g.col)+'">'+Math.round(pc)+'%</span></div>'+
        '<div class="jamt" style="color:'+(done?"var(--teal)":"var(--text)")+'">\u00A5'+fmt(bal)+'</div>'+
-       '<div class="jof">of \u00A5'+fmt(g.target)+'</div>'+
+       '<div class="jof">of \u00A5'+fmt(g.target)+
+         (added>0?' <span style="color:'+g.col+'">\u00B7 +\u00A5'+fmt(added)+' this month</span>':'')+'</div>'+
        '<div class="jbar"><i style="width:'+pc+'%;background:'+(done?"var(--teal)":g.col)+'"></i></div>'+
        '<div class="jrow"><span>'+(done?"target reached":"\u00A5"+fmt(jarLeft(g))+" remaining")+'</span>'+
        '<span class="r">'+(done?"\u2713":jarETA(g))+'</span></div>'+
@@ -2668,7 +2734,7 @@ function reportPDF(){
     pdfFill(D,PM,D.y,W,0.5,RLINE);
     D.y-=16;
   });
-  if(S.goals.length)rptNote(D,"Each goal holds its share of everything banked in closed months, using the split that was in force at the time.");
+  if(S.goals.length)rptNote(D,"Each goal is a pool. Every month adds its share of that month\u2019s saving, using the split that was in force at the time, and closed months are never recalculated.");
 
   /* ── 3. Monthly history ── */
   rptSection(D,"Monthly history",82);
@@ -2694,13 +2760,14 @@ function reportPDF(){
       pdfTextR(D,cV,D.y,yen(sa),10,true,sa>=0?RINK:RRED);
       pdfTextR(D,cR,D.y,sa>0?Math.round(rateOf(x))+"%":"\u2014",10,false,RSOFT);
       D.y-=9;
-      /* the split this month was filed under, drawn to scale */
-      var sp=splitOf(x),tot=0,id;
-      for(id in sp)tot+=sp[id]||0;
-      if(tot>0&&sa>0){
+      /* the split this month was filed under, drawn out of 100 rather
+         than out of what was handed out, so any unallocated share shows
+         as a gap instead of being scaled away */
+      var sp=splitOf(x);
+      if(sa>0){
         var xx=PM;
         S.goals.forEach(function(g){
-          var share=(sp[g.id]||0)/tot;
+          var share=(sp[g.id]||0)/100;
           if(share<=0)return;
           pdfFill(D,xx,D.y,W*share,3,g.col||RBLUE);
           xx+=W*share;
@@ -3081,13 +3148,13 @@ function bind(){
   q("[data-gp]").forEach(function(b){b.onclick=function(){
     var g=S.goals.find(function(x){return x.id===b.dataset.gp;});
     if(!g)return;
-    g.pct=Math.max(0,Math.min(100,jarPct(g)+(+b.dataset.by)));
-    balanceGoals(g.id);stampSplit();save();updateGoalEditorDOM();};});
+    setPct(g,jarPct(g)+(+b.dataset.by));
+    stampSplit();save();updateGoalEditorDOM();};});
   q("[data-gv]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.gv;});
     if(!g)return;
-    g.pct=Math.max(0,Math.min(100,+i.value||0));
-    balanceGoals(g.id);stampSplit();save();updateGoalEditorDOM();};});
+    setPct(g,+i.value||0);
+    stampSplit();save();updateGoalEditorDOM();};});
   /* rename: the name is read live everywhere, so this is the only edit */
   q("[data-gn]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.gn;});
