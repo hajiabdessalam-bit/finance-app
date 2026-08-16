@@ -546,6 +546,42 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .pctwrap .step .sym{width:14px;height:14px}
 /* the single Home insight — a line, deliberately not another card */
 /* the share you have not given to any goal — stated, never absorbed */
+/* Money outside: given is stated flatly, owed carries the warm colour */
+/* folded explanation — deliberately the quietest thing on the card */
+.why{margin-top:12px}
+.why>summary{display:flex;align-items:center;gap:6px;list-style:none;cursor:pointer;
+  font-size:12.5px;font-weight:600;color:var(--faint);padding:2px 0;-webkit-tap-highlight-color:transparent}
+.why>summary::-webkit-details-marker{display:none}
+.why>summary::after{content:"";width:6px;height:6px;flex:none;
+  border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+  transform:rotate(45deg) translate(-1px,-1px);transition:transform .2s var(--ease)}
+.why[open]>summary{color:var(--muted)}
+.why[open]>summary::after{transform:rotate(225deg)}
+.why>summary:active{opacity:.6}
+.whyb{margin-top:8px;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.osum{display:flex;gap:10px;margin-top:18px}
+.ocell{flex:1;min-width:0;padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2)}
+.ocell.owe{background:rgba(255,179,61,.08);border-color:rgba(255,179,61,.22)}
+.ocell .k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint)}
+.ocell.owe .k{color:var(--saffron)}
+.ocell .v{display:block;margin-top:6px;font-family:var(--round);font-size:22px;font-weight:800;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--muted)}
+.ocell.owe .v{color:var(--text)}
+.ocell .s{display:block;margin-top:3px;font-size:11.5px;color:var(--muted);line-height:1.4}
+.orow{display:flex;align-items:center;gap:12px;padding:14px 0 6px}
+.orow+.oact{padding-bottom:12px;border-bottom:1px solid var(--line)}
+.orow .n{flex:1;min-width:0;font-size:14.5px;font-weight:650;letter-spacing:-.01em}
+.orow .n em{display:block;font-style:normal;font-size:11.5px;font-weight:500;color:var(--faint);margin-top:3px;line-height:1.4}
+.orow .a{font-family:var(--round);font-size:16px;font-weight:750;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;flex:none}
+.orow.done .n,.orow.done .a{opacity:.55}
+.oact{display:flex;gap:8px;justify-content:flex-end}
+.obtn{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;
+  padding:8px 13px;font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--muted);
+  line-height:1.2}
+.obtn:active{opacity:.6}
+.obtn.warn{color:var(--coral);border-color:rgba(255,122,92,.22);background:rgba(255,122,92,.07)}
 .unal{margin-top:16px;padding:12px 14px;border-radius:14px;
   background:rgba(255,179,61,.08);border:1px solid rgba(255,179,61,.22)}
 .unal .u1{display:block;font-family:var(--round);font-size:14px;font-weight:750;
@@ -639,7 +675,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b27 \u00B7 goal pools";
+var BUILD="b29 \u00B7 quieter screens";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -671,7 +707,8 @@ var BASE_GOALS=[
 ];
 function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)),months:{},
   tab:"home",monthCursor:null,weekIdx:null,pick:"household",lastBackup:null,name:"",wiGoal:null,more:false,returnTab:"home",wiAmt:0,cycleStart:15,clamp:null,card:{limit:0,used:0,payDay:18,lastPaid:null},payMethod:"bank",
-  notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false};}
+  notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false,
+  outside:{given:[],borrowed:[]},outTab:"given",outArm:null};}
 
 var S=(function(){
   try{var r=store.getItem(KEY);if(r){var p=JSON.parse(r);if(p&&p.months)return p;}}catch(e){}
@@ -685,6 +722,14 @@ if(!S.goals){
     if(S.targets.morocco)S.goals[1].target=S.targets.morocco;
   }
 }
+/* Money outside arrived after some saves were written, so make room for
+   it without touching anything else that is already there. */
+(function migrateOutside(){
+  if(!S.outside||typeof S.outside!=="object")S.outside={given:[],borrowed:[]};
+  if(!(S.outside.given instanceof Array))S.outside.given=[];
+  if(!(S.outside.borrowed instanceof Array))S.outside.borrowed=[];
+})();
+
 /* A closed month with no split of its own used to fall back to today's
    percentages, which meant editing a share rewrote history. Now closed
    months never look at today — so any month that was saved without a
@@ -777,7 +822,100 @@ function budgetVariable(k){var m=M(k),t=0;CATS.forEach(function(c){if(c.type==="
 function spentOn(k,id){return M(k).spend.reduce(function(s,e){return e.cat===id?s+e.amount:s;},0);}
 function spentVariable(k){return M(k).spend.reduce(function(s,e){
   return (e.cat!=="oneoff"&&e.cat!=="buffer")?s+e.amount:s;},0);}
-function spentOneoff(k){return M(k).spend.reduce(function(s,e){return e.cat==="oneoff"?s+e.amount:s;},0);}
+/* ═══ MONEY OUTSIDE ═══
+   Two opposite things, deliberately modelled differently.
+
+   GIVEN — money handed to someone with no reliable date of return.
+   The moment it leaves, it is gone as far as planning is concerned:
+   it lowers what you have exactly as an unplanned purchase does, and
+   it is never counted as money coming back. The record exists so you
+   can remember what you gave and to whom, not so you can spend it
+   twice. If it does come back one day, that is recorded on the day it
+   actually happens and only then does the money reappear.
+
+   BORROWED — money someone handed to you. It touches the equation not
+   at all: it is not salary, not savings, and it cannot raise your
+   health or feed a goal. It is an obligation, and the only number the
+   app keeps about it is how long you have had it. Repaying it is
+   real money leaving, so that does count. */
+function OUT(){return S.outside||(S.outside={given:[],borrowed:[]});}
+function givenList(){return OUT().given||[];}
+function borrowedList(){return OUT().borrowed||[];}
+function dayKey(iso){                       /* which financial month a date falls in */
+  if(!iso)return null;
+  var p=String(iso).split("-");
+  if(p.length<3)return null;
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  return isNaN(d)?null:mKey(d);
+}
+function todayISO(){return isoDay(new Date());}
+
+/* what left your hands this month because you gave it away */
+function givenOf(k){
+  return givenList().reduce(function(s,g){
+    return dayKey(g.on)===k?s+Math.max(0,g.amount||0):s;},0);
+}
+/* what left your hands this month because you paid a debt back */
+function repaidOf(k){
+  return borrowedList().reduce(function(s,b){
+    return (b.repaidOn&&dayKey(b.repaidOn)===k)?s+Math.max(0,b.amount||0):s;},0);
+}
+/* what actually came back this month, on the day it really arrived */
+function returnedOf(k){
+  return givenList().reduce(function(s,g){
+    return (g.backOn&&dayKey(g.backOn)===k)?s+Math.max(0,g.back||g.amount||0):s;},0);
+}
+
+/* still out there, and still borrowed */
+function givenOutstanding(){
+  return givenList().reduce(function(s,g){return g.backOn?s:s+Math.max(0,g.amount||0);},0);
+}
+function givenPeople(){
+  var seen={},n=0;
+  givenList().forEach(function(g){
+    if(g.backOn)return;
+    var p=(g.person||"").trim().toLowerCase();
+    if(p&&!seen[p]){seen[p]=1;n++;}
+  });
+  return n;
+}
+function owedOutstanding(){
+  return borrowedList().reduce(function(s,b){return b.repaidOn?s:s+Math.max(0,b.amount||0);},0);
+}
+/* how long a debt has stood, in plain words — no countdown, no target */
+function ageOf(iso){
+  var d=dayKey(iso)?new Date(String(iso).split("-")[0],+String(iso).split("-")[1]-1,+String(iso).split("-")[2]):null;
+  if(!d||isNaN(d))return "";
+  var days=Math.floor((Date.now()-d.getTime())/864e5);
+  if(days<0)return "";
+  if(days<1)return "today";
+  if(days<31)return days+" day"+(days===1?"":"s");
+  var mo=Math.floor(days/30.44);
+  if(mo<12)return mo+" month"+(mo===1?"":"s");
+  var yr=Math.floor(mo/12),rem=mo%12;
+  return yr+" year"+(yr===1?"":"s")+(rem?" "+rem+" month"+(rem===1?"":"s"):"");
+}
+/* the age of the oldest debt, phrased so it reads as a sentence */
+function debtAgeLine(){
+  var a=oldestDebtAge();
+  if(!a)return "still to repay";
+  if(a==="today")return "borrowed today";
+  return "borrowed "+a+" ago";
+}
+function oldestDebtAge(){
+  var out=borrowedList().filter(function(b){return !b.repaidOn;});
+  if(!out.length)return "";
+  var oldest=out.slice().sort(function(a,b){return String(a.on)<String(b.on)?-1:1;})[0];
+  return ageOf(oldest.on);
+}
+
+/* ── how this reaches the month's arithmetic ──
+   Unplanned money out is unplanned money out, whatever its reason, so
+   giving and repaying travel down exactly the same channel a one-off
+   does: buffer first, then savings. What changes is only how it is
+   REPORTED, so spending never looks bigger than what you consumed. */
+function consumedOneoff(k){return M(k).spend.reduce(function(s,e){return e.cat==="oneoff"?s+e.amount:s;},0);}
+function spentOneoff(k){return consumedOneoff(k)+givenOf(k)+repaidOf(k);}
 /* ── the buffer ──
    Not a goal and not savings: an allowance held back each month for
    small surprises. While the month is live the whole allowance is
@@ -821,7 +959,9 @@ function assumedSpend(k){return Math.max(budgetVariable(k),spentVariable(k));}
 function savedActual(k){
   var m=M(k);
   if(m.override!==null&&m.override!==undefined)return m.override;
-  return m.salary-fixedTotal(k)-assumedSpend(k)-bufferCharge(k)-oneoffOverflow(k);
+  /* returnedOf is 0 unless something you gave away actually came back
+     in this month, so every month without a return is unchanged */
+  return m.salary-fixedTotal(k)-assumedSpend(k)-bufferCharge(k)-oneoffOverflow(k)+returnedOf(k);
 }
 function savedProjected(k){return savedActual(k);}
 function savedNow(k){return savedActual(k);}
@@ -843,13 +983,17 @@ function effSavings(k){return (M(k).alloc.savings||0)-spentOneoff(k);}
 
    Saving nothing, or less than nothing, is 0 regardless.            */
 function healthFrom(salary,saved,planned){
-  if(salary<=0)return 50;
+  /* With no salary there is nothing to score. A made-up 50 read as
+     "average" when the truth is "unknown", so it now returns null and
+     the screen shows a dash. */
+  if(salary<=0)return null;
   if(saved<=0)return 0;
   var att=planned>0?Math.min(1,saved/planned):1;
   var depth=Math.min(1,(saved/salary)/0.30);
   return Math.round(100*(0.7*att+0.3*depth));
 }
 function healthScore(k){return healthFrom(M(k).salary,savedActual(k),savedPlanned(k));}
+function healthText(v){return v===null?"\u2014":String(v);}
 /* Four stops, interpolated — the colour slides through the scale
    rather than snapping between four fixed states. */
 var HEALTH_STOPS=[[0,[255,77,77]],[35,[255,122,61]],[65,[255,193,61]],[100,[47,212,188]]];
@@ -863,8 +1007,8 @@ function healthRGB(v){
   }
   return [47,212,188];
 }
-function healthColor(v){return "rgb("+healthRGB(v).join(",")+")";}
-function healthRGBA(v,al){return "rgba("+healthRGB(v).join(",")+","+al+")";}
+function healthColor(v){return v===null?"var(--muted)":"rgb("+healthRGB(v).join(",")+")";}
+function healthRGBA(v,al){return v===null?"rgba(162,156,199,"+al+")":"rgba("+healthRGB(v).join(",")+","+al+")";}
 function healthWhy(k,v){
   var m=M(k),saved=savedActual(k),planned=savedPlanned(k),oo=spentOneoff(k);
   var rate=m.salary>0?Math.round(Math.max(0,saved)/m.salary*100):0;
@@ -877,6 +1021,7 @@ function healthWhy(k,v){
   return "Saving \u00A5"+fmt(saved)+" against a \u00A5"+fmt(planned)+" target \u2014 "+rate+"% of what you earn.";
 }
 function healthLabel(v){
+  if(v===null)return "Not enough to go on";
   return v>=80?"On track":v>=60?"Slightly behind":v>=35?"Saving pressure":"Overspending risk";
 }
 function savingsRate(k){var m=M(k);return m.salary>0?Math.max(0,savedNow(k))/m.salary*100:0;}
@@ -1115,6 +1260,10 @@ function monthlyRate(){
   return Math.max(0,savedPlanned(cur()));
 }
 function totalSpendOf(k){return fixedTotal(k)+assumedSpend(k)+spentOneoff(k);}
+/* what you actually consumed, with nothing you merely handed over */
+function consumedOf(k){return fixedTotal(k)+assumedSpend(k)+consumedOneoff(k);}
+/* what left your hands without being consumed */
+function handedOverOf(k){return givenOf(k)+repaidOf(k);}
 function rateOf(k){var m=M(k);return m&&m.salary>0?Math.max(0,savedActual(k))/m.salary*100:0;}
 function cumulativeTo(k){
   return allMonths().filter(function(x){return x<=k;})
@@ -1293,6 +1442,15 @@ function recordChange(k,id,from,to){
 /* ═══ 9. HELPERS ═══ */
 function fmt(n){return Math.round(n).toLocaleString("en-US");}
 function catOf(id){return CATS.find(function(c){return c.id===id;})||{id:"oneoff",name:"One-off",type:"oneoff"};}
+/* ── an explanation you can open ──
+   Nothing is removed: the words the app used to say are all still here,
+   they just start folded so the numbers reach you first. Built on
+   <details>, so opening one needs no state, no handler and no redraw. */
+function why(html,label){
+  return '<details class="why"><summary>'+(label||"How this works")+'</summary>'+
+         '<div class="whyb">'+html+'</div></details>';
+}
+
 function esc(s){return String(s==null?"":s).replace(/[<>&"]/g,function(c){return{"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c];});}
 function tint(c){return c+"1f";}
 /* ═══ 9b. SYMBOLS ═══
@@ -1490,6 +1648,7 @@ function pageHTML(tab,noSheets){
   else if(tab==="journey")h+=viewJourney();
   else if(tab==="backup")h+=viewBackup();
   else if(tab==="export")h+=viewExport();
+  else if(tab==="outside")h+=viewOutside();
   else if(tab==="tools")h+=viewTools();
   else if(tab==="note")h+=viewNote();
   else if(tab==="settings")h+=viewSettings();
@@ -1541,12 +1700,18 @@ function domSame(a,b){
 var FIELDS={INPUT:1,TEXTAREA:1,SELECT:1};
 function domAttrs(live,next){
   var i,a,n=next.attributes,o=live.attributes;
+  /* An opened explanation is the reader's doing, not the page's, so its
+     `open` is theirs to keep across a redraw — the same courtesy the
+     field under their finger gets below. */
+  var keepOpen=(live.tagName==="DETAILS");
   for(i=0;i<n.length;i++){
     a=n[i];
+    if(keepOpen&&a.name==="open")continue;
     if(live.getAttribute(a.name)!==a.value)live.setAttribute(a.name,a.value);
   }
   for(i=o.length-1;i>=0;i--){
     a=o[i];
+    if(keepOpen&&a.name==="open")continue;
     if(!next.hasAttribute(a.name))live.removeAttribute(a.name);
   }
   if(FIELDS[live.tagName]){
@@ -1669,7 +1834,7 @@ function viewHome(k,live){
      '<div class="salary-line"><span class="cur">\u00A5</span>'+
      '<input id="sal" type="number" inputmode="numeric" value="'+m.salary+'"'+(isSettled(k)?" disabled":"")+' aria-label="Salary"></div>'+
      '<div class="hstatus"><span class="hpill"><i class="hdot"></i>'+healthLabel(hs)+'</span>'+
-     '<span class="hscore">HEALTH <b>'+hs+'</b>/100</span></div>'+
+     '<span class="hscore">HEALTH <b>'+healthText(hs)+'</b>/100</span></div>'+
      '<p class="hwhy">'+healthWhy(k,hs)+'</p>'+
      '</div></div>';
 
@@ -1681,7 +1846,7 @@ function viewHome(k,live){
      (live?'<span class="lab">day '+periodDay(k)+' of '+periodDays(k)+'</span>':'')+'</div><div class="eq">'+
      '<div class="eqrow"><span class="k">Income</span><span class="v">\u00A5'+fmt(m.salary)+'</span></div>'+
      '<div class="eqrow"><span class="k">Spending</span><span class="v" style="color:var(--muted)">\u2212'+fmt(spendTotal)+'</span></div>'+
-     '<div class="eqrow total"><span class="k">Saved</span>'+
+     '<div class="eqrow total"><span class="k">Saved this month</span>'+
      '<span class="v" style="color:'+(d>=0?"var(--teal)":"var(--coral)")+'">\u00A5'+fmt(Math.max(0,sv))+'</span></div></div>'+
      '<div class="vs '+(d>=0?"up":"down")+'">'+(d>=0?"+":"\u2212")+fmt(Math.abs(d))+' vs the '+fmt(pl)+' you planned</div>';
   var bA=bufferAmount(k),bU=bufferUsed(k),bR=bufferReturned(k),bOv=oneoffOverflow(k);
@@ -1718,9 +1883,10 @@ function viewHome(k,live){
      '<div class="scen" style="margin-top:10px">'+
      '<div class="sc"><div class="k">saved</div><div class="v" id="wiSaved">\u00A5'+fmt(Math.max(0,sv-pre))+'</div></div>'+
      '<div class="sc"><div class="k">health</div><div class="v" id="wiHealth" style="color:'+healthColor(healthFrom(m.salary,Math.max(0,sv-pre),pl))+'">'+
-       (pre>0?hs+'<span class="wiarrow">\u2192</span>'+healthFrom(m.salary,Math.max(0,sv-pre),pl):hs)+'</div></div>'+
+       (pre>0?healthText(hs)+'<span class="wiarrow">\u2192</span>'+healthText(healthFrom(m.salary,Math.max(0,sv-pre),pl)):healthText(hs))+'</div></div>'+
      '<div class="sc"><div class="k">every goal</div><div class="v" id="wiEta">'+delayText(pre)+'</div></div></div>'+
-     '<p class="hint" id="wiWhy" style="margin-top:12px">'+(pre>0?'From your calculator. Drag to adjust.':'Drag the slider before you decide. <span style="opacity:.65">Delay is an estimate \u2014 '+paceBasis()+'.</span>')+'</p></div>';
+     '<p class="hint" id="wiWhy" style="margin-top:12px">'+(pre>0?'From your calculator. Drag to adjust.':'Drag the slider before you decide.')+'</p>'+
+     why('The delay shown is an estimate, '+paceBasis()+'. Health is what your score would become if you spent this, and every goal moves back by the same share of your saving it would have taken.','How this is worked out')+'</div>';
 
   if(cardOn()){
     var c=card(),use=cardUsage(),np=nextPayment();
@@ -1773,7 +1939,7 @@ function viewPlan(k,live){
   h+='</div>';
 
   h+='<div class="card"><div class="card-h"><span class="card-t">Override</span></div>'+
-     '<p class="hint">If the real figure differs from the equation, put what you actually saved. Leave it empty to let the equation decide.</p>'+
+     why('If the real figure differs from the equation, put what you actually saved. Leave it empty to let the equation decide.','When to use this')+
      '<div class="tgt" style="margin-top:12px"><span class="lab" style="flex:1">Actually saved</span>'+
      '<input id="ovr" type="number" inputmode="numeric" placeholder="'+fmt(Math.max(0,sv))+'" value="'+(m.override!=null?m.override:"")+'"></div>';
   if(m.override!==null&&m.override!==undefined)
@@ -1823,25 +1989,51 @@ function viewLog(k){
      '<button class="addb" id="eadd">Add</button></div>'+
      '<div id="purse" class="purse"></div>'+
      '<div id="cardWarn"></div>'+
-     '<p class="hint" style="margin-top:11px">'+
-     (onCard
+     why(onCard
        ? "Goes on the card. \u00A5"+fmt(cardAvail())+" of \u00A5"+fmt(card().limit)+" credit is free right now."
        : bufferOpen(k)
          ? "Comes out of your buffer first \u2014 \u00A5"+fmt(bufferLeft(k))+" of \u00A5"+fmt(bufferAmount(k))+
            " left \u2014 then out of "+mName(k).split(" ")[0]+"\u2019s savings."
-         : "Your buffer is locked, so this comes straight out of "+mName(k).split(" ")[0]+"\u2019s savings.")+
-     '</p></div>';
+         : "Your buffer is locked, so this comes straight out of "+mName(k).split(" ")[0]+"\u2019s savings.",
+       "Where this comes from")+'</div>';
 
   /* the list */
-  h+='<div class="card"><div class="card-h"><span class="card-t">What you bought</span>'+
+  var handedNow=handedOverOf(k);
+  h+='<div class="card"><div class="card-h"><span class="card-t">'+
+     (handedNow>0?"Unplanned money out":"What you bought")+'</span>'+
      (oo>0?'<span class="lab" style="color:var(--coral)">\u00A5'+fmt(oo)+' from savings</span>':'')+'</div>';
-  if(!list.length)h+='<div class="empty">Nothing unplanned in '+mName(k).split(" ")[0]+'.<br>That is the goal.</div>';
+  /* Money handed to someone leaves through the same door as a purchase,
+     so it has to appear here too, or the total at the top would not add
+     up. It is marked as what it is, and it is edited where it lives. */
+  var handed=[];
+  givenList().forEach(function(g){
+    if(dayKey(g.on)===k)handed.push({on:g.on,amount:g.amount,
+      who:g.person||"someone",what:"given to",note:g.note||""});
+  });
+  borrowedList().forEach(function(b){
+    if(b.repaidOn&&dayKey(b.repaidOn)===k)handed.push({on:b.repaidOn,amount:b.amount,
+      who:b.person||"someone",what:"repaid to",note:""});
+  });
+
+  if(!list.length&&!handed.length)h+='<div class="empty">Nothing unplanned in '+mName(k).split(" ")[0]+'.<br>That is the goal.</div>';
   else list.forEach(function(e){
     var dt=new Date(e.ts),isB=e.cat==="buffer";
     h+='<div class="log"><span class="ico" style="background:'+tint(isB?COLOR.buffer:COLOR.oneoff)+';color:'+(isB?COLOR.buffer:COLOR.oneoff)+'">'+sym(isB?"buffer":"warning")+'</span>'+
        '<span class="n">'+(e.note?esc(e.note):"Unnamed")+'<em>'+dt.getDate()+" "+MOS[dt.getMonth()]+' \u00B7 '+(isB?"from buffer":"out of savings")+(e.method==="card"?' \u00B7 '+sym("card")+' card':"")+'</em></span>'+
        '<span class="a" style="color:'+(isB?"var(--sage)":"var(--coral)")+'">\u00A5'+fmt(e.amount)+'</span>'+
        '<button class="del" data-d="'+e.id+'" aria-label="Delete">\u00D7</button></div>';});
+
+  handed.forEach(function(x){
+    h+='<div class="log"><span class="ico" style="background:'+tint("#8DA88F")+';color:#8DA88F">'+sym("person")+'</span>'+
+       '<span class="n">'+esc(x.what.charAt(0).toUpperCase()+x.what.slice(1))+' '+esc(x.who)+
+       '<em>'+prettyDay(x.on)+' \u00B7 not spending \u00B7 in Money outside'+(x.note?' \u00B7 '+esc(x.note):'')+'</em></span>'+
+       '<span class="a" style="color:var(--sage)">\u00A5'+fmt(x.amount)+'</span></div>';});
+
+  if(handed.length){
+    h+='<p class="hint" style="margin-top:14px"><b>\u00A5'+fmt(consumedOneoff(k))+'</b> spent \u00B7 <b>\u00A5'+
+       fmt(handedOverOf(k))+'</b> handed to someone</p>'+
+       why('Both reduce what you have, but only the first is spending. Keeping them apart stops your spending history looking bigger than what you actually consumed.');
+  }
   h+='</div>';
 
   return h+'</div>';
@@ -1856,9 +2048,9 @@ function editGoalsSheetPair(){
        '<div class="shhead"><span class="card-t">Edit goals</span>'+
        '<span class="lab" style="color:'+(tot===100?"var(--teal)":"var(--saffron)")+'">'+tot+'% allocated</span>'+
        '<button class="shx" data-sheet="0" aria-label="Close">'+ICON.x+'</button></div>'+
-       '<p class="hint" style="margin-bottom:6px">Each share is a slice of what you save that month, and setting one never moves the others. '+
-       'Rename a goal by typing over it, arrows set priority, and a lock holds a share so you cannot change it by accident. '+
-       'Months already closed keep the split they were living under.</p>'+
+       why('Each share is a slice of what you save that month, and setting one never moves the others. '+
+           'Rename a goal by typing over it, arrows set priority, and a lock holds a share so you cannot change it by accident. '+
+           'Months already closed keep the split they were living under.','How shares work')+
        (freeRoom()>0
          ? '<div class="unal" style="margin-bottom:4px"><span class="u1">'+freeRoom()+'% unallocated</span>'+
            '<span class="u2">That part of each month\u2019s saving joins no goal. Raise a share to use it.</span></div>'
@@ -1907,10 +2099,10 @@ function newGoalSheetPair(){
        '<div class="ngline"><span class="lab">Share of savings</span>'+
        '<span class="pctwrap"><input class="pctin" type="number" inputmode="numeric" id="ngPct" value="10" aria-label="Share">'+
        '<span class="pctsign">%</span></span></div></div>'+
-       '<p class="hint" style="margin-top:12px">'+
-       (room<=0?'All 100% is already allocated, so a new goal would start at 0%. Lower another share first.'
-              :'There is '+room+'% unallocated, so a new goal can take up to that without moving any other goal. '+
-               'Months already closed keep the split they were living under.')+'</p>'+
+       (room<=0
+         ? '<p class="hint" style="margin-top:12px">All 100% is already allocated, so a new goal would start at 0%. Lower another share first.</p>'
+         : '<p class="hint" style="margin-top:12px">There is <b>'+room+'%</b> unallocated.</p>'+
+           why('A new goal can take up to that without moving any other goal. Months already closed keep the split they were living under.'))+
        '<button class="btn go" id="ngAdd" style="margin-top:16px">Create goal</button>'+
        '<button class="btn" data-newg="0" style="margin-top:10px">Cancel</button></div>';
     return h;
@@ -1949,6 +2141,8 @@ function viewGoals(noSheets){
               'It stays in your savings \u2014 raise a share to put it to work.</span></div>';
      })()+'</div>';
 
+  var basis=paceBasis();
+
   /* one card per jar, with room to breathe */
   S.goals.forEach(function(g,i){
     var bal=jarBalance(g),pc=g.target>0?Math.min(100,bal/g.target*100):0,done=jarDone(g);
@@ -1963,11 +2157,14 @@ function viewGoals(noSheets){
          (added>0?' <span style="color:'+g.col+'">\u00B7 +\u00A5'+fmt(added)+' this month</span>':'')+'</div>'+
        '<div class="jbar"><i style="width:'+pc+'%;background:'+(done?"var(--teal)":g.col)+'"></i></div>'+
        '<div class="jrow"><span>'+(done?"target reached":"\u00A5"+fmt(jarLeft(g))+" remaining")+'</span>'+
-       '<span class="r">'+(done?"\u2713":jarETA(g))+'</span></div>'+
+       '<span class="r">'+(done?"\u2713":(jarETA(g)==="\u2014"?"\u2014":"about "+jarETA(g)))+'</span></div>'+
        (dt?'<div class="jdue" style="color:'+dt.c+'">'+dt.t+'</div>':'')+
        '</div>';
   });
-  if(S.goals.length>1)h+='<p class="hint" style="margin-top:14px;text-align:center">Hold a goal to move it up or down.</p>';
+  /* Every date above is an estimate. Say so once, and say what it rests
+     on, rather than repeating a caveat on each card. */
+  if(S.goals.length)h+=why('Dates above are estimates, '+basis+'. They move as your saving does.','About these dates');
+  if(S.goals.length>1)h+='<p class="hint" style="margin-top:10px;text-align:center">Hold a goal to move it up or down.</p>';
 
   h+='<button class="btn" data-sheet="1" style="margin-top:22px">Edit goals</button>';
   h+='<button class="btn ghost" data-newg="1" style="margin-top:10px">+  Add a goal</button>';
@@ -2072,10 +2269,11 @@ function journeyNotes(k,p){
   return out.slice(0,3);
 }
 
-var MORE_PAGES=["journey","backup","export","tools","note","settings"];
+var MORE_PAGES=["journey","backup","export","tools","note","settings","outside"];
 var MENU=[
   {id:"journey",e:"compass",t:"Journey",s:"Track your financial progress",col:"#7B72FF",live:true},
   {id:"tools",  e:"calculator",t:"Tools",  s:"Calculator and notes",        col:"#2FD4BC",live:true},
+  {id:"outside",e:"person",   t:"Money outside",s:"",                        col:"#8DA88F",live:true},
   {id:"settings",e:"gear",t:"Settings",s:"Your month, your card, your data",col:"#B08CFF",live:true}
 ];
 function moreSheet(){
@@ -2085,7 +2283,7 @@ function moreSheet(){
   MENU.forEach(function(x){
     h+='<button class="menucard'+(x.live?"":" soon")+'" data-more="'+x.id+'"'+(x.live?"":" disabled")+'>'+
        '<span class="menuico" style="background:'+tint(x.col)+';color:'+x.col+'">'+sym(x.e)+'</span>'+
-       '<span class="menutxt"><span class="menut">'+x.t+'</span><span class="menus">'+x.s+'</span></span>'+
+       '<span class="menutxt"><span class="menut">'+x.t+'</span><span class="menus">'+(x.id==="outside"?outSum(cur()):x.s)+'</span></span>'+
        (x.live?'<span class="menuchev"></span>':'<span class="menusoon">soon</span>')+'</button>';
   });
   return h+'<div style="height:8px"></div></div>';
@@ -2101,7 +2299,7 @@ function viewExport(){
   var k=thisMonth(),past=closedMonths(),h='<div class="view">'+backLink("settings");
 
   h+='<div class="card"><div class="card-h"><span class="card-t">Financial report</span></div>'+
-     '<p class="hint">A PDF of where you stand. Built on this phone from your own numbers \u2014 nothing is sent anywhere.</p>'+
+     why('A PDF of where you stand. Built on this phone from your own numbers \u2014 nothing is sent anywhere.','What the report is')+
      '<div class="xlist">'+
        '<div class="xrow"><b>This month</b><span>'+mName(k)+' \u00B7 salary, bills, budget, buffer and what you saved</span></div>'+
        '<div class="xrow"><b>Goals</b><span>'+(S.goals.length
@@ -2118,7 +2316,122 @@ function viewExport(){
      '<p class="hint" style="opacity:.55;margin-top:10px">Opens the share sheet, so you can save it to Files or send it on.</p>'+
      '</div>';
 
-  if(!past.length)h+='<div class="card"><p class="hint">You can export now, but the report gets much better once a month or two has closed \u2014 that is where the history and the pace come from.</p></div>';
+  if(!past.length)h+='<div class="card">'+why('You can export now, but the report gets much better once a month or two has closed \u2014 that is where the history and the pace come from.','Worth knowing first')+'</div>';
+  return h+'</div>';
+}
+
+/* "18 Aug", or "18 Aug 2025" once it is no longer this year */
+function prettyDay(iso){
+  if(!iso)return "";
+  var p=String(iso).split("-");
+  if(p.length<3)return "";
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  if(isNaN(d))return "";
+  var now=new Date();
+  return d.getDate()+" "+MOS[d.getMonth()]+(d.getFullYear()!==now.getFullYear()?" "+d.getFullYear():"");
+}
+
+/* ═══ MONEY OUTSIDE — the page ═══
+   Deliberately quiet. Given money is already gone as far as planning is
+   concerned, so it is stated flatly with no expectation attached: no
+   due date, no countdown, no "coming back". What you owe gets the warm
+   colour, because that is the one you can still act on. */
+function outSum(k){
+  var g=givenOutstanding(),o=owedOutstanding();
+  if(!g&&!o)return "Nothing given, nothing borrowed";
+  var bits=[];
+  if(g)bits.push("\u00A5"+fmt(g)+" given");
+  if(o)bits.push("\u00A5"+fmt(o)+" borrowed");
+  return bits.join(" \u00B7 ");
+}
+
+function viewOutside(){
+  var h='<div class="view">'+backLink();
+  var given=givenList().slice().sort(function(a,b){return String(b.on)<String(a.on)?-1:1;});
+  var owed=borrowedList().slice().sort(function(a,b){return String(b.on)<String(a.on)?-1:1;});
+  var gOut=givenOutstanding(),oOut=owedOutstanding(),people=givenPeople();
+
+  /* ── the overview, two lines and no more ── */
+  h+='<div class="card"><div class="card-h"><span class="card-t">Money outside</span></div>'+
+     '<div class="osum">'+
+       '<div class="ocell quiet"><span class="k">Given</span>'+
+         '<span class="v">\u00A5'+fmt(gOut)+'</span>'+
+         '<span class="s">'+(gOut>0?people+" person"+(people===1?"":"s"):"nothing out")+'</span></div>'+
+       '<div class="ocell owe"><span class="k">Borrowed</span>'+
+         '<span class="v">\u00A5'+fmt(oOut)+'</span>'+
+         '<span class="s">'+(oOut>0?debtAgeLine():"nothing borrowed")+'</span></div>'+
+     '</div>'+
+     why('Money you gave away already left your plan \u2014 the app treats it as gone and never counts it as money coming back. '+
+         'Money you borrowed is an obligation: it is not income, and it changes nothing about what you can spend.',
+         'How Money outside works')+'</div>';
+
+  /* ── given ── */
+  h+='<div class="sect">Given</div>';
+  h+='<div class="card">'+
+     why('Recorded on the day it left. It lowers what you have, exactly as an unplanned purchase does, and it is not counted as spending.')+
+     '<input class="notefield" id="gvPerson" style="margin-top:14px" placeholder="Who did you give it to?" maxlength="32">'+
+     '<input class="notefield" id="gvNote" style="margin-top:8px" placeholder="What was it for? \u00B7 optional" maxlength="48">'+
+     '<div class="aline" style="margin-top:8px"><span class="lab">Date given</span>'+
+     '<input class="duein" type="date" id="gvDate" value="'+todayISO()+'" aria-label="Date given"></div>'+
+     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="gvAmt" type="number" inputmode="decimal" placeholder="How much?">'+
+     '<button class="addb" id="gvAdd">Add</button></div></div>';
+
+  if(!given.length)h+='<div class="card"><div class="empty">You have not given anything out.</div></div>';
+  else{
+    h+='<div class="card">';
+    given.forEach(function(g){
+      var back=!!g.backOn,armed=S.outArm===g.id;
+      h+='<div class="orow'+(back?" done":"")+'">'+
+         '<span class="ico" style="background:'+tint("#8DA88F")+';color:#8DA88F">'+sym("person")+'</span>'+
+         '<span class="n">Given to '+esc(g.person||"someone")+
+           '<em>'+prettyDay(g.on)+(g.note?' \u00B7 '+esc(g.note):'')+
+           (back?' \u00B7 came back '+prettyDay(g.backOn):'')+'</em></span>'+
+         '<span class="a" style="color:'+(back?"var(--teal)":"var(--sage)")+'">\u00A5'+fmt(g.amount)+'</span>'+
+         '</div>'+
+         '<div class="oact">'+
+           (back?'<button class="obtn" data-gunback="'+g.id+'">Mark as still out</button>'
+               :'<button class="obtn" data-gback="'+g.id+'">They paid it back</button>')+
+           '<button class="obtn warn" data-gdel2="'+g.id+'">'+(armed?"Tap again to remove":"Remove")+'</button>'+
+         '</div>';
+    });
+    h+='</div>';
+  }
+
+  /* ── borrowed ── */
+  h+='<div class="sect">Borrowed</div>';
+  h+='<div class="card">'+
+     why('Borrowing is not income. Recording it changes none of your numbers \u2014 it only keeps count of how long you have had it. Paying it back does cost you real money, on the day you pay.')+
+     '<input class="notefield" id="bwPerson" style="margin-top:14px" placeholder="Who did you borrow from?" maxlength="32">'+
+     '<div class="aline" style="margin-top:8px"><span class="lab">Date borrowed</span>'+
+     '<input class="duein" type="date" id="bwDate" value="'+todayISO()+'" aria-label="Date borrowed"></div>'+
+     '<div class="aline"><span class="lab">Due<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
+     '<input class="duein" type="date" id="bwDue" aria-label="Due date"></div>'+
+     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="bwAmt" type="number" inputmode="decimal" placeholder="How much?">'+
+     '<button class="addb" id="bwAdd">Add</button></div></div>';
+
+  if(!owed.length)h+='<div class="card"><div class="empty">You have borrowed from no one. Keep it that way.</div></div>';
+  else{
+    h+='<div class="card">';
+    owed.forEach(function(b){
+      var paid=!!b.repaidOn,armed=S.outArm===b.id;
+      var age=paid?"":ageOf(b.on);
+      h+='<div class="orow'+(paid?" done":"")+'">'+
+         '<span class="ico" style="background:'+tint(COLOR.household)+';color:'+COLOR.household+'">'+sym("person")+'</span>'+
+         '<span class="n">Borrowed from '+esc(b.person||"someone")+
+           '<em>'+prettyDay(b.on)+
+           (paid?' \u00B7 repaid '+prettyDay(b.repaidOn)
+                :(age?' \u00B7 '+(age==="today"?"borrowed today":"borrowed "+age+" ago"):'')+(b.due?' \u00B7 due '+prettyDay(b.due):''))+'</em></span>'+
+         '<span class="a" style="color:'+(paid?"var(--teal)":"var(--saffron)")+'">\u00A5'+fmt(b.amount)+'</span>'+
+         '</div>'+
+         '<div class="oact">'+
+           (paid?'<button class="obtn" data-bunpaid="'+b.id+'">Mark as not repaid</button>'
+                :'<button class="obtn" data-bpaid="'+b.id+'">I paid this back</button>')+
+           '<button class="obtn warn" data-bdel="'+b.id+'">'+(armed?"Tap again to remove":"Remove")+'</button>'+
+         '</div>';
+    });
+    h+='</div>';
+  }
+
   return h+'</div>';
 }
 
@@ -2301,13 +2614,13 @@ function viewSettings(){
      (d===1?'Set to the 1st, so periods follow the calendar month.'
            :'Every summary, comparison and projection uses '+ordinal(d)+' \u2192 '+ordinal(d)+' of the next month.')+
      '</p></div>'+
-     '<div class="card"><p class="hint">Changing this re-labels the periods ahead. Anything already recorded stays in the month it was filed under.</p></div>';
+     '<div class="card">'+why('Changing this re-labels the periods ahead. Anything already recorded stays in the month it was filed under.','What changing this does')+'</div>';
 
   /* ── Credit card ── */
   h+='<div class="sect">Credit card</div>';
   h+='<div class="card"><div class="card-h"><span class="card-t">Your card</span>'+
      (cardOn()?'<span class="lab" style="color:'+(cardUsage()>=100?"var(--coral)":"var(--muted)")+'">'+Math.round(cardUsage())+'% used</span>':'')+'</div>'+
-     '<p class="hint">Credit is borrowed, not income. The app only tracks it so you know what is really free.</p>'+
+     why('Credit is borrowed, not income. The app only tracks it so you know what is really free.')+
      '<div class="aline" style="margin-top:18px"><span class="lab">Credit limit</span>'+
      '<input class="atgtin" type="number" inputmode="numeric" data-card="limit" value="'+(c.limit||"")+'" placeholder="0"></div>'+
      '<div class="aline"><span class="lab">Currently used</span>'+
@@ -2352,7 +2665,7 @@ function viewSettings(){
      '<span class="lab" style="color:var(--text)">'+BUILD+'</span></div>'+
      '<div class="aline"><span class="lab">Storage</span>'+
      '<span class="lab" style="color:var(--text)">'+(MEMONLY?"this session only":"on this phone")+'</span></div>'+
-     '<p class="hint" style="margin-top:16px">Everything you enter stays on this phone. Nothing is sent anywhere, and there is no account.</p></div>';
+     why('Everything you enter stays on this phone. Nothing is sent anywhere, and there is no account.','Where your data lives')+'</div>';
 
   return h+'</div>';
 }
@@ -2363,7 +2676,7 @@ function backupCard(){
   if(days===null)h+='<div class="bkwarn">'+sym("warning")+'<span>You have never backed up. Everything lives only on this phone.</span></div>';
   else if(days>=30)h+='<div class="bkwarn">'+sym("warning")+'<span>Last backup was '+days+' days ago. Worth doing again.</span></div>';
   else h+='<p class="hint">Last backup '+(days===0?"today":days+" day"+(days>1?"s":"")+" ago")+'.</p>';
-  h+='<p class="hint" style="margin-top:10px">Nothing leaves the phone. A backup is a copy of your months, goals and entries that survives if the phone does not.</p>';
+  h+=why('Nothing leaves the phone. A backup is a copy of your months, goals and entries that survives if the phone does not.');
 
   h+='<div class="bkstep"><b>Save my data</b>'+
      '<p class="hint">A file you keep in Files, iCloud, or email to yourself.</p>'+
@@ -2374,7 +2687,7 @@ function backupCard(){
      '<button class="btn" id="copy">Copy as text</button></div>';
 
   h+='<div class="bkstep"><b>Bring my data back</b>'+
-     '<p class="hint">Replaces everything here with a backup you saved before. You are asked to confirm first.</p>'+
+     why('Replaces everything here with a backup you saved before. You are asked to confirm first.')+
      '<input type="file" id="bkfile" accept="application/json,.json,text/plain" style="display:none">'+
      '<button class="btn" id="pick">Restore from file</button>'+
      '<button class="btn ghost" id="paste">Paste backup text instead</button></div>';
@@ -2689,8 +3002,9 @@ function reportPDF(){
   rptRow(D,"Fixed bills",yen(fixedTotal(k)));
   rptRow(D,"Spending budget",yen(budgetVariable(k)));
   rptRow(D,"Buffer",yen(bufferAmount(k)));
-  var oo=spentOneoff(k);
+  var oo=consumedOneoff(k),handed=handedOverOf(k);
   if(oo>0)rptRow(D,"One-off spending",yen(oo),RRED);
+  if(handed>0)rptRow(D,"Given or repaid",yen(handed),RSOFT);
 
   var sv=savedNow(k),rate=m.salary>0?Math.max(0,sv)/m.salary*100:0;
   rptRoom(D,86);
@@ -2794,6 +3108,22 @@ function reportPDF(){
     });
     D.y-=22;
     rptNote(D,"The thin bar under each month shows how that month's saving was split between goals.");
+  }
+
+  /* ── Money outside ── only when there is any */
+  var gOut=givenOutstanding(),oOut=owedOutstanding();
+  if(gOut>0||oOut>0){
+    rptSection(D,"Money outside",30);
+    if(gOut>0){
+      rptRow(D,"Given, still out",yen(gOut),RSOFT);
+      rptNote(D,"Recorded so you know what you gave and to whom. It is not counted as money coming back, and it plays no part in any plan or goal above.");
+    }
+    if(oOut>0){
+      rptRow(D,"Borrowed, not yet repaid",yen(oOut),RSAF);
+      var age=oldestDebtAge();
+      if(age)rptRow(D,"Longest outstanding",age+" ago");
+      rptNote(D,"Borrowed money is an obligation, never income. None of it counts towards savings, goals or the health score.");
+    }
   }
 
   /* ── 4. Credit card ── */
@@ -2950,12 +3280,13 @@ function bind(){
     wi.oninput=function(){
       S.wiAmt=0;
       var x=+wi.value,left=Math.max(0,base-x),sc=healthFrom(salary,left,planned),col=healthColor(sc);
+      var scT=healthText(sc);
       var days=mrate>0?Math.round(x/mrate*30):0;
       elA.textContent="\u00A5"+fmt(x);
       elA.style.color=x>0?col:"";
       elS.textContent="\u00A5"+fmt(left);
       elS.style.color=x>0?col:"";
-      elH.innerHTML=x>0?(baseH+'<span class="wiarrow">\u2192</span>'+sc):String(baseH);
+      elH.innerHTML=x>0?(healthText(baseH)+'<span class="wiarrow">\u2192</span>'+scT):healthText(baseH);
       elH.style.color=x>0?col:healthColor(baseH);
       elE.textContent=delayText(x);
       elE.style.color=x>0?col:"";
@@ -3231,6 +3562,63 @@ function bind(){
 
   /* the offline line is part of the generated page now, so binding does
      not need to draw it — only the service worker finishing does */
+
+  /* ── money outside ── */
+  var gvAdd=document.getElementById("gvAdd");
+  if(gvAdd)gvAdd.onclick=function(){
+    var amt=parseFloat((document.getElementById("gvAmt")||{}).value)||0;
+    if(amt<=0){alert("Enter how much you gave.");return;}
+    var on=(document.getElementById("gvDate")||{}).value||todayISO();
+    OUT().given.push({id:"o"+Date.now().toString(36),
+      person:String((document.getElementById("gvPerson")||{}).value||"").trim(),
+      note:String((document.getElementById("gvNote")||{}).value||"").trim(),
+      amount:amt,on:on});
+    S.outArm=null;save();updateViewDOM();toast("Recorded");};
+
+  var bwAdd=document.getElementById("bwAdd");
+  if(bwAdd)bwAdd.onclick=function(){
+    var amt=parseFloat((document.getElementById("bwAmt")||{}).value)||0;
+    if(amt<=0){alert("Enter how much you borrowed.");return;}
+    OUT().borrowed.push({id:"o"+Date.now().toString(36),
+      person:String((document.getElementById("bwPerson")||{}).value||"").trim(),
+      amount:amt,
+      on:(document.getElementById("bwDate")||{}).value||todayISO(),
+      due:(document.getElementById("bwDue")||{}).value||""});
+    S.outArm=null;save();updateViewDOM();toast("Recorded");};
+
+  /* a return, or a repayment, is dated the day it actually happened */
+  q("[data-gback]").forEach(function(b){b.onclick=function(){
+    var g=givenList().find(function(x){return x.id===b.dataset.gback;});
+    if(!g)return;
+    g.backOn=todayISO();g.back=g.amount;
+    S.outArm=null;save();updateViewDOM();toast("Marked as returned");};});
+  q("[data-gunback]").forEach(function(b){b.onclick=function(){
+    var g=givenList().find(function(x){return x.id===b.dataset.gunback;});
+    if(!g)return;
+    delete g.backOn;delete g.back;
+    S.outArm=null;save();updateViewDOM();};});
+  q("[data-bpaid]").forEach(function(b){b.onclick=function(){
+    var x=borrowedList().find(function(y){return y.id===b.dataset.bpaid;});
+    if(!x)return;
+    x.repaidOn=todayISO();
+    S.outArm=null;save();updateViewDOM();toast("Marked as repaid");};});
+  q("[data-bunpaid]").forEach(function(b){b.onclick=function(){
+    var x=borrowedList().find(function(y){return y.id===b.dataset.bunpaid;});
+    if(!x)return;
+    delete x.repaidOn;
+    S.outArm=null;save();updateViewDOM();};});
+
+  /* removing needs a second tap, as everywhere else that destroys data */
+  q("[data-gdel2]").forEach(function(b){b.onclick=function(){
+    var id=b.dataset.gdel2;
+    if(S.outArm===id){OUT().given=givenList().filter(function(g){return g.id!==id;});S.outArm=null;}
+    else S.outArm=id;
+    save();updateViewDOM();};});
+  q("[data-bdel]").forEach(function(b){b.onclick=function(){
+    var id=b.dataset.bdel;
+    if(S.outArm===id){OUT().borrowed=borrowedList().filter(function(x){return x.id!==id;});S.outArm=null;}
+    else S.outArm=id;
+    save();updateViewDOM();};});
 
   var rs=document.getElementById("reset");
   if(rs)rs.onclick=function(){
