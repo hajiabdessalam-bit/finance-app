@@ -582,6 +582,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   line-height:1.2}
 .obtn:active{opacity:.6}
 .obtn.warn{color:var(--coral);border-color:rgba(255,122,92,.22);background:rgba(255,122,92,.07)}
+.jplan{color:var(--faint)}
 .unal{margin-top:16px;padding:12px 14px;border-radius:14px;
   background:rgba(255,179,61,.08);border:1px solid rgba(255,179,61,.22)}
 .unal .u1{display:block;font-family:var(--round);font-size:14px;font-weight:750;
@@ -675,7 +676,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b29 \u00B7 quieter screens";
+var BUILD="b30 \u00B7 planned vs banked";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -956,14 +957,20 @@ function monthProgress(k){
 
    saved = salary − fixed bills − spending budget − buffer used − one-offs   */
 function assumedSpend(k){return Math.max(budgetVariable(k),spentVariable(k));}
-function savedActual(k){
+/* What the equation expects, before you tell it otherwise. */
+function savedProjected(k){
   var m=M(k);
-  if(m.override!==null&&m.override!==undefined)return m.override;
   /* returnedOf is 0 unless something you gave away actually came back
      in this month, so every month without a return is unchanged */
   return m.salary-fixedTotal(k)-assumedSpend(k)-bufferCharge(k)-oneoffOverflow(k)+returnedOf(k);
 }
-function savedProjected(k){return savedActual(k);}
+/* The best figure available: what you recorded if you recorded it,
+   otherwise what the equation expects. */
+function savedActual(k){
+  var m=M(k);
+  if(m.override!==null&&m.override!==undefined)return m.override;
+  return savedProjected(k);
+}
 function savedNow(k){return savedActual(k);}
 function savedPlanned(k){return M(k).alloc.savings||0;}
 /* one-offs are unplanned, so they come straight out of savings */
@@ -1066,13 +1073,54 @@ function splitOf(k){
 function stampSplit(){
   var t=thisMonth();
   allMonths().forEach(function(k){
-    if(k>=t)S.months[k].split=currentSplit();   /* now and everything planned after */
+    /* Once a month is confirmed it is settled in substance, even if the
+       calendar has not caught up — so a change made now cannot reach
+       back into money that has already been banked. */
+    if(k>=t&&!isConfirmed(k))S.months[k].split=currentSplit();
   });
 }
 /* What this month actually puts into one goal */
+/* ── planned, projected, banked ──
+   Three different things the app used to run together.
+
+   PLANNED    what the plan says should happen. Exists for any month,
+              including ones that have not started.
+   PROJECTED  what the equation expects the live month to leave, if
+              nothing else happens. Still a prediction.
+   BANKED     money that is actually there. A month that has ended is
+              banked by definition; a month still running is banked
+              only once you record what you really saved.
+
+   A plan can predict money, but a prediction must never become money
+   you have already saved — so only BANKED reaches a goal's balance. */
+function isConfirmed(k){
+  var m=M(k);
+  if(!m)return false;
+  if(isSettled(k))return true;                       /* the past is finished */
+  return m.override!==null&&m.override!==undefined;  /* you told us yourself */
+}
+/* What to call a month's saving, given whether the money is real yet */
+function savedWord(k,cap){
+  var w=isSettled(k)?"saved"
+       :isConfirmed(k)?"banked so far"
+       :isAhead(k)?"planned"
+       :"projected";
+  return cap?w.charAt(0).toUpperCase()+w.slice(1):w;
+}
+function savedConfirmed(k){
+  if(!M(k))return 0;
+  return isConfirmed(k)?savedActual(k):0;
+}
+
+/* what a month has actually put into a goal */
 function contribution(k,id){
   var sp=splitOf(k);
-  return Math.max(0,savedActual(k))*(sp[id]||0)/100;
+  return Math.max(0,savedConfirmed(k))*(sp[id]||0)/100;
+}
+/* what a month is expected to put in, if the plan holds */
+function plannedContribution(k,id){
+  var sp=splitOf(k);
+  return Math.max(0,savedProjected(k))*(sp[id]||0)/100;
 }
 /* What a month saved but handed to no goal */
 function unallocatedPctOf(k){
@@ -1091,10 +1139,15 @@ function jarBanked(g){
   return closedMonths().reduce(function(s,k){return s+contribution(k,g.id);},0);
 }
 /* What the live month has added so far */
-function jarThisMonth(g){return contribution(thisMonth(),g.id);}
-/* The pool: what was already there, plus what this month has added.
-   This is the number progress and "remaining" are measured against. */
-function jarBalance(g){return jarBanked(g)+jarThisMonth(g);}
+/* what the live month has actually banked into a goal — zero until the
+   month is confirmed, however healthy the projection looks */
+function jarBankedThisMonth(g){return contribution(thisMonth(),g.id);}
+/* what a given month expects to put in. Takes the month being viewed,
+   so an upcoming page talks about that month and not this one. */
+function jarPlannedIn(k,g){return plannedContribution(k,g.id);}
+/* The pool: every yen confirmed into it, and nothing that is merely
+   expected. Progress and "remaining" are measured against this. */
+function jarBalance(g){return jarBanked(g)+jarBankedThisMonth(g);}
 function jarLeft(j){return Math.max(0,j.target-jarBalance(j));}
 function jarRate(j){return monthlyRate()*jarPct(j)/100;}
 function jarETA(j){return etaFor(jarLeft(j),jarRate(j));}
@@ -1846,7 +1899,7 @@ function viewHome(k,live){
      (live?'<span class="lab">day '+periodDay(k)+' of '+periodDays(k)+'</span>':'')+'</div><div class="eq">'+
      '<div class="eqrow"><span class="k">Income</span><span class="v">\u00A5'+fmt(m.salary)+'</span></div>'+
      '<div class="eqrow"><span class="k">Spending</span><span class="v" style="color:var(--muted)">\u2212'+fmt(spendTotal)+'</span></div>'+
-     '<div class="eqrow total"><span class="k">Saved this month</span>'+
+     '<div class="eqrow total"><span class="k">'+savedWord(k,true)+(isLive(k)?" this month":"")+'</span>'+
      '<span class="v" style="color:'+(d>=0?"var(--teal)":"var(--coral)")+'">\u00A5'+fmt(Math.max(0,sv))+'</span></div></div>'+
      '<div class="vs '+(d>=0?"up":"down")+'">'+(d>=0?"+":"\u2212")+fmt(Math.abs(d))+' vs the '+fmt(pl)+' you planned</div>';
   var bA=bufferAmount(k),bU=bufferUsed(k),bR=bufferReturned(k),bOv=oneoffOverflow(k);
@@ -1961,7 +2014,7 @@ function purseHTML(k,amt){
   var col=short>0?"var(--coral)":(big<=0?"var(--saffron)":"var(--teal)");
   var sub;
   if(take<=0)
-    sub="saved this month"+(buf>0?" \u00B7 plus \u00A5"+fmt(buf)+" of buffer":"")+
+    sub=savedWord(k)+" this month"+(buf>0?" \u00B7 plus \u00A5"+fmt(buf)+" of buffer":"")+
         (bufferOpen(k)?"":" \u00B7 buffer locked");
   else if(short>0)
     sub="\u00A5"+fmt(short)+" more than you have";
@@ -2120,6 +2173,13 @@ function newGoalSheet(){
 
 function viewGoals(noSheets){
   var k=cur(),plan=savedPlanned(k),tot=pctTotal(),h='<div class="view">';
+  /* what to call the figure at the top depends entirely on whether the
+     money is real yet */
+  var heroAmt=isConfirmed(k)?savedConfirmed(k):Math.max(0,savedActual(k));
+  var heroWord=isSettled(k)?"saved in "+mShort(k)
+              :isConfirmed(k)?"banked this month"
+              :isAhead(k)?"planned for "+mShort(k)
+              :"projected this month, not banked yet";
   var open=S.goals.filter(function(g){return !jarDone(g);});
   var next=open.slice().sort(function(a,b){var ra=jarRate(a),rb=jarRate(b);
     return (ra>0?jarLeft(a)/ra:1e9)-(rb>0?jarLeft(b)/rb:1e9);})[0];
@@ -2129,15 +2189,15 @@ function viewGoals(noSheets){
      '<span class="bigt-w" style="font-family:var(--round);font-size:21px;font-weight:800;letter-spacing:-.032em;flex:1">Your goals</span>'+
      '<span class="lab">'+open.length+' active</span></div>'+
      '<div class="salary-line" style="margin-top:20px"><span class="cur">\u00A5</span>'+
-     '<span class="heroamt">'+fmt(plan)+'</span></div>'+
-     '<p class="hint" style="margin-top:8px">saved this month'+
+     '<span class="heroamt">'+fmt(heroAmt)+'</span></div>'+
+     '<p class="hint" style="margin-top:8px">'+heroWord+
      (next?' \u00B7 next to land is <b style="color:'+next.col+'">'+esc(next.name)+'</b>':'')+'</p>'+
      (function(){
        var free=freeRoom();
        if(free<=0)return '';
-       var amt=Math.max(0,savedNow(k))*free/100;
+       var amt=Math.max(0,savedActual(k))*free/100;
        return '<div class="unal"><span class="u1">'+free+'% unallocated</span>'+
-              '<span class="u2">\u00A5'+fmt(amt)+' of this month\u2019s saving is going to no goal. '+
+              '<span class="u2">\u00A5'+fmt(amt)+' of '+(isLive(k)?"this month\u2019s":mShort(k)+"\u2019s")+' saving is going to no goal. '+
               'It stays in your savings \u2014 raise a share to put it to work.</span></div>';
      })()+'</div>';
 
@@ -2146,7 +2206,7 @@ function viewGoals(noSheets){
   /* one card per jar, with room to breathe */
   S.goals.forEach(function(g,i){
     var bal=jarBalance(g),pc=g.target>0?Math.min(100,bal/g.target*100):0,done=jarDone(g);
-    var dt=dueText(g),added=jarThisMonth(g);
+    var dt=dueText(g),banked=jarBankedThisMonth(g),planned=jarPlannedIn(k,g);
     h+='<div class="jarcard'+(done?"":" quiet")+'" data-gid="'+g.id+'" style="--jc:'+g.col+';--jc-soft:'+g.col+'26;--jc-line:'+g.col+'3d">'+
        '<div class="jhead"><span class="jico" style="background:'+tint(g.col)+';color:'+g.col+'">'+gSym(g.e)+'</span>'+
        '<span class="jmeta"><div class="jname">'+esc(g.name)+'</div>'+
@@ -2154,7 +2214,10 @@ function viewGoals(noSheets){
        '<span class="jpc" style="color:'+(done?"var(--teal)":g.col)+'">'+Math.round(pc)+'%</span></div>'+
        '<div class="jamt" style="color:'+(done?"var(--teal)":"var(--text)")+'">\u00A5'+fmt(bal)+'</div>'+
        '<div class="jof">of \u00A5'+fmt(g.target)+
-         (added>0?' <span style="color:'+g.col+'">\u00B7 +\u00A5'+fmt(added)+' this month</span>':'')+'</div>'+
+         (banked>0?' <span style="color:'+g.col+'">\u00B7 +\u00A5'+fmt(banked)+' banked this month</span>':'')+
+         (planned>0&&!(banked>0&&isLive(k))
+           ? ' <span class="jplan">\u00B7 +\u00A5'+fmt(planned)+' planned'+(isLive(k)?" this month":" in "+mShort(k))+'</span>'
+           : '')+'</div>'+
        '<div class="jbar"><i style="width:'+pc+'%;background:'+(done?"var(--teal)":g.col)+'"></i></div>'+
        '<div class="jrow"><span>'+(done?"target reached":"\u00A5"+fmt(jarLeft(g))+" remaining")+'</span>'+
        '<span class="r">'+(done?"\u2713":(jarETA(g)==="\u2014"?"\u2014":"about "+jarETA(g)))+'</span></div>'+
@@ -3011,7 +3074,7 @@ function reportPDF(){
   D.y-=6;
   pdfFill(D,PM,D.y-62,W,62,RPAPER);
   pdfFill(D,PM,D.y-62,3,62,sv>=0?RTEAL:RRED);
-  pdfText(D,PM+18,D.y-24,"Saved this month",9.5,false,RSOFT);
+  pdfText(D,PM+18,D.y-24,savedWord(k,true)+(isLive(k)?" this month":""),9.5,false,RSOFT);
   pdfText(D,PM+18,D.y-48,yen(sv),22,true,sv>=0?RTEAL:RRED);
   pdfTextR(D,PW-PM-18,D.y-24,Math.round(rate)+"%",9.5,false,RSOFT);
   pdfTextR(D,PW-PM-18,D.y-48,"of salary",11,false,RINK);
