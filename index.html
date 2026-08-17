@@ -654,6 +654,173 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .view{animation:in .4s var(--ease) both}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
+
+/* ═══════════════════════════════════════════════════════════════
+   DEPTH PASS
+   Clean first, depth second, glow third.
+
+   The flatness came from every surface sitting at exactly the same
+   height with exactly the same edge. Nothing here changes a colour, a
+   size, a spacing or a shape — it only decides which things are
+   nearer the eye than others, and lets light fall accordingly.
+
+   Two shadows per surface, always: a tight one an inch below the card
+   that says "this has an edge", and a wide soft one that says "there
+   is space under it". A single hairline of light along the top edge
+   does the rest, because that is where the app's own light comes from.
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  /* the tight shadow + the soft one, at two heights */
+  --lift-1:0 1px 2px rgba(0,0,0,.34),0 10px 24px -18px rgba(0,0,0,.8);
+  --lift-2:0 2px 5px rgba(0,0,0,.40),0 20px 44px -24px rgba(0,0,0,.9);
+  /* the hairline of light along a top edge */
+  --edge:inset 0 1px 0 rgba(255,255,255,.055);
+  --edge-2:inset 0 1px 0 rgba(255,255,255,.085);
+  /* the faintest possible sheen down the top of a surface */
+  --sheen:linear-gradient(180deg,rgba(255,255,255,.024),rgba(255,255,255,0) 46%);
+}
+
+/* ── ordinary cards: lifted, lit along the top, never glowing ── */
+.card{
+  background:var(--sheen),var(--surface);
+  box-shadow:var(--edge),var(--lift-1);
+  transition:box-shadow .3s var(--ease);
+}
+/* the goal cards already carry their own depth; give them the same light */
+.jarcard{box-shadow:var(--edge),var(--lift-1)}
+.jarcard.quiet{box-shadow:var(--edge),0 1px 2px rgba(0,0,0,.3),0 8px 20px -18px rgba(0,0,0,.75)}
+
+/* ── rows that are really buttons sit one step higher and compress ── */
+.srow,.menucard{
+  background:var(--sheen),var(--surface);
+  box-shadow:var(--edge),var(--lift-1);
+  transition:transform .16s var(--spring),box-shadow .18s var(--ease),background .18s var(--ease);
+}
+.srow:active,.menucard:active{
+  transform:scale(.985);
+  box-shadow:var(--edge),0 1px 2px rgba(0,0,0,.3);
+}
+
+/* ── a warning lets its own colour reach the light under the card ──
+   Only ever a tint of the shadow, never a halo around the card. */
+@supports selector(:has(*)){
+  .card:has(.warnbox.over),.card:has(.bkwarn),.card:has(.unal),.card:has(.offl.warn){
+    box-shadow:var(--edge),var(--lift-1),0 14px 34px -28px rgba(255,122,92,.5);
+  }
+  .card:has(.unal),.card:has(.bkwarn){
+    box-shadow:var(--edge),var(--lift-1),0 14px 34px -28px rgba(255,179,61,.5);
+  }
+  .card:has(.warnbox.clear),.card:has(.offl:not(.warn)){
+    box-shadow:var(--edge),var(--lift-1),0 14px 34px -30px rgba(47,212,188,.45);
+  }
+}
+
+/* ── touch feedback: things move under the finger, briefly ── */
+.btn{
+  box-shadow:var(--edge),0 1px 2px rgba(0,0,0,.3);
+  transition:transform .15s var(--spring),box-shadow .15s var(--ease),filter .15s var(--ease);
+}
+.btn:active{
+  transform:scale(.975);
+  box-shadow:inset 0 2px 7px rgba(0,0,0,.34);
+  filter:brightness(.95);
+}
+.btn.go{box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(123,114,255,.55)}
+.btn.go:active{box-shadow:inset 0 2px 9px rgba(0,0,0,.3);filter:brightness(.93)}
+.btn.ghost{box-shadow:none}
+.btn.ghost:active{box-shadow:none;background:rgba(255,255,255,.03)}
+
+.addb{
+  box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 10px 22px -13px rgba(123,114,255,.6);
+  transition:transform .15s var(--spring),box-shadow .15s var(--ease),filter .15s var(--ease);
+}
+.addb:active{transform:scale(.955);box-shadow:inset 0 2px 9px rgba(0,0,0,.32);filter:brightness(.93)}
+
+.obtn{transition:transform .15s var(--spring),opacity .15s var(--ease),box-shadow .15s var(--ease)}
+.obtn:active{transform:scale(.955);opacity:.7;box-shadow:inset 0 1px 5px rgba(0,0,0,.3)}
+
+.step,.key,.emrow button,.shx,.mnav{box-shadow:var(--edge),0 1px 2px rgba(0,0,0,.26)}
+.step:active,.key:active,.emrow button:active,.shx:active,.mnav:active{
+  box-shadow:inset 0 1px 5px rgba(0,0,0,.34);
+}
+
+/* ── the slider: a real object on a track ── */
+.slider::-webkit-slider-runnable-track{box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
+.slider::-webkit-slider-thumb{
+  box-shadow:0 1px 2px rgba(0,0,0,.45),0 5px 14px -5px rgba(0,0,0,.8),
+             inset 0 -1px 1px rgba(0,0,0,.12);
+  transition:transform .16s var(--spring),box-shadow .16s var(--ease);
+}
+.slider:active::-webkit-slider-thumb{
+  transform:scale(1.18);
+  box-shadow:0 1px 3px rgba(0,0,0,.5),0 8px 20px -6px rgba(0,0,0,.85);
+}
+
+/* ── the lock, and the small icons that change meaning ── */
+.lockbtn svg{transition:stroke .25s var(--ease),transform .3s var(--spring)}
+.lockbtn.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 10px -6px rgba(255,179,61,.7)}
+.lockbtn.on svg{transform:scale(1.07)}
+.jico,.menuico,.ins .ic,.ico{transition:box-shadow .25s var(--ease),transform .25s var(--spring)}
+
+/* ── a folded explanation is a control you can press ──
+   Still the quietest thing on the card, but now clearly a thing. */
+.why>summary{
+  padding:9px 12px;border-radius:12px;
+  background:rgba(255,255,255,.022);
+  border:1px solid rgba(255,255,255,.05);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+  transition:background .18s var(--ease),border-color .18s var(--ease),
+             color .18s var(--ease),transform .14s var(--spring);
+}
+.why>summary:active{transform:scale(.988);background:rgba(255,255,255,.05);opacity:1}
+.why[open]>summary{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.075)}
+.whyb{padding:0 2px}
+
+/* ── the projected figure on the spending screen is the focus ──
+   A soft internal highlight, so the panel reads as a shaped surface
+   rather than a flat rectangle, and the number sits in the light. */
+.purse{
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 58%),var(--surface-2);
+  box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 12px 28px -22px rgba(0,0,0,.8);
+}
+.purse::before{
+  content:"";position:absolute;left:-6%;top:-70%;width:56%;height:220%;
+  background:radial-gradient(closest-side,rgba(255,255,255,.055),rgba(255,255,255,0) 72%);
+  pointer-events:none;
+}
+.purse>*{position:relative}
+.pursebig{
+  font-size:27px;
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+  transition:color .22s var(--ease),text-shadow .22s var(--ease);
+}
+
+/* ── ambient light ──
+   The three washes that were already behind everything now drift, very
+   slowly and very slightly, and the top-left one takes its hue from how
+   the month is going. Nothing floats, nothing spins, nothing pulses. */
+body::before{
+  background:
+    radial-gradient(58% 32% at 16% 0%,rgba(123,114,255,.19),transparent 70%),
+    radial-gradient(46% 28% at 96% 10%,rgba(47,212,188,.09),transparent 70%),
+    radial-gradient(70% 38% at 50% 103%,var(--amb,rgba(255,179,61,.06)),transparent 70%);
+  transition:background 1.2s var(--ease);
+  animation:drift 68s ease-in-out infinite;
+  will-change:transform;
+}
+@keyframes drift{
+  0%,100%{transform:translate3d(0,0,0) scale(1)}
+  50%    {transform:translate3d(-1.2%,1%,0) scale(1.05)}
+}
+html.mood-good{--amb:rgba(47,212,188,.07)}
+html.mood-warn{--amb:rgba(255,179,61,.07)}
+html.mood-bad {--amb:rgba(255,122,92,.06)}
+
+@media (prefers-reduced-motion:reduce){
+  body::before{animation:none}
+}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -676,7 +843,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b30 \u00B7 planned vs banked";
+var BUILD="b31 \u00B7 depth";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -1873,7 +2040,19 @@ function render(){
   .forEach(function(t){var on=S.tab===t[0]||(t[0]==="more"&&(S.more||MORE_PAGES.indexOf(S.tab)>-1));
     bar+='<button class="tab'+(on?" on":"")+'" data-t="'+t[0]+'">'+t[2]+'<span>'+t[1]+'</span></button>';});
   document.getElementById("bar").innerHTML=bar;
+  paintMood();
   bind();
+}
+/* One class on <html>, so the light behind everything knows whether the
+   month is going well. It is the only thing the score changes globally,
+   and the difference is barely nameable — which is the point. */
+function paintMood(){
+  var v=null;
+  try{v=healthScore(cur());}catch(e){}
+  var m=v===null?"":v>=80?"mood-good":v>=45?"mood-warn":"mood-bad";
+  var c=document.documentElement.classList;
+  ["mood-good","mood-warn","mood-bad"].forEach(function(x){if(x!==m)c.remove(x);});
+  if(m&&!c.contains(m))c.add(m);
 }
 
 function viewHome(k,live){
