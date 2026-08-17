@@ -776,25 +776,113 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .why[open]>summary{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.075)}
 .whyb{padding:0 2px}
 
-/* ── the projected figure on the spending screen is the focus ──
-   A soft internal highlight, so the panel reads as a shaped surface
-   rather than a flat rectangle, and the number sits in the light. */
-.purse{
-  position:relative;overflow:hidden;
-  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 58%),var(--surface-2);
-  box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 12px 28px -22px rgba(0,0,0,.8);
+/* ── contextual help ──
+   The icon is part of the line it sits on and costs nothing vertically.
+   The popover is created on demand and removed again, so when it is shut
+   there is no container, no padding and no reserved row anywhere. */
+.iq{
+  display:inline-grid;place-items:center;vertical-align:-.22em;
+  width:22px;height:22px;margin-left:5px;border-radius:50%;flex:none;
+  color:var(--faint);background:transparent;
+  transition:color .2s var(--ease),background .2s var(--ease),transform .14s var(--spring);
 }
+.iq .sym{width:15px;height:15px;stroke-width:1.6}
+.iq:active,.iq.on{color:var(--majorelle);background:rgba(123,114,255,.14);transform:scale(.92)}
+.iq.on{transform:none}
+
+.iqpop{
+  position:fixed;z-index:140;padding:12px 14px;border-radius:14px;
+  background:rgba(30,27,60,.98);border:1px solid var(--line-2);
+  color:var(--muted);font-size:12.5px;line-height:1.5;
+  box-shadow:0 2px 6px rgba(0,0,0,.4),0 22px 48px -22px rgba(0,0,0,.95);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  opacity:0;transform:translateY(-4px);pointer-events:none;
+  transition:opacity .18s var(--ease),transform .18s var(--ease);
+}
+.iqpop.on{opacity:1;transform:none;pointer-events:auto}
+.iqpop::after{
+  content:"";position:absolute;top:-5px;left:var(--arrow,50%);margin-left:-5px;
+  width:9px;height:9px;transform:rotate(45deg);
+  background:rgba(30,27,60,.98);border-left:1px solid var(--line-2);border-top:1px solid var(--line-2);
+}
+.iqpop.above::after{top:auto;bottom:-5px;border:0;
+  border-right:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+
+/* the whole of a removed paragraph, said in one dot */
+.offplan{
+  display:inline-block;width:7px;height:7px;border-radius:50%;flex:none;
+  margin-right:8px;vertical-align:.12em;
+  background:var(--coral);box-shadow:0 0 10px -1px var(--coral);
+}
+.eqrow.total .k{display:inline-flex;align-items:center}
+
+/* ── the projected figure on the spending screen ──
+   Large number, small icon for what it is, quiet control for why. The
+   number and its label are one stacked block, so a label that wraps
+   cannot drag the number off its own line. One colour variable, --pc,
+   carries the state through the icon, the number and the card's edge.
+   Nothing else on the page is treated this way. */
+.purse{
+  --pc:var(--teal);
+  --pc-soft:rgba(47,212,188,.14);
+  --pc-line:rgba(47,212,188,.30);
+  --pc-edge:rgba(47,212,188,.13);
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;gap:14px;
+  padding:15px 15px 15px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.052),rgba(255,255,255,0) 58%),var(--surface-2);
+  border:1px solid var(--line);
+  box-shadow:var(--edge-2),
+             0 1px 2px rgba(0,0,0,.3),
+             0 16px 34px -24px rgba(0,0,0,.85),
+             0 0 22px -12px var(--pc-edge);
+  transition:box-shadow .3s var(--ease),border-color .3s var(--ease);
+}
+.purse.tone-warn{--pc:var(--saffron);--pc-soft:rgba(255,179,61,.14);--pc-line:rgba(255,179,61,.30);--pc-edge:rgba(255,179,61,.15)}
+.purse.tone-bad {--pc:var(--coral); --pc-soft:rgba(255,122,92,.14);--pc-line:rgba(255,122,92,.32);--pc-edge:rgba(255,122,92,.17)}
+/* the soft internal highlight, so it reads as a shaped surface */
 .purse::before{
   content:"";position:absolute;left:-6%;top:-70%;width:56%;height:220%;
-  background:radial-gradient(closest-side,rgba(255,255,255,.055),rgba(255,255,255,0) 72%);
+  background:radial-gradient(closest-side,rgba(255,255,255,.06),rgba(255,255,255,0) 72%);
   pointer-events:none;
 }
 .purse>*{position:relative}
-.pursebig{
-  font-size:27px;
-  text-shadow:0 1px 0 rgba(0,0,0,.35);
-  transition:color .22s var(--ease),text-shadow .22s var(--ease);
+
+/* the icon: ambient light, not neon — a wash, a hairline ring, no fill */
+.purse-ico{
+  flex:none;width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;color:var(--pc);
+  background:radial-gradient(closest-side,var(--pc-soft),rgba(255,255,255,0) 78%);
+  box-shadow:inset 0 0 0 1px var(--pc-line),0 0 16px -6px var(--pc);
+  transition:color .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease);
 }
+.purse-ico .sym{width:21px;height:21px;stroke-width:1.6}
+
+.purse-txt{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:66px}
+.pursebig{
+  font-size:27px;color:var(--pc);
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+  transition:color .28s var(--ease);
+}
+.pursesub{
+  font-size:12px;color:var(--muted);line-height:1.4;
+  display:block;flex:none;
+}
+.pursesub em{display:block;font-style:normal;color:var(--faint);margin-top:2px}
+
+/* the information control — barely there until you touch it */
+.purse-i{
+  flex:none;width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;color:var(--faint);
+  background:transparent;align-self:center;
+  transition:color .2s var(--ease),background .2s var(--ease),transform .14s var(--spring);
+}
+.purse-i .sym{width:17px;height:17px}
+.purse-i:active{color:var(--pc);background:var(--pc-soft);transform:scale(.9)}
+
+/* the number is nudged when it changes, so the eye follows it */
+@keyframes bump{from{transform:translateY(2px);opacity:.55}to{transform:none;opacity:1}}
+.pursebig.bump{animation:bump .26s var(--ease)}
 
 /* ── ambient light ──
    The three washes that were already behind everything now drift, very
@@ -843,7 +931,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b31 \u00B7 depth";
+var BUILD="b33 \u00B7 quiet home";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -1666,6 +1754,78 @@ function catOf(id){return CATS.find(function(c){return c.id===id;})||{id:"oneoff
    Nothing is removed: the words the app used to say are all still here,
    they just start folded so the numbers reach you first. Built on
    <details>, so opening one needs no state, no handler and no redraw. */
+/* ── contextual help ──
+   A folded section still costs a row of screen even when shut. This
+   costs nothing: the icon is 22px of the line it already sits on, and
+   the explanation lives in one popover element shared by every ⓘ in the
+   app, created only when something is actually asked. */
+function iq(text){
+  return '<button class="iq" type="button" data-iq="'+esc(text)+'" aria-label="What this means">'+sym("info")+'</button>';
+}
+function closeIQ(){
+  var el=document.getElementById("iqpop");
+  if(!el)return;
+  el.classList.remove("on");
+  clearTimeout(el.__t);
+  el.__t=setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
+  var was=document.querySelector(".iq.on");
+  if(was)was.classList.remove("on");
+}
+function openIQ(btn){
+  var open=btn.classList.contains("on");
+  closeIQ();
+  if(open)return;                       /* tapping the same one shuts it */
+  var el=document.createElement("div");
+  el.id="iqpop";el.className="iqpop";el.setAttribute("role","tooltip");
+  el.innerHTML='<span>'+esc(btn.dataset.iq||"")+'</span>';
+  document.body.appendChild(el);
+  btn.classList.add("on");
+
+  /* sit under the icon, nudged inside the screen edges */
+  var r=btn.getBoundingClientRect(),m=12;
+  var w=Math.min(268,window.innerWidth-m*2);
+  el.style.width=w+"px";
+  var left=Math.min(Math.max(m,r.left+r.width/2-w/2),window.innerWidth-w-m);
+  el.style.left=left+"px";
+  var top=r.bottom+8;
+  if(top+el.offsetHeight>window.innerHeight-m)top=Math.max(m,r.top-8-el.offsetHeight);
+  el.style.top=top+"px";
+  el.style.setProperty("--arrow",(r.left+r.width/2-left)+"px");
+  el.classList.toggle("above",top<r.top);
+  el.__born=Date.now();
+  requestAnimationFrame(function(){el.classList.add("on");});
+}
+/* one listener for the whole app: anything else dismisses it */
+(function(){
+  document.addEventListener("click",function(e){
+    var b=e.target.closest?e.target.closest(".iq"):null;
+    if(b){e.preventDefault();e.stopPropagation();openIQ(b);return;}
+    if(!(e.target.closest&&e.target.closest("#iqpop")))closeIQ();
+  },true);
+  window.addEventListener("resize",closeIQ);
+  document.addEventListener("scroll",function(){
+    var el=document.getElementById("iqpop");
+    if(el&&Date.now()-el.__born<350)return;   /* the scroll that revealed it */
+    closeIQ();
+  },true);
+})();
+
+/* Everything the three removed lines used to say, in one sentence that
+   only exists while it is being read. */
+function standsHelp(k){
+  var pl=savedPlanned(k),sv=savedActual(k),d=sv-pl;
+  var oo=spentOneoff(k),bU=bufferUsed(k),bA=bufferAmount(k);
+  var out=savedWord(k,true)+" is your income less fixed bills, spending budget, buffer and anything unplanned. ";
+  out+=Math.abs(d)<1?"That lands exactly on the \u00A5"+fmt(pl)+" you planned."
+      :d>0?"That is \u00A5"+fmt(d)+" above the \u00A5"+fmt(pl)+" you planned."
+          :"That is \u00A5"+fmt(-d)+" below the \u00A5"+fmt(pl)+" you planned.";
+  if(oo>0)out+=" \u00A5"+fmt(oo)+" of unplanned spending is the reason";
+  if(oo>0&&bA>0)out+=bU>0?", of which the buffer absorbed \u00A5"+fmt(bU)+".":", and the buffer was locked or empty.";
+  else if(oo>0)out+=".";
+  else if(bA>0)out+=" Your \u00A5"+fmt(bA)+" buffer is untouched.";
+  return out;
+}
+
 function why(html,label){
   return '<details class="why"><summary>'+(label||"How this works")+'</summary>'+
          '<div class="whyb">'+html+'</div></details>';
@@ -1729,6 +1889,10 @@ var SYM={
   flame:'<path d="M12 3.2s5.5 3.9 5.5 8.6a5.5 5.5 0 0 1-11 0c0-1.6.6-3 1.4-4.1.4 1 1 1.7 1.9 2.1 0-2.6.9-5 2.2-6.6z"/>',
   speed:'<path d="M4.4 17.6a8.6 8.6 0 1 1 15.2 0"/><path d="m12 12.4 3.7-3.1"/><circle cx="12" cy="13.6" r="1.2" fill="currentColor" stroke="none"/>',
   check:'<path d="m5.4 12.6 4.4 4.4 8.8-10"/>',
+  /* which way this month is being pushed */
+  impact:'<path d="M3.4 16.6 9 11l3.6 3.6L20.6 6.6"/><path d="M15.4 6.6h5.2v5.2"/><path d="M3.4 20.6h17.2"/>',
+  impactDown:'<path d="M3.4 7.4 9 13l3.6-3.6 8 8"/><path d="M20.6 15.6h-5.2v-5.2"/><path d="M3.4 20.6h17.2"/>',
+  info:'<circle cx="12" cy="12" r="8.6"/><path d="M12 11.2v5"/><circle cx="12" cy="8.1" r=".62" fill="currentColor" stroke="none"/>',
   plus:'<path d="M12 5.6v12.8M5.6 12h12.8"/>',
   minus:'<path d="M5.6 12h12.8"/>'
 };
@@ -2078,22 +2242,11 @@ function viewHome(k,live){
      (live?'<span class="lab">day '+periodDay(k)+' of '+periodDays(k)+'</span>':'')+'</div><div class="eq">'+
      '<div class="eqrow"><span class="k">Income</span><span class="v">\u00A5'+fmt(m.salary)+'</span></div>'+
      '<div class="eqrow"><span class="k">Spending</span><span class="v" style="color:var(--muted)">\u2212'+fmt(spendTotal)+'</span></div>'+
-     '<div class="eqrow total"><span class="k">'+savedWord(k,true)+(isLive(k)?" this month":"")+'</span>'+
-     '<span class="v" style="color:'+(d>=0?"var(--teal)":"var(--coral)")+'">\u00A5'+fmt(Math.max(0,sv))+'</span></div></div>'+
-     '<div class="vs '+(d>=0?"up":"down")+'">'+(d>=0?"+":"\u2212")+fmt(Math.abs(d))+' vs the '+fmt(pl)+' you planned</div>';
-  var bA=bufferAmount(k),bU=bufferUsed(k),bR=bufferReturned(k),bOv=oneoffOverflow(k);
-  if(bA>0){
-    h+='<div class="vs" style="margin-top:6px;color:'+(bOv>0?"var(--coral)":"var(--teal)")+'">'+sym("buffer")+' '+
-      (isLive(k)
-        ? (bU===0?"buffer untouched \u00B7 \u00A5"+fmt(bA)+" still yours"
-          :bOv>0?"buffer absorbed \u00A5"+fmt(bU)+" \u00B7 \u00A5"+fmt(bOv)+" hit savings"
-                :"buffer absorbed \u00A5"+fmt(bU)+" \u00B7 \u00A5"+fmt(bufferLeft(k))+" left")
-        : (bU===0?"buffer untouched \u00B7 \u00A5"+fmt(bA)+" added to savings"
-          :bOv>0?"buffer absorbed \u00A5"+fmt(bU)+" \u00B7 \u00A5"+fmt(bOv)+" hit savings"
-                :"buffer absorbed \u00A5"+fmt(bU)+" \u00B7 \u00A5"+fmt(bR)+" returned to savings"))+'</div>';
-  }
-  if(oo>0)h+='<div class="vs down" style="margin-top:6px">'+sym("warning")+' \u00A5'+fmt(oo)+' unplanned \u00B7 '+
-    (pl>0?Math.round(Math.min(100,oo/pl*100))+'% of this month\u2019s savings':'over your savings')+'</div>';
+     '<div class="eqrow total"><span class="k">'+savedWord(k,true)+(isLive(k)?" this month":"")+
+       iq(standsHelp(k))+'</span>'+
+     '<span class="v" style="color:'+(d>=0?"var(--teal)":"var(--coral)")+'">'+
+       (d<0?'<i class="offplan" title="Below plan"></i>':'')+
+       '\u00A5'+fmt(Math.max(0,sv))+'</span></div></div>';
   h+='<details class="more"><summary>Breakdown</summary><div class="eq">'+
      '<div class="eqrow"><span class="k">Fixed bills</span><span class="v" style="color:var(--muted)">\u2212'+fmt(fx)+'</span></div>'+
      '<div class="eqrow"><span class="k">Spending budget</span><span class="v" style="color:var(--muted)">\u2212'+fmt(assumedSpend(k))+'</span></div>'+
@@ -2107,7 +2260,9 @@ function viewHome(k,live){
 
   h+='<div class="card" id="wiCard" data-wi-saved="'+Math.max(0,sv)+'" data-wi-planned="'+pl+'"'+
      ' data-wi-salary="'+m.salary+'" data-wi-rate="'+Math.round(monthlyRate())+'" data-wi-base="'+hs+'">'+
-     '<div class="card-h"><span class="card-t">Before you buy it</span></div>'+
+     '<div class="card-h"><span class="card-t">Before you buy it'+
+     iq('The delay shown is an estimate, '+paceBasis()+'. Health is what your score would become if you spent this, and every goal moves back by the same share of your saving it would have taken.')+
+     '</span></div>'+
      '<span class="lab">Considering spending</span>'+
      '<div class="wiamt" id="wiAmt" style="color:'+(pre>0?healthColor(healthFrom(m.salary,Math.max(0,sv-pre),pl)):'')+'">\u00A5'+fmt(pre)+'</div>'+
      '<input class="slider" id="wiSlider" type="range" min="0" max="'+cap+'" step="100" value="'+pre+'" aria-label="Amount you are considering">'+
@@ -2118,7 +2273,7 @@ function viewHome(k,live){
        (pre>0?healthText(hs)+'<span class="wiarrow">\u2192</span>'+healthText(healthFrom(m.salary,Math.max(0,sv-pre),pl)):healthText(hs))+'</div></div>'+
      '<div class="sc"><div class="k">every goal</div><div class="v" id="wiEta">'+delayText(pre)+'</div></div></div>'+
      '<p class="hint" id="wiWhy" style="margin-top:12px">'+(pre>0?'From your calculator. Drag to adjust.':'Drag the slider before you decide.')+'</p>'+
-     why('The delay shown is an estimate, '+paceBasis()+'. Health is what your score would become if you spent this, and every goal moves back by the same share of your saving it would have taken.','How this is worked out')+'</div>';
+     '</div>';
 
   if(cardOn()){
     var c=card(),use=cardUsage(),np=nextPayment();
@@ -2182,7 +2337,7 @@ function viewPlan(k,live){
 /* What you have to spend, shown before anything is typed and moved as
    you type. Standing still it answers "can I afford this?"; while you
    type it answers "what will be left?".                              */
-function purseHTML(k,amt){
+function purseData(k,amt){
   var sav=Math.max(0,savedActual(k)),buf=bufferFree(k);
   var take=Math.max(0,amt||0);
   var fromBuf=Math.min(take,buf),fromSav=Math.min(take-fromBuf,sav);
@@ -2190,18 +2345,38 @@ function purseHTML(k,amt){
   var short=take-fromBuf-fromSav;
 
   var big=take>0?savAfter:sav;
-  var col=short>0?"var(--coral)":(big<=0?"var(--saffron)":"var(--teal)");
-  var sub;
-  if(take<=0)
-    sub=savedWord(k)+" this month"+(buf>0?" \u00B7 plus \u00A5"+fmt(buf)+" of buffer":"")+
-        (bufferOpen(k)?"":" \u00B7 buffer locked");
-  else if(short>0)
-    sub="\u00A5"+fmt(short)+" more than you have";
-  else
-    sub="left after this"+(bufAfter>0?" \u00B7 buffer \u00A5"+fmt(bufAfter):"");
+  var tone=short>0?"bad":(big<=0?"warn":"ok");
+  var line1,line2;
+  if(take<=0){
+    line1=savedWord(k)+" this month";
+    line2=(buf>0?"plus \u00A5"+fmt(buf)+" of buffer":"")+
+          (bufferOpen(k)?"":(buf>0?" \u00B7 ":"")+"buffer locked");
+  }else if(short>0){
+    line1="\u00A5"+fmt(short)+" more than you have";
+    line2="";
+  }else{
+    line1="left after this";
+    line2=bufAfter>0?"buffer \u00A5"+fmt(bufAfter)+" still untouched":"";
+  }
+  return{big:"\u00A5"+fmt(Math.max(0,big)),line1:line1,line2:line2,tone:tone,
+         icon:tone==="ok"?"impact":"impactDown"};
+}
 
-  return '<div class="pursebig" style="color:'+col+'">\u00A5'+fmt(Math.max(0,big))+'</div>'+
-         '<div class="pursesub">'+sub+'</div>';
+/* ── the projected figure ──
+   A small icon for what this is, the number itself as the one loud thing
+   on the card, and a quiet control on the right that opens the
+   explanation already sitting underneath. The number and its label are
+   a stacked block so the label can wrap without dragging the number
+   off its own baseline. */
+function purseHTML(k,amt){
+  var d=purseData(k,amt);
+  return '<span class="purse-ico" data-ico="'+d.icon+'">'+sym(d.icon)+'</span>'+
+         '<span class="purse-txt">'+
+           '<span class="pursebig">'+d.big+'</span>'+
+           '<span class="pursesub">'+esc(d.line1)+
+             (d.line2?'<em>'+esc(d.line2)+'</em>':'')+'</span>'+
+         '</span>'+
+         '<button class="purse-i" type="button" aria-label="Where this comes from">'+sym("info")+'</button>';
 }
 
 function viewLog(k){
@@ -2219,7 +2394,7 @@ function viewLog(k){
      '<input class="notefield" id="enote" style="margin-top:0" placeholder="What was it? e.g. TV, taxi, repair">'+
      '<div class="entry" style="margin-top:8px"><input class="amtfield" id="eamt" type="number" inputmode="decimal" placeholder="How much?">'+
      '<button class="addb" id="eadd">Add</button></div>'+
-     '<div id="purse" class="purse"></div>'+
+     '<div id="purse" class="purse tone-ok"></div>'+
      '<div id="cardWarn"></div>'+
      why(onCard
        ? "Goes on the card. \u00A5"+fmt(cardAvail())+" of \u00A5"+fmt(card().limit)+" credit is free right now."
@@ -3606,12 +3781,46 @@ function bind(){
   /* live credit check while typing an amount */
   var wBox=document.getElementById("cardWarn"),amtF=document.getElementById("eamt");
   var purse=document.getElementById("purse");
+  /* Typing changes three short strings and a colour. Rewriting the card
+     for that would restart the icon's light and throw the number away
+     mid-transition, so each part is updated only when it actually
+     differs, and the number is nudged so the eye follows the change. */
   function paintPurse(){
     if(!purse)return;
-    purse.innerHTML=purseHTML(cur(),parseFloat(amtF&&amtF.value)||0);
+    var d=purseData(cur(),parseFloat(amtF&&amtF.value)||0);
+    var big=purse.querySelector(".pursebig"),sub=purse.querySelector(".pursesub");
+    if(!big||!sub){purse.innerHTML=purseHTML(cur(),parseFloat(amtF&&amtF.value)||0);big=purse.querySelector(".pursebig");sub=purse.querySelector(".pursesub");}
+    if(purse.__tone!==d.tone){
+      purse.__tone=d.tone;
+      purse.className="purse tone-"+d.tone;
+    }
+    var ico=purse.querySelector(".purse-ico");
+    if(ico&&ico.dataset.ico!==d.icon){
+      ico.dataset.ico=d.icon;
+      ico.innerHTML=sym(d.icon);
+    }
+    if(big&&big.firstChild&&big.textContent!==d.big){
+      big.textContent=d.big;
+      big.classList.remove("bump");void big.offsetWidth;big.classList.add("bump");
+    }
+    if(sub){
+      var want=esc(d.line1)+(d.line2?'<em>'+esc(d.line2)+'</em>':'');
+      if(sub.innerHTML!==want)sub.innerHTML=want;
+    }
   }
-  if(purse){paintPurse();
-    if(amtF&&!amtF.__purseBound){amtF.__purseBound=true;amtF.addEventListener("input",paintPurse);}}
+  if(purse){
+    paintPurse();
+    if(amtF&&!amtF.__purseBound){amtF.__purseBound=true;amtF.addEventListener("input",paintPurse);}
+    /* the information control opens the explanation already on the card */
+    var pin=purse.querySelector(".purse-i");
+    if(pin)pin.onclick=function(){
+      var card=purse.closest?purse.closest(".card"):null;
+      var det=card?card.querySelector("details.why"):null;
+      if(!det)return;
+      det.open=!det.open;
+      if(det.open)det.scrollIntoView({block:"nearest",behavior:"smooth"});
+    };
+  }
   function creditCheck(){
     if(!wBox)return;
     var v=parseFloat(amtF&&amtF.value)||0;
