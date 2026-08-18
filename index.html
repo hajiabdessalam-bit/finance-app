@@ -403,13 +403,13 @@ details.more .eqrow{font-size:13px}
   font-size:13.5px;font-weight:600;white-space:nowrap;color:var(--muted);transition:all .22s var(--ease);flex:none}
 .chip.on{color:#fff;border-color:currentColor}
 .chip:active{transform:scale(.94)}
-.entry{display:flex;gap:8px}
-.amtfield{flex:1;background:var(--surface-2);border-radius:14px;padding:13px 15px;font-family:var(--round);
-  font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.entry{display:flex;gap:8px;align-items:stretch}
+.amtfield{flex:1 1 0;min-width:0;background:var(--surface-2);border-radius:14px;padding:13px 15px;
+  font-family:var(--round);font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .amtfield::placeholder{color:var(--faint);font-weight:400}
 .notefield{width:100%;background:var(--surface-2);border-radius:14px;padding:12px 15px;font-size:14.5px;margin-top:8px}
 .notefield::placeholder{color:var(--faint)}
-.addb{padding:0 20px;border-radius:14px;background:var(--majorelle);color:#fff;font-weight:700;font-size:15px;
+.addb{flex:none;white-space:nowrap;padding:0 20px;border-radius:14px;background:var(--majorelle);color:#fff;font-weight:700;font-size:15px;
   transition:transform .18s var(--spring)}
 .addb:active{transform:scale(.94)}
 .sp{padding:13px 0;border-bottom:1px solid var(--line)}
@@ -589,6 +589,36 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   letter-spacing:-.02em;color:var(--saffron)}
 .unal .u2{display:block;margin-top:4px;font-size:12px;line-height:1.5;color:var(--muted)}
 .pctin:disabled,.step:disabled{opacity:.4}
+/* the open month, stated beside history but never inside it */
+/* the month-close card: the only thing on Home that asks for something */
+/* the figure you came to find out, and the salary that produced it */
+.heroval{font-family:var(--round);font-size:44px;font-weight:800;letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.herosal{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)}
+.herosal .k{font-size:13px;color:var(--muted);flex:none}
+.herosal #sal{flex:1 1 0;min-width:0;width:auto;text-align:right;background:none;padding:0;
+  font-family:var(--round);font-size:17px;font-weight:700;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;color:var(--text)}
+.herosal #sal:focus{color:var(--majorelle)}
+.closecard{border-color:rgba(123,114,255,.26);
+  box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 20px 44px -26px rgba(123,114,255,.75)}
+.closehead{margin-bottom:18px}
+.closek{display:block;font-family:var(--round);font-size:20px;font-weight:800;letter-spacing:-.03em}
+.closet{display:block;margin-top:6px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.closerow{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 0;border-top:1px solid var(--line)}
+.closerow .k{display:inline-flex;align-items:center;font-size:13.5px;color:var(--muted)}
+.closerow .v{font-family:var(--round);font-size:16px;font-weight:750;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums}
+.closelab{display:block;margin-top:18px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.onopen{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  margin-top:16px;padding-top:14px;border-top:1px dashed var(--line-2)}
+.onopen .k{font-size:12.5px;color:var(--faint)}
+.onopen .v{font-family:var(--round);font-size:17px;font-weight:750;letter-spacing:-.02em;
+  color:var(--muted);font-variant-numeric:tabular-nums}
+.jvs .v.proj{color:var(--muted)}
 .jvs{display:flex;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 .jvs>div{flex:1;min-width:0}
 .jvs .k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
@@ -815,6 +845,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   background:var(--coral);box-shadow:0 0 10px -1px var(--coral);
 }
 .eqrow.total .k{display:inline-flex;align-items:center}
+.eqrow.total .v{font-size:19px}
 
 /* ── the projected figure on the spending screen ──
    Large number, small icon for what it is, quiet control for why. The
@@ -931,7 +962,7 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b33 \u00B7 quiet home";
+var BUILD="b34 \u00B7 planned, projected, banked";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
@@ -978,6 +1009,27 @@ if(!S.goals){
     if(S.targets.morocco)S.goals[1].target=S.targets.morocco;
   }
 }
+/* Until now a month counted as confirmed simply by ending, so everything
+   already closed was already banked. Confirmation is now something you
+   give, and applying that rule to old months would silently empty a
+   history the user has been reading for weeks. So every month that had
+   already closed is confirmed once, at the figure it was already
+   showing, and only months closing from here on are ever asked about. */
+(function migrateConfirm(){
+  var t=thisMonth(),k,m,changed=false;
+  for(k in S.months){
+    if(!Object.prototype.hasOwnProperty.call(S.months,k))continue;
+    if(k>=t)continue;
+    m=S.months[k];
+    if(!m||m.override!==null&&m.override!==undefined)continue;
+    if(S.closeSeen)continue;              /* only ever on the first upgrade */
+    m.override=Math.max(0,savedProjected(k));
+    changed=true;
+  }
+  if(!S.closeSeen){S.closeSeen=true;changed=true;}
+  if(changed)try{store.setItem(KEY,JSON.stringify(S));}catch(e){}
+})();
+
 /* Money outside arrived after some saves were written, so make room for
    it without touching anything else that is already there. */
 (function migrateOutside(){
@@ -1274,13 +1326,19 @@ function healthRGBA(v,al){return v===null?"rgba(162,156,199,"+al+")":"rgba("+hea
 function healthWhy(k,v){
   var m=M(k),saved=savedActual(k),planned=savedPlanned(k),oo=spentOneoff(k);
   var rate=m.salary>0?Math.round(Math.max(0,saved)/m.salary*100):0;
+  var word=savedWord(k);
   if(m.salary<=0)return "Set your salary and this comes alive.";
   if(saved<0)return "You are spending \u00A5"+fmt(-saved)+" more than you earn this month.";
   if(oo>0&&saved<planned)
-    return "\u00A5"+fmt(oo)+" of unplanned spending has taken your savings from \u00A5"+fmt(planned)+
+    return "\u00A5"+fmt(oo)+" of unplanned spending has taken this month from \u00A5"+fmt(planned)+
            " down to \u00A5"+fmt(saved)+" \u2014 "+rate+"% of what you earn.";
-  if(saved>=planned)return "On target at \u00A5"+fmt(saved)+", which is "+rate+"% of what you earn. Nothing unplanned so far.";
-  return "Saving \u00A5"+fmt(saved)+" against a \u00A5"+fmt(planned)+" target \u2014 "+rate+"% of what you earn.";
+  /* The buffer earning its keep deserves saying out loud, not erasing. */
+  if(oo>0&&saved>=planned)
+    return "\u00A5"+fmt(oo)+" of unplanned spending, absorbed by your buffer \u2014 the plan held at \u00A5"+
+           fmt(saved)+", "+rate+"% of what you earn.";
+  if(saved>=planned)return "On target at \u00A5"+fmt(saved)+", "+rate+"% of what you earn. Nothing unplanned so far.";
+  return word.charAt(0).toUpperCase()+word.slice(1)+" \u00A5"+fmt(saved)+" against a \u00A5"+fmt(planned)+
+         " target \u2014 "+rate+"% of what you earn.";
 }
 function healthLabel(v){
   if(v===null)return "Not enough to go on";
@@ -1296,7 +1354,7 @@ function loggingThin(k){
 
 /* ═══ 5. GOALS · STREAK · MILESTONES ═══ */
 function closedMonths(){var t=thisMonth();return allMonths().filter(function(k){return k<t;});}
-function banked(){return closedMonths().reduce(function(s,k){return s+Math.max(0,savedActual(k));},0);}
+function banked(){return closedMonths().reduce(function(s,k){return s+Math.max(0,savedConfirmed(k));},0);}
 /* ── how a month's saving is divided ──
    A goal is a pool. Its percentage decides how much of THIS month's
    saving joins the pool; the pool itself is the sum of every month's
@@ -1351,7 +1409,6 @@ function stampSplit(){
 function isConfirmed(k){
   var m=M(k);
   if(!m)return false;
-  if(isSettled(k))return true;                       /* the past is finished */
   return m.override!==null&&m.override!==undefined;  /* you told us yourself */
 }
 /* What to call a month's saving, given whether the money is real yet */
@@ -1564,7 +1621,7 @@ function bindGoalDrag(){
 }
 function monthlyRate(){
   var past=closedMonths();
-  if(past.length){var r=past.slice(-3);return r.reduce(function(s,k){return s+Math.max(0,savedActual(k));},0)/r.length;}
+  if(past.length){var r=past.slice(-3);return r.reduce(function(s,k){return s+Math.max(0,savedConfirmed(k));},0)/r.length;}
   return Math.max(0,savedPlanned(cur()));
 }
 function totalSpendOf(k){return fixedTotal(k)+assumedSpend(k)+spentOneoff(k);}
@@ -1573,14 +1630,23 @@ function consumedOf(k){return fixedTotal(k)+assumedSpend(k)+consumedOneoff(k);}
 /* what left your hands without being consumed */
 function handedOverOf(k){return givenOf(k)+repaidOf(k);}
 function rateOf(k){var m=M(k);return m&&m.salary>0?Math.max(0,savedActual(k))/m.salary*100:0;}
+/* the same, but only counting money that is really there */
+function rateBanked(k){var m=M(k);return m&&m.salary>0?Math.max(0,savedConfirmed(k))/m.salary*100:0;}
+/* Everything actually banked up to and including a month. A month that
+   is still running contributes only once you have confirmed it, so a
+   projection can never inflate your history. */
 function cumulativeTo(k){
   return allMonths().filter(function(x){return x<=k;})
-    .reduce(function(s,x){return s+Math.max(0,savedActual(x));},0);
+    .reduce(function(s,x){return s+Math.max(0,savedConfirmed(x));},0);
+}
+/* and what the live month expects to add on top, kept separate */
+function projectedOn(k){
+  return isConfirmed(k)?0:Math.max(0,savedActual(k));
 }
 /* The spread of what you have actually saved recently. A single average
    pretends next month is settled; a range says what the record supports. */
 function paceRange(){
-  var v=closedMonths().slice(-6).map(function(k){return Math.max(0,savedActual(k));})
+  var v=closedMonths().slice(-6).map(function(k){return Math.max(0,savedConfirmed(k));})
         .filter(function(x){return x>0;});
   if(v.length<2)return null;
   return {lo:Math.min.apply(null,v),hi:Math.max.apply(null,v),n:v.length};
@@ -1610,7 +1676,7 @@ function etaFor(remaining,rate){
 }
 function streak(){
   var p=closedMonths(),n=0;
-  for(var i=p.length-1;i>=0;i--){if(savedActual(p[i])>=savedPlanned(p[i]))n++;else break;}
+  for(var i=p.length-1;i>=0;i--){if(savedConfirmed(p[i])>=savedPlanned(p[i]))n++;else break;}
   return n;
 }
 /* ═══ 6. INSIGHTS ═══
@@ -1622,7 +1688,7 @@ function streak(){
    least two, or there is no "usual" to compare against. */
 function recentAverage(exclude){
   var v=closedMonths().filter(function(k){return k!==exclude;}).slice(-3)
-        .map(function(k){return Math.max(0,savedActual(k));});
+        .map(function(k){return Math.max(0,savedConfirmed(k));});
   if(v.length<2)return null;
   return v.reduce(function(a,b){return a+b;},0)/v.length;
 }
@@ -1748,6 +1814,25 @@ function recordChange(k,id,from,to){
 }
 
 /* ═══ 9. HELPERS ═══ */
+/* ── one number language ──
+   Money reads the same everywhere: ¥11,500, never 11500. A number input
+   cannot show a separator, so money fields are text fields carrying a
+   formatted value that hand you raw digits the moment you focus them.
+   numVal() is the only way the app reads such a field, so a separator
+   can never be mistaken for the end of a number. */
+function numVal(el){
+  if(!el)return 0;
+  var v=String(el.value==null?"":el.value).replace(/[,\s\u00A5]/g,"");
+  var n=parseFloat(v);
+  return isFinite(n)?n:0;
+}
+function isBlank(el){return !el||String(el.value||"").trim()==="";}
+function moneyField(attrs,value,placeholder){
+  return '<input type="text" inputmode="decimal" data-money="1" '+attrs+
+    ' value="'+(value===null||value===undefined||value===""?"":fmt(value))+'"'+
+    (placeholder?' placeholder="'+placeholder+'"':'')+'>';
+}
+
 function fmt(n){return Math.round(n).toLocaleString("en-US");}
 function catOf(id){return CATS.find(function(c){return c.id===id;})||{id:"oneoff",name:"One-off",type:"oneoff"};}
 /* ── an explanation you can open ──
@@ -2009,6 +2094,39 @@ function areaChart(vals,labels,color){
 /* The body of a page, built for any tab and written nowhere. render()
    uses it for the tab you are on; the gesture layer uses it for the tab
    you are swiping towards. One builder, so the two can never diverge. */
+/* ── closing a month ──
+   The one moment where a projection becomes money. A month that has
+   ended but was never confirmed is the only thing the app ever asks you
+   for, and it asks once, at the top of Home, until you answer.
+
+   Confirming writes the figure you give into that month's override —
+   the same field the Plan page has always had — so nothing new enters
+   the data model and nothing already recorded is overwritten. */
+function needsClosing(){
+  return allMonths().filter(function(k){
+    return k<thisMonth()&&!isConfirmed(k)&&M(k).salary>0;
+  }).sort()[0]||null;
+}
+function closeCard(k){
+  var planned=savedPlanned(k),projected=savedProjected(k);
+  return '<div class="card closecard"><div class="closehead">'+
+      '<span class="closek">'+mName(k)+' is over</span>'+
+      '<span class="closet">Confirm what you actually saved and it becomes part of your record.</span>'+
+    '</div>'+
+    '<div class="closerow">'+
+      '<span class="k">You planned</span><span class="v">\u00A5'+fmt(planned)+'</span></div>'+
+    '<div class="closerow">'+
+      '<span class="k">The plan expected'+
+        iq("This is what the equation left after your bills, budget, buffer and anything unplanned you logged. If the real figure differs, put the real one in \u2014 that is the number that counts.")+
+      '</span><span class="v">\u00A5'+fmt(Math.max(0,projected))+'</span></div>'+
+    '<label class="closelab" for="closeAmt">What did you actually save?</label>'+
+    '<div class="entry" style="margin-top:8px">'+
+      moneyField('class="amtfield" id="closeAmt" data-close="'+k+'"',Math.max(0,projected))+
+      '<button class="addb" id="closeGo" data-close="'+k+'">Confirm</button></div>'+
+    '<p class="hint" style="margin-top:12px">Once confirmed it joins your banked total, feeds your goals, and stops changing.</p>'+
+    '</div>';
+}
+
 function pageHTML(tab,noSheets){
   var k=cur(),live=isLive(k),editable=k>=thisMonth(),h="";
   var months=allMonths(),idx=months.indexOf(k);
@@ -2025,6 +2143,9 @@ function pageHTML(tab,noSheets){
          : '<b>This period has closed.</b> It is kept as a record and can no longer be edited.')+
        '</div><button class="btn" data-now="1" style="margin-top:12px">Back to '+mName(thisMonth())+'</button></div>';
   }
+  /* the one thing the app ever asks of you, asked once, at the top */
+  var due=needsClosing();
+  if(tab==="home"&&due&&live)h+=closeCard(due);
   if(tab==="home")h+=viewHome(k,live);
   else if(tab==="plan")h+=viewPlan(k,live);
   else if(tab==="log")h+=viewLog(k);
@@ -2226,24 +2347,29 @@ function viewHome(k,live){
   var hs=healthScore(k),hc=healthColor(hs);
   h+='<div class="hero" style="--hc:'+hc+';--hc-soft:'+healthRGBA(hs,.13)+';--hc-line:'+healthRGBA(hs,.32)+'">'+
      '<div class="aura"></div><div class="aura two"></div><div class="glass">'+
-     '<span class="lab">Salary this month</span>'+
+     '<span class="lab">'+savedWord(k,true)+(isLive(k)?" this month":" in "+mShort(k))+
+       iq(standsHelp(k))+'</span>'+
      '<div class="salary-line"><span class="cur">\u00A5</span>'+
-     '<input id="sal" type="number" inputmode="numeric" value="'+m.salary+'"'+(isSettled(k)?" disabled":"")+' aria-label="Salary"></div>'+
+     '<span class="heroval">'+fmt(Math.max(0,sv))+'</span></div>'+
      '<div class="hstatus"><span class="hpill"><i class="hdot"></i>'+healthLabel(hs)+'</span>'+
      '<span class="hscore">HEALTH <b>'+healthText(hs)+'</b>/100</span></div>'+
+     '<div class="herosal"><span class="k">Salary this month</span>'+
+     moneyField('id="sal" aria-label="Salary"'+(isSettled(k)?" disabled":""),m.salary)+'</div>'+
      '<p class="hwhy">'+healthWhy(k,hs)+'</p>'+
      '</div></div>';
 
-  var hl=headline(k);
-  if(hl)h+='<div class="oneins" style="--oic:'+hl.c+'">'+sym(hl.i)+'<span>'+hl.t+'</span></div>';
+  /* The hero sentence and the insight line can land on the same subject.
+     One of them saying it is enough, and the hero says it first. */
+  var hl=headline(k),heroSaid=healthWhy(k,hs);
+  var doubled=hl&&hl.i==="warning"&&/unplanned/i.test(heroSaid);
+  if(hl&&!doubled)h+='<div class="oneins" style="--oic:'+hl.c+'">'+sym(hl.i)+'<span>'+hl.t+'</span></div>';
 
   var spendTotal=fx+assumedSpend(k)+bufferCharge(k)+oneoffOverflow(k);
   h+='<div class="card"><div class="card-h"><span class="card-t">Where it stands</span>'+
      (live?'<span class="lab">day '+periodDay(k)+' of '+periodDays(k)+'</span>':'')+'</div><div class="eq">'+
      '<div class="eqrow"><span class="k">Income</span><span class="v">\u00A5'+fmt(m.salary)+'</span></div>'+
      '<div class="eqrow"><span class="k">Spending</span><span class="v" style="color:var(--muted)">\u2212'+fmt(spendTotal)+'</span></div>'+
-     '<div class="eqrow total"><span class="k">'+savedWord(k,true)+(isLive(k)?" this month":"")+
-       iq(standsHelp(k))+'</span>'+
+     '<div class="eqrow total"><span class="k">'+savedWord(k,true)+(isLive(k)?" this month":"")+'</span>'+
      '<span class="v" style="color:'+(d>=0?"var(--teal)":"var(--coral)")+'">'+
        (d<0?'<i class="offplan" title="Below plan"></i>':'')+
        '\u00A5'+fmt(Math.max(0,sv))+'</span></div></div>';
@@ -2317,7 +2443,7 @@ function viewPlan(k,live){
        (c.type==="variable"?'<span class="tag">tracked</span>':c.type==="fixed"?'<span class="tag">auto</span>':c.type==="buffer"?'<span class="tag">rolls over</span>':'')+
        '<button class="lockbtn'+(lk?" on":"")+'" data-lock="'+c.id+'"'+(ed?"":" disabled")+' aria-label="Lock">'+(lk?ICON.lock:ICON.open)+'</button>'+
        '<span class="stepper"><button class="step" data-n="'+c.id+'" data-by="-100"'+(ed?"":" disabled")+' aria-label="Less">'+ICON.minus+'</button>'+
-       '<input class="amtin" type="number" inputmode="numeric" data-a="'+c.id+'" value="'+a+'"'+(ed?"":" disabled")+'>'+
+       moneyField('class="amtin" data-a="'+c.id+'"'+(ed?"":" disabled"),a)+
        '<button class="step" data-n="'+c.id+'" data-by="100"'+(ed?"":" disabled")+' aria-label="More">'+ICON.plus+'</button></span></div>'+
        '<input class="slider" type="range" min="0" max="'+Math.max(m.salary,a)+'" step="100" value="'+a+'" data-r="'+c.id+'"'+((ed&&!lk)?"":" disabled")+'>'+
        (c.id==="savings"&&oo>0?'<div class="note" style="color:var(--coral)">\u2212\u00A5'+fmt(oo)+' of one-offs comes out of this \u2192 <b>\u00A5'+fmt(Math.max(0,effSavings(k)))+'</b> actually saved</div>':'')+
@@ -2328,7 +2454,7 @@ function viewPlan(k,live){
   h+='<div class="card"><div class="card-h"><span class="card-t">Override</span></div>'+
      why('If the real figure differs from the equation, put what you actually saved. Leave it empty to let the equation decide.','When to use this')+
      '<div class="tgt" style="margin-top:12px"><span class="lab" style="flex:1">Actually saved</span>'+
-     '<input id="ovr" type="number" inputmode="numeric" placeholder="'+fmt(Math.max(0,sv))+'" value="'+(m.override!=null?m.override:"")+'"></div>';
+     moneyField('id="ovr"',m.override!=null?m.override:"",fmt(Math.max(0,sv)))+'</div>';
   if(m.override!==null&&m.override!==undefined)
     h+='<div class="note" style="color:var(--saffron);margin-top:10px">Manually set. <button id="clearov" style="color:var(--majorelle);font-weight:600">Use the equation instead</button></div>';
   return h+'</div></div>';
@@ -2392,7 +2518,7 @@ function viewLog(k){
      (cardOn()?'<button class="chip'+(onCard?" on":"")+'" data-pm="card" style="'+(onCard?"color:var(--saffron);background:rgba(255,179,61,.14)":"")+'">'+sym("card")+' Credit card</button>':'')+
      '</div>'+
      '<input class="notefield" id="enote" style="margin-top:0" placeholder="What was it? e.g. TV, taxi, repair">'+
-     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="eamt" type="number" inputmode="decimal" placeholder="How much?">'+
+     '<div class="entry" style="margin-top:8px">'+moneyField('class="amtfield" id="eamt"',"","How much?")+
      '<button class="addb" id="eadd">Add</button></div>'+
      '<div id="purse" class="purse tone-ok"></div>'+
      '<div id="cardWarn"></div>'+
@@ -2478,7 +2604,7 @@ function editGoalsSheetPair(){
          '<span class="pctsign">%</span>'+
          '<button class="step" data-gp="'+g.id+'" data-by="5"'+(jarLocked(g)?" disabled":"")+' aria-label="More">'+ICON.plus+'</button></span></div>'+
          '<div class="aline"><span class="lab">Target</span>'+
-         '<input class="atgtin" type="number" inputmode="numeric" data-jt="'+g.id+'" value="'+g.target+'" aria-label="Target"></div>'+
+         moneyField('class="atgtin" data-jt="'+g.id+'" aria-label="Target"',g.target)+'</div>'+
          '<div class="aline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
          '<input class="duein" type="month" data-gd="'+g.id+'" value="'+(g.due||"")+'" aria-label="Deadline"></div>'+
          (S.goals.length>1?'<div class="aline" style="justify-content:flex-end;margin-top:12px">'+
@@ -2500,7 +2626,7 @@ function newGoalSheetPair(){
        '<div class="emrow">'+GEMO.map(function(e,i){
          return '<button data-ne="'+e+'"'+(i===0?' class="on"':'')+' aria-label="'+e+'">'+sym(e)+'</button>';}).join("")+'</div>'+
        '<div class="ngline"><span class="lab">Target</span>'+
-       '<input class="atgtin" type="number" inputmode="numeric" id="ngTarget" placeholder="0" aria-label="Target amount"></div>'+
+       moneyField('class="atgtin" id="ngTarget" aria-label="Target amount"',"","0")+'</div>'+
        '<div class="ngline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
        '<input class="duein" type="month" id="ngDue" aria-label="Deadline"></div>'+
        '<div class="ngline"><span class="lab">Share of savings</span>'+
@@ -2600,14 +2726,20 @@ function viewJourney(){
   var delta=prevSaved===null?null:saved-prevSaved;
 
   /* the journey so far */
-  h+='<div class="card" style="padding:24px 22px"><span class="lab">Your journey</span>'+
+  var openNow=projectedOn(k);
+  h+='<div class="card" style="padding:24px 22px"><span class="lab">Banked so far</span>'+
      '<div class="jamt" style="margin-top:12px;font-size:38px">\u00A5'+fmt(total)+'</div>'+
-     '<div class="jof" style="margin-top:7px">saved since you started'+
-     (delta!==null?' \u00B7 <span style="color:'+(delta>=0?"var(--teal)":"var(--coral)")+'">'+
-       (delta>=0?"\u2191 \u00A5"+fmt(delta)+" more":"\u2193 \u00A5"+fmt(-delta)+" less")+' than '+mShort(p)+'</span>':'')+'</div>';
-  if(months.length>1)h+='<div style="margin-top:22px">'+
-     areaChart(months.map(function(x){return cumulativeTo(x);}),months.map(mShort),"#7B72FF")+'</div>';
-  else h+='<p class="hint" style="margin-top:16px">One month recorded. The curve appears once a second month closes.</p>';
+     '<div class="jof" style="margin-top:7px">confirmed across '+closedMonths().length+
+       ' closed month'+(closedMonths().length===1?'':'s')+
+       iq("Only months you have confirmed count here. "+mShort(k)+" is still open, so what it is on course to add is shown separately and is not part of this total.")+'</div>'+
+     (openNow>0
+       ? '<div class="onopen"><span class="k">'+mShort(k)+' on course to add</span>'+
+         '<span class="v">+\u00A5'+fmt(openNow)+'</span></div>'
+       : '');
+  var closedOnly=months.filter(function(x){return isConfirmed(x);});
+  if(closedOnly.length>1)h+='<div style="margin-top:22px">'+
+     areaChart(closedOnly.map(function(x){return cumulativeTo(x);}),closedOnly.map(mShort),"#7B72FF")+'</div>';
+  else h+='<p class="hint" style="margin-top:16px">The curve appears once a second month has been confirmed.</p>';
   h+='</div>';
 
   /* this month against last */
@@ -2616,14 +2748,14 @@ function viewJourney(){
     var pct=prevSaved>0?Math.round((saved-prevSaved)/prevSaved*100):null;
     h+='<div class="card" style="padding:22px"><div class="card-h"><span class="card-t">'+mName(k).split(" ")[0]+' vs '+mShort(p)+'</span></div>'+
        '<div class="scen">'+
-       '<div class="sc"><div class="k">saved</div><div class="v" style="color:'+(delta>=0?"var(--teal)":"var(--coral)")+'">'+
+       '<div class="sc"><div class="k">'+(isConfirmed(k)?"saved":"on course")+'</div><div class="v" style="color:'+(delta>=0?"var(--teal)":"var(--coral)")+'">'+
          (pct===null?"\u00A5"+fmt(saved):(pct>=0?"+":"")+pct+"%")+'</div></div>'+
        '<div class="sc"><div class="k">spending</div><div class="v" style="color:'+(spD<=0?"var(--teal)":"var(--coral)")+'">'+
          (spD===0?"same":(spD<0?"\u2193 ":"\u2191 ")+"\u00A5"+fmt(Math.abs(spD)))+'</div></div>'+
        '<div class="sc"><div class="k">kept</div><div class="v">'+Math.round(rateOf(k))+'%</div></div>'+
        '</div>'+
        '<div class="jvs">'+
-         '<div><span class="k">'+mShort(k)+'</span><span class="v">\u00A5'+fmt(saved)+'</span></div>'+
+         '<div><span class="k">'+mShort(k)+(isConfirmed(k)?"":" \u00B7 projected")+'</span><span class="v'+(isConfirmed(k)?"":" proj")+'">\u00A5'+fmt(saved)+'</span></div>'+
          '<div><span class="k">'+mShort(p)+'</span><span class="v">\u00A5'+fmt(prevSaved)+'</span></div>'+
          (function(){
            var avg=recentAverage(k);
@@ -2790,7 +2922,7 @@ function viewOutside(){
      '<input class="notefield" id="gvNote" style="margin-top:8px" placeholder="What was it for? \u00B7 optional" maxlength="48">'+
      '<div class="aline" style="margin-top:8px"><span class="lab">Date given</span>'+
      '<input class="duein" type="date" id="gvDate" value="'+todayISO()+'" aria-label="Date given"></div>'+
-     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="gvAmt" type="number" inputmode="decimal" placeholder="How much?">'+
+     '<div class="entry" style="margin-top:8px">'+moneyField('class="amtfield" id="gvAmt"',"","How much?")+
      '<button class="addb" id="gvAdd">Add</button></div></div>';
 
   if(!given.length)h+='<div class="card"><div class="empty">You have not given anything out.</div></div>';
@@ -2823,7 +2955,7 @@ function viewOutside(){
      '<input class="duein" type="date" id="bwDate" value="'+todayISO()+'" aria-label="Date borrowed"></div>'+
      '<div class="aline"><span class="lab">Due<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
      '<input class="duein" type="date" id="bwDue" aria-label="Due date"></div>'+
-     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="bwAmt" type="number" inputmode="decimal" placeholder="How much?">'+
+     '<div class="entry" style="margin-top:8px">'+moneyField('class="amtfield" id="bwAmt"',"","How much?")+
      '<button class="addb" id="bwAdd">Add</button></div></div>';
 
   if(!owed.length)h+='<div class="card"><div class="empty">You have borrowed from no one. Keep it that way.</div></div>';
@@ -3039,9 +3171,9 @@ function viewSettings(){
      (cardOn()?'<span class="lab" style="color:'+(cardUsage()>=100?"var(--coral)":"var(--muted)")+'">'+Math.round(cardUsage())+'% used</span>':'')+'</div>'+
      why('Credit is borrowed, not income. The app only tracks it so you know what is really free.')+
      '<div class="aline" style="margin-top:18px"><span class="lab">Credit limit</span>'+
-     '<input class="atgtin" type="number" inputmode="numeric" data-card="limit" value="'+(c.limit||"")+'" placeholder="0"></div>'+
+     moneyField('class="atgtin" data-card="limit" aria-label="Credit limit"',c.limit||"","0")+'</div>'+
      '<div class="aline"><span class="lab">Currently used</span>'+
-     '<input class="atgtin" type="number" inputmode="numeric" data-card="used" value="'+(c.used||"")+'" placeholder="0"></div>'+
+     moneyField('class="atgtin" data-card="used" aria-label="Currently used"',c.used||"","0")+'</div>'+
      '<div class="aline"><span class="lab">Payment day</span>'+
      '<span class="pctwrap"><button class="step" data-cday="-1" aria-label="Earlier">'+ICON.minus+'</button>'+
      '<input class="pctin" type="number" inputmode="numeric" data-card="payDay" value="'+(c.payDay||18)+'" aria-label="Payment day">'+
@@ -3484,7 +3616,7 @@ function reportPDF(){
     D.y-=16;
     past.forEach(function(x){
       rptRoom(D,34);
-      var mm=M(x),sa=savedActual(x);
+      var mm=M(x),sa=savedConfirmed(x);
       pdfText(D,cM,D.y,mName(x),10,false,RINK);
       pdfTextR(D,cI,D.y,yen(mm.salary),10,false,RSOFT);
       pdfTextR(D,cS,D.y,yen(totalSpendOf(x)),10,false,RSOFT);
@@ -3665,7 +3797,7 @@ function bind(){
     if(i>=ms.length){S.monthCursor=makeNext(ms[ms.length-1]);save();render();}};});
 
   var sal=document.getElementById("sal");
-  if(sal)sal.onchange=function(){m.salary=Math.max(0,+this.value||0);balance(k,null);save();updatePlanDOM();};
+  if(sal)sal.onchange=function(){m.salary=Math.max(0,numVal(this));balance(k,null);save();updatePlanDOM();};
 
   q("[data-lock]").forEach(function(b){b.onclick=function(){m.locks[b.dataset.lock]=!m.locks[b.dataset.lock];save();updatePlanDOM();};});
   q("[data-n]").forEach(function(b){b.onclick=function(){
@@ -3674,7 +3806,7 @@ function bind(){
     recordChange(k,id,from,m.alloc[id]);balance(k,id);save();updatePlanDOM();};});
   q("[data-a]").forEach(function(i){i.onchange=function(){
     var id=i.dataset.a,from=m.alloc[id]||0;
-    m.alloc[id]=Math.max(0,+i.value||0);
+    m.alloc[id]=Math.max(0,numVal(i));
     recordChange(k,id,from,m.alloc[id]);balance(k,id);save();updatePlanDOM();};});
   q("[data-r]").forEach(function(r){
     var id=r.dataset.r,start=null;
@@ -3683,7 +3815,7 @@ function bind(){
       m.alloc[id]=+r.value;balance(k,id);
       var segs=q(".seg"),i=0;
       CATS.forEach(function(c){var a=m.alloc[c.id]||0;if(a>0&&segs[i]){segs[i].style.flexGrow=a;i++;}});
-      q("[data-a]").forEach(function(x){x.value=m.alloc[x.dataset.a]||0;});};
+      q("[data-a]").forEach(function(x){if(document.activeElement!==x)x.value=fmt(m.alloc[x.dataset.a]||0);});};
     r.onchange=function(){if(start!==null)recordChange(k,id,start,m.alloc[id]);save();updatePlanDOM();};});
 
   var wi=document.getElementById("wiSlider");
@@ -3718,14 +3850,14 @@ function bind(){
   }
 
   var ovr=document.getElementById("ovr");
-  if(ovr)ovr.onchange=function(){var v=String(this.value).trim();m.override=v===""?null:Math.max(0,+v||0);save();updatePlanDOM();};
+  if(ovr)ovr.onchange=function(){m.override=isBlank(this)?null:Math.max(0,numVal(this));save();updatePlanDOM();};
   var co=document.getElementById("clearov");
   if(co)co.onclick=function(){m.override=null;save();updatePlanDOM();};
 
 
   var add=document.getElementById("eadd");
   if(add)add.onclick=function(){
-    var f=document.getElementById("eamt"),v=parseFloat(f.value);
+    var f=document.getElementById("eamt"),v=numVal(f);
     if(!v||v<=0){f.focus();return;}
     var nf=document.getElementById("enote");
     var meth=(S.payMethod==="card"&&cardOn())?"card":"bank";
@@ -3762,7 +3894,7 @@ function bind(){
 
   q("[data-jt]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.jt;});
-    if(g){g.target=Math.max(0,+i.value||0);save();updateGoalEditorDOM();}};});
+    if(g){g.target=Math.max(0,numVal(i));save();updateGoalEditorDOM();}};});
   q("[data-more]").forEach(function(b){b.onclick=function(){
     if(b.dataset.more==="close"){S.more=false;save();render();return;}
     var x=MENU.find(function(y){return y.id===b.dataset.more;});
@@ -3771,7 +3903,7 @@ function bind(){
       S.more=false;S.tab=x.id;save();render();appScrollTo(0,true);
     }};});
   q("[data-card]").forEach(function(i){i.onchange=function(){
-    var c=card(),f=i.dataset.card,v=Math.max(0,parseInt(i.value,10)||0);
+    var c=card(),f=i.dataset.card,v=Math.max(0,Math.round(numVal(i)));
     if(f==="payDay")c.payDay=Math.min(31,Math.max(1,v||18));
     else{c[f]=v;if(f==="limit"&&v>0&&!c.lastPaid)c.lastPaid=thisMonth();}
     save();updateCreditCardDOM();};});
@@ -3787,9 +3919,9 @@ function bind(){
      differs, and the number is nudged so the eye follows the change. */
   function paintPurse(){
     if(!purse)return;
-    var d=purseData(cur(),parseFloat(amtF&&amtF.value)||0);
+    var d=purseData(cur(),numVal(amtF));
     var big=purse.querySelector(".pursebig"),sub=purse.querySelector(".pursesub");
-    if(!big||!sub){purse.innerHTML=purseHTML(cur(),parseFloat(amtF&&amtF.value)||0);big=purse.querySelector(".pursebig");sub=purse.querySelector(".pursesub");}
+    if(!big||!sub){purse.innerHTML=purseHTML(cur(),numVal(amtF));big=purse.querySelector(".pursebig");sub=purse.querySelector(".pursesub");}
     if(purse.__tone!==d.tone){
       purse.__tone=d.tone;
       purse.className="purse tone-"+d.tone;
@@ -3823,7 +3955,7 @@ function bind(){
   }
   function creditCheck(){
     if(!wBox)return;
-    var v=parseFloat(amtF&&amtF.value)||0;
+    var v=numVal(amtF);
     if(v<=0){wBox.innerHTML="";return;}
     var mk2=cur(),out="";
     if(S.payMethod==="card"&&cardOn()){
@@ -3862,7 +3994,24 @@ function bind(){
   q("[data-alloc]").forEach(function(b){b.onclick=function(){
     S.allocInfo=!S.allocInfo;save();updatePlanDOM();};});
 
-  q('input[type="number"]').forEach(function(i){
+  /* Money fields carry a formatted value. On focus they hand you the raw
+     digits so typing and the caret behave normally; on blur they put the
+     separators back. The stored value is never touched by either. */
+  q('[data-money]').forEach(function(i){
+    if(i.__moneyBound)return;
+    i.__moneyBound=true;
+    i.addEventListener("focus",function(){
+      var raw=String(i.value||"").replace(/[,\s\u00A5]/g,"");
+      if(i.value!==raw)i.value=raw;
+      setTimeout(function(){try{i.select();}catch(e){}},0);
+    });
+    i.addEventListener("blur",function(){
+      if(isBlank(i)){i.value="";return;}
+      i.value=fmt(numVal(i));
+    });
+  });
+
+  q('input[type="number"], [data-money]').forEach(function(i){
     if(i.__selBound)return;              /* a property, not an attribute: */
     i.__selBound=true;                   /* patching cannot strip it      */
     var grab=function(){setTimeout(function(){
@@ -3960,7 +4109,7 @@ function bind(){
   var ngA=document.getElementById("ngAdd");
   if(ngA)ngA.onclick=function(){
     var nm=String((document.getElementById("ngName")||{}).value||"").trim().slice(0,24);
-    var tg=+((document.getElementById("ngTarget")||{}).value)||0;
+    var tg=numVal(document.getElementById("ngTarget"));
     var pc=+((document.getElementById("ngPct")||{}).value)||0;
     var du=String((document.getElementById("ngDue")||{}).value||"");
     if(!nm){alert("Give the goal a name.");return;}
@@ -4017,7 +4166,7 @@ function bind(){
   /* ── money outside ── */
   var gvAdd=document.getElementById("gvAdd");
   if(gvAdd)gvAdd.onclick=function(){
-    var amt=parseFloat((document.getElementById("gvAmt")||{}).value)||0;
+    var amt=numVal(document.getElementById("gvAmt"));
     if(amt<=0){alert("Enter how much you gave.");return;}
     var on=(document.getElementById("gvDate")||{}).value||todayISO();
     OUT().given.push({id:"o"+Date.now().toString(36),
@@ -4028,7 +4177,7 @@ function bind(){
 
   var bwAdd=document.getElementById("bwAdd");
   if(bwAdd)bwAdd.onclick=function(){
-    var amt=parseFloat((document.getElementById("bwAmt")||{}).value)||0;
+    var amt=numVal(document.getElementById("bwAmt"));
     if(amt<=0){alert("Enter how much you borrowed.");return;}
     OUT().borrowed.push({id:"o"+Date.now().toString(36),
       person:String((document.getElementById("bwPerson")||{}).value||"").trim(),
@@ -4070,6 +4219,19 @@ function bind(){
     if(S.outArm===id){OUT().borrowed=borrowedList().filter(function(x){return x.id!==id;});S.outArm=null;}
     else S.outArm=id;
     save();updateViewDOM();};});
+
+  /* confirming a month — the only place a projection becomes money */
+  var closeGo=document.getElementById("closeGo");
+  if(closeGo)closeGo.onclick=function(){
+    var k=closeGo.dataset.close,f=document.getElementById("closeAmt");
+    if(!k||!M(k))return;
+    if(isBlank(f)){alert("Put in what you actually saved, then confirm.");return;}
+    var v=Math.max(0,numVal(f));
+    if(!confirm("Confirm "+mName(k)+" at \u00A5"+fmt(v)+"?\n\nIt joins your banked total and stops changing.")) return;
+    M(k).override=v;
+    save();render();
+    toast(mName(k)+" confirmed");
+  };
 
   var rs=document.getElementById("reset");
   if(rs)rs.onclick=function(){
