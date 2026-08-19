@@ -1025,14 +1025,9 @@ body::after{
   background-size:120px 120px;
 }
 
-/* ── the month header stays with you ──
-   Black fading into nothing, so cards pass under it instead of
-   being cut off by it. No blur, no bar, no hard edge. */
-.mbar{
-  position:sticky;top:calc(env(safe-area-inset-top,0px) - 2px);z-index:6;
-  margin:-6px -20px 14px;padding:6px 20px 14px;
-  background:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,0) 100%);
-}
+/* ── the month header is part of the page ──
+   It scrolls away with everything else; nothing floats over the cards. */
+.mbar{margin:0 0 16px;padding:0}
 .mtitle b{font-size:19px;font-weight:800;letter-spacing:-.035em}
 .mnav{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.055);
   border:1px solid var(--line)}
@@ -1121,7 +1116,7 @@ body::after{
    The chosen tab sits in a lit pill rather than merely changing
    colour, which is what makes the row read as a control. */
 .bar{
-  left:12px;right:12px;bottom:calc(var(--sab) + 9px);
+  left:12px;right:12px;bottom:var(--sab);
   height:64px;padding:5px 6px;border-radius:26px;
   border:1px solid rgba(255,255,255,.09);
   background:rgba(16,16,19,.76);
@@ -2636,7 +2631,6 @@ function viewHome(k,live){
      '<div class="eqrow"><span class="k">Spending</span><span class="v" style="color:var(--muted)">\u2212'+fmt(spendTotal)+'</span></div>'+
      '<div class="eqrow total"><span class="k">'+savedWord(k,true)+(isLive(k)?" this month":"")+'</span>'+
      '<span class="v" style="color:'+(d>=0?"var(--teal)":"var(--coral)")+'">'+
-       (d<0?'<i class="offplan" title="Below plan"></i>':'')+
        '\u00A5'+fmt(Math.max(0,sv))+'</span></div></div>';
   h+='<details class="more"><summary>Breakdown</summary><div class="eq">'+
      '<div class="eqrow"><span class="k">Fixed bills</span><span class="v" style="color:var(--muted)">\u2212'+fmt(fx)+'</span></div>'+
