@@ -1243,7 +1243,11 @@ html::after{
    One track holding a pill for every line of the plan: the width is the
    share, the colour is the category, and the symbol is the same one the
    row underneath carries. Tapping a pill is the whole reading. */
-.allocv{margin-top:16px}
+.allocv{margin-top:11px}
+/* the same reading the pills carry, said in words underneath \u2014 the size
+   and colour every other quiet note in the app already uses */
+.alegend{font-size:11.5px;color:var(--faint);margin-top:14px;line-height:1.85}
+.alegend span{white-space:nowrap;margin-right:8px}
 .atrack{
   display:flex;gap:5px;padding:5px;height:64px;border-radius:22px;
   background:linear-gradient(180deg,#26262D,#15151A);
@@ -1384,7 +1388,7 @@ var store=(function(){
 var KEY="plan.v4";
 /* Journey moved onto Home; a save that was left on that page opens Home */
 function dropJourneyTab(st){if(st&&st.tab==="journey")st.tab="home";return st;}
-var BUILD="b39 \u00B7 journey on home";
+var BUILD="b40 \u00B7 legend + card dates";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
@@ -1464,6 +1468,22 @@ var CLEGACY={"#7B72FF":"#9E5BFF","#2FD4BC":"#D45CE8","#FFB33D":"#FF7BA8",
    months never look at today — so any month that was saved without a
    split gets one written once, from the percentages in force right now,
    and from then on it is fixed like every other month. */
+/* Under the old rules a payment could only be applied once its period had
+   CLOSED, so a lastPaid equal to the live month can never have been a real
+   payment \u2014 it can only be the stamp written when the limit was first set.
+   Step it back one month so this period's payment is still ahead of you. */
+(function migrateCardPay(){
+  if(S.cardPayFix)return;
+  S.cardPayFix=true;
+  var c=S.card;
+  if(c&&c.lastPaid&&c.lastPaid===mKey(new Date())){
+    var d=new Date(+c.lastPaid.split("-")[0],+c.lastPaid.split("-")[1]-1,1);
+    d.setMonth(d.getMonth()-1);
+    c.lastPaid=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+  }
+  try{store.setItem(KEY,JSON.stringify(S));}catch(e){}
+})();
+
 (function migrateSplits(){
   var t=thisMonth(),k,changed=false;
   for(k in S.months){
@@ -2701,6 +2721,7 @@ function updateViewDOM(){
    in-page value edit goes through the patching path above instead. */
 function render(){
   ensureMonth();
+  applyCardPayments();
   var h=pageHTML(S.tab);
   if(S.more)h+=moreSheet();
   var app=document.getElementById("app");
@@ -2926,7 +2947,19 @@ function allocVisual(k){
           ' data-iq="'+esc(allocSay(p))+'" aria-label="'+esc(p.name)+'">'+(p.ico?sym(p.ico):"")+'</button>';
   });
   return '<div class="allocv"><div class="atrack" id="atrack" style="--ag:'+d.big.col+'59">'+
-         segs+'</div></div>';
+         segs+'</div>'+allocLegend(d)+'</div>';
+}
+function allocLegendInner(d){
+  var out="";
+  d.parts.forEach(function(p){
+    if(p.amt<=0)return;
+    out+='<span>\u2022 '+esc(p.name)+' '+pctText(p.pct)+'</span> ';
+  });
+  return out;
+}
+function allocLegend(d){
+  var i=allocLegendInner(d);
+  return i?'<div class="alegend" id="alegend">'+i+'</div>':"";
 }
 /* widths and percentages only — nothing here creates or removes a node,
    so it is safe to call on every frame of a drag */
@@ -2943,6 +2976,10 @@ function paintAlloc(k,live){
     var s=document.getElementById("aseg-"+p.id);
     if(s){s.style.flexGrow=p.pct.toFixed(3);s.style.display=p.amt>0?"":"none";s.dataset.iq=allocSay(p);}
   });
+  /* the words under the bar say the same thing, so they move with it.
+     It holds no handler and no field, so replacing its text is safe. */
+  var lg=document.getElementById("alegend");
+  if(lg)lg.innerHTML=allocLegendInner(d);
 }
 
 function viewPlan(k,live){
@@ -3549,25 +3586,55 @@ function card(){
 function cardOn(){return card().limit>0;}
 function cardAvail(){return Math.max(0,card().limit-card().used);}
 function cardUsage(){return card().limit>0?card().used/card().limit*100:0;}
-function nextPayment(){return M(thisMonth()).alloc.installments||0;}
 function cardAvailAfter(){return cardAvail()+nextPayment();}
+/* one month on from a key, without creating anything */
+function monthAfter(k){
+  var d=mParse(k);d.setMonth(d.getMonth()+1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+/* The day budget month k's installment actually leaves your account. The
+   payment day is a calendar day, and a period that starts on the 15th
+   spans two calendar months, so the day can fall in either one \u2014 take
+   the first occurrence on or after the period starts. */
+function payDateFor(k){
+  var st=periodStart(k),day=Math.min(card().payDay||18,28),
+      y=st.getFullYear(),m=st.getMonth(),
+      d=new Date(y,m,clampDay(y,m,day),0,0,0);
+  if(d<st){m+=1;if(m>11){m=0;y+=1;}d=new Date(y,m,clampDay(y,m,day),0,0,0);}
+  return d;
+}
+/* the earliest month on record whose payment has not been made yet */
+function nextPayMonth(){
+  var c=card(),ms=allMonths(),i;
+  for(i=0;i<ms.length;i++)if(!(c.lastPaid&&ms[i]<=c.lastPaid))return ms[i];
+  return null;
+}
+function nextPayment(){var k=nextPayMonth();return k?(M(k).alloc.installments||0):0;}
 function nextPayDate(){
-  var d=new Date(),y=d.getFullYear(),m=d.getMonth(),day=Math.min(card().payDay||18,28);
-  if(d.getDate()>day){m+=1;if(m>11){m=0;y+=1;}}
-  return new Date(y,m,clampDay(y,m,day));
+  var k=nextPayMonth();
+  if(k)return payDateFor(k);
+  var ms=allMonths();
+  return payDateFor(monthAfter(ms.length?ms[ms.length-1]:thisMonth()));
 }
 function payDateLabel(){var d=nextPayDate();return d.getDate()+" "+MOS[d.getMonth()];}
-/* a closed period means its installment was paid, so that credit comes back */
+/* A payment happens on the day the card charges it, not when the period
+   closes. Waiting for the close meant an 18 August payment did not give
+   its credit back until the middle of September. */
 function applyCardPayments(){
   if(!cardOn())return;
-  var c=card(),last=c.lastPaid;
-  closedMonths().forEach(function(k){
-    if(!last||k>last){
-      var pay=M(k).alloc.installments||0;
-      if(pay>0)c.used=Math.max(0,c.used-pay);
-      c.lastPaid=k;
-    }
-  });
+  var c=card(),now=Date.now(),ms=allMonths(),i,k,pay;
+  /* A card with no payment history starts from now, never from your whole
+     record \u2014 settling months you had no card for would hand back credit
+     that was never used. */
+  if(!c.lastPaid)c.lastPaid=prevOf(thisMonth())||"0000-00";
+  for(i=0;i<ms.length;i++){
+    k=ms[i];
+    if(c.lastPaid&&k<=c.lastPaid)continue;
+    if(payDateFor(k).getTime()>now)break;      /* not due yet */
+    pay=M(k).alloc.installments||0;
+    if(pay>0)c.used=Math.max(0,c.used-pay);
+    c.lastPaid=k;
+  }
 }
 /* Verdict on putting an amount on the card. Credit you have not been
    given back yet is not credit you can spend — the upcoming payment is
@@ -4329,7 +4396,7 @@ function bind(){
   q("[data-card]").forEach(function(i){i.onchange=function(){
     var c=card(),f=i.dataset.card,v=Math.max(0,parseInt(i.value,10)||0);
     if(f==="payDay")c.payDay=Math.min(31,Math.max(1,v||18));
-    else{c[f]=v;if(f==="limit"&&v>0&&!c.lastPaid)c.lastPaid=thisMonth();}
+    else{c[f]=v;if(f==="limit"&&v>0&&!c.lastPaid)c.lastPaid=prevOf(thisMonth())||"0000-00";}
     save();updateCreditCardDOM();};});
   q("[data-cday]").forEach(function(b){b.onclick=function(){
     var c=card();c.payDay=Math.min(31,Math.max(1,(c.payDay||18)+(+b.dataset.cday)));save();updateCreditCardDOM();};});
