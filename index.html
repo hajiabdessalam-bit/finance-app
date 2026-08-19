@@ -1238,6 +1238,128 @@ html::after{
 .unal,.verdict{border-radius:18px}
 .purse{border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 58%),rgba(255,255,255,.035)}
 
+
+/* ── ALLOCATION, SEEN ────────────────────────────────────────────────
+   One track holding a pill for every line of the plan: the width is the
+   share, the colour is the category, and the symbol is the same one the
+   row underneath carries. Tapping a pill is the whole reading. */
+.allocv{margin-top:16px}
+.atrack{
+  display:flex;gap:5px;padding:5px;height:64px;border-radius:22px;
+  background:linear-gradient(180deg,#26262D,#15151A);
+  border:1px solid rgba(255,255,255,.075);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.6),
+             0 18px 38px -26px var(--ag,rgba(0,0,0,.9)),
+             0 6px 16px -12px rgba(0,0,0,.85);
+}
+.aseg{
+  position:relative;flex-basis:0;flex-shrink:1;min-width:10px;border-radius:17px;
+  display:grid;place-items:center;overflow:hidden;
+  background:linear-gradient(178deg,rgba(255,255,255,.22),rgba(255,255,255,.02) 52%,rgba(0,0,0,.12)),var(--sc,#8A8A98);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 0 0 1px rgba(255,255,255,.06),
+             0 3px 10px -6px var(--sc,#000);
+  transition:flex-grow .42s var(--ease),transform .2s var(--spring),box-shadow .2s var(--ease);
+}
+.atrack.live .aseg{transition:transform .2s var(--spring)}   /* a dragged finger leads, it does not follow */
+.aseg:active{transform:scale(.955)}
+.aseg.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 0 2px rgba(255,255,255,.92),
+         0 7px 20px -7px var(--sc,#000)}
+.aseg .sym{width:21px;height:21px;stroke-width:1.9;color:var(--si,rgba(12,4,24,.7))}
+/* the empty part of the salary: present, but plainly not a category */
+.aseg.free{
+  background:repeating-linear-gradient(118deg,rgba(255,255,255,.06) 0 5px,rgba(255,255,255,0) 5px 11px),rgba(255,255,255,.035);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+/* a pill too narrow for its symbol simply goes without one */
+@supports (container-type:inline-size){
+  .aseg{container-type:inline-size}
+  .aseg .sym{display:none}
+  @container (min-width:23px){.aseg .sym{display:block;width:15px;height:15px;stroke-width:2.1}}
+  @container (min-width:34px){.aseg .sym{width:21px;height:21px;stroke-width:1.9}}
+}
+
+
+
+/* ── JOURNEY, on the front page ──────────────────────────────────────
+   What used to be a page you had to go looking for: the months you have
+   banked, drawn as one column each, with the month you are reading lit
+   and everything else in graphite. The pale cap on a column is money
+   the month is on course to add but has not banked — the app never lets
+   a projection pass for savings, and the drawing keeps that rule. */
+.jrn{position:relative;overflow:hidden}
+.jrn-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.jmode{display:inline-flex;align-items:center;gap:7px;flex:none;
+  padding:8px 14px;border-radius:999px;color:#fff;
+  font-family:var(--round);font-size:12.5px;font-weight:650;letter-spacing:-.01em;
+  background:linear-gradient(180deg,#A96BFF,#8845EE);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 8px 18px -10px rgba(158,91,255,.95);
+  transition:transform .2s var(--spring)}
+.jmode:active{transform:scale(.94)}
+.jmode i{width:6px;height:6px;border-radius:6px;background:#fff;flex:none}
+.jrn-fig{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:12px}
+.jrn-big{font-family:var(--round);font-size:28px;font-weight:800;letter-spacing:-.042em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.jrn-sub{font-size:11px;color:var(--faint);text-align:right;flex:none}
+
+.jchart{margin-top:18px}
+.jcols{position:relative;display:flex;align-items:flex-end;justify-content:space-around;gap:6px;height:84px}
+.jcols::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:var(--line);pointer-events:none}
+.jcol{position:relative;flex:1 1 0;min-width:0;max-width:58px;height:100%;padding:0;background:none;
+  transition:transform .2s var(--spring)}
+.jcol:active{transform:scale(.94)}
+.jcol>span{position:absolute;left:0;right:0;display:block;pointer-events:none}
+.jsolid{bottom:0;border-radius:4px 4px 3px 3px;
+  background:linear-gradient(180deg,#34343D,#212127);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+  transition:height .45s var(--ease),background .25s var(--ease)}
+.jsolid.top{border-radius:11px 11px 3px 3px}
+.jghost{border-radius:11px 11px 4px 4px;
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.035));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);
+  transition:height .45s var(--ease),bottom .45s var(--ease)}
+.jnil{bottom:0;height:3px;border-radius:3px;background:rgba(255,255,255,.06)}
+/* the lit column: the app's own purple. The bloom is carried by the
+   shadow rather than a radial layer, so it adds light without adding
+   any geometry to the row. */
+.jcol.on>span{z-index:1}
+.jcol.on .jsolid{background:linear-gradient(180deg,#B87DFF,#8845EE);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),
+             0 0 30px 2px rgba(158,91,255,.34),0 10px 26px -8px rgba(158,91,255,.95)}
+.jcol.on .jghost{background:linear-gradient(180deg,rgba(196,145,255,.60),rgba(136,69,238,.30));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 0 0 1px rgba(206,168,255,.5),
+             0 0 30px 2px rgba(158,91,255,.30),0 10px 26px -9px rgba(158,91,255,.9)}
+/* the reading line and its head, straight from the top of the column */
+.jline{left:50%!important;right:auto!important;width:1.5px;bottom:0;height:var(--jt,0%);
+  background:linear-gradient(180deg,#fff,rgba(255,255,255,.18));
+  box-shadow:0 0 5px rgba(0,0,0,.45);
+  transform:translateX(-50%);opacity:0;transition:opacity .2s var(--ease),height .45s var(--ease)}
+.jmk{left:50%!important;right:auto!important;width:15px;height:15px;border-radius:50%;
+  bottom:var(--jt,0%);transform:translate(-50%,50%);
+  background:#0E0E13;border:1.5px solid rgba(255,255,255,.94);
+  box-shadow:0 0 14px rgba(158,91,255,.85);opacity:0;
+  transition:opacity .2s var(--ease),bottom .45s var(--ease)}
+.jcol.on .jline,.jcol.on .jmk{opacity:1;z-index:2}
+
+.jlabs{display:flex;justify-content:space-around;gap:6px;margin-top:10px}
+.jlab{flex:1 1 0;min-width:0;max-width:58px;text-align:center;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
+  transition:color .2s var(--ease)}
+.jlab.on{color:var(--majorelle);font-weight:700}
+
+/* the reading itself — the one place a figure for a single month sits */
+.jread{margin-top:17px;border-radius:17px;padding:14px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.022));
+  border:1px solid rgba(255,255,255,.085);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 10px 22px -16px rgba(0,0,0,.95);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
+.jrline{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.jrline+.jrline{margin-top:5px}
+.jread .m{font-family:var(--round);font-size:15px;font-weight:700;letter-spacing:-.028em}
+.jread .a{font-family:var(--round);font-size:17px;font-weight:800;letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums}
+.jread .k,.jread .v{font-size:12px;color:var(--muted)}
+.jread .v{font-variant-numeric:tabular-nums}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -1260,7 +1382,9 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b37 \u00B7 graphite";
+/* Journey moved onto Home; a save that was left on that page opens Home */
+function dropJourneyTab(st){if(st&&st.tab==="journey")st.tab="home";return st;}
+var BUILD="b39 \u00B7 journey on home";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
@@ -1293,10 +1417,11 @@ var BASE_GOALS=[
 function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)),months:{},
   tab:"home",monthCursor:null,weekIdx:null,pick:"household",lastBackup:null,name:"",wiGoal:null,more:false,returnTab:"home",wiAmt:0,cycleStart:15,clamp:null,card:{limit:0,used:0,payDay:18,lastPaid:null},payMethod:"bank",
   notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false,addGiven:false,addBorrowed:false,
+  jMode:"month",jSel:null,
   outside:{given:[],borrowed:[]},outTab:"given",outArm:null};}
 
 var S=(function(){
-  try{var r=store.getItem(KEY);if(r){var p=JSON.parse(r);if(p&&p.months)return p;}}catch(e){}
+  try{var r=store.getItem(KEY);if(r){var p=JSON.parse(r);if(p&&p.months)return dropJourneyTab(p);}}catch(e){}
   return fresh();
 })();
 /* carry an older save forward: two targets become four jars */
@@ -2125,7 +2250,7 @@ function closeIQ(){
   el.classList.remove("on");
   clearTimeout(el.__t);
   el.__t=setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-  var was=document.querySelector(".iq.on,.purse-i.on");
+  var was=document.querySelector(".iq.on,.purse-i.on,.aseg.on");
   if(was)was.classList.remove("on");
 }
 function openIQ(btn){
@@ -2155,7 +2280,7 @@ function openIQ(btn){
 /* one listener for the whole app: anything else dismisses it */
 (function(){
   document.addEventListener("click",function(e){
-    var b=e.target.closest?e.target.closest(".iq"):null;
+    var b=e.target.closest?e.target.closest(".iq,.aseg"):null;
     if(b){e.preventDefault();e.stopPropagation();openIQ(b);return;}
     if(!(e.target.closest&&e.target.closest("#iqpop")))closeIQ();
   },true);
@@ -2413,7 +2538,6 @@ function pageHTML(tab,noSheets){
   else if(tab==="plan")h+=viewPlan(k,live);
   else if(tab==="log")h+=viewLog(k);
   else if(tab==="goals")h+=viewGoals(noSheets);
-  else if(tab==="journey")h+=viewJourney();
   else if(tab==="backup")h+=viewBackup();
   else if(tab==="export")h+=viewExport();
   else if(tab==="outside")h+=viewOutside();
@@ -2551,7 +2675,7 @@ function domSync(live,html,unwrap){
 /* ── the three update paths ──
    Each one regenerates only its own region and reconciles it. None of
    them touches #app.innerHTML, and none of them calls render().     */
-function updatePlanDOM(){return updateViewDOM();}
+function updatePlanDOM(){closePillIQ();return updateViewDOM();}
 function updateCreditCardDOM(){return updateViewDOM();}
 function updateGoalEditorDOM(){
   var app=appEl();
@@ -2603,6 +2727,103 @@ function paintMood(){
   if(m&&!c.contains(m))c.add(m);
 }
 
+/* ── the journey, on the front page ──
+   Journey used to be a page behind the More menu, so it was never seen.
+   What was worth seeing is here instead: how much has actually been
+   banked, month by month, with one month lit and readable at a tap.
+   Nothing new is calculated \u2014 every figure below already existed. */
+function jrnMonths(){
+  var t=thisMonth();
+  return allMonths().filter(function(x){return x<=t;}).slice(-7);
+}
+/* solid = money confirmed; cap = what an open month is on course to add
+   and has not banked. The two are never added into one figure. */
+function jrnValue(k,mode){
+  return mode==="total"
+    ? {solid:cumulativeTo(k),cap:projectedOn(k)}
+    : {solid:Math.max(0,savedConfirmed(k)),cap:projectedOn(k)};
+}
+function jrnMode(){return S.jMode==="total"?"total":"month";}
+function jrnSel(k,ms){
+  if(S.jSel&&ms.indexOf(S.jSel)>=0)return S.jSel;
+  return ms.indexOf(k)>=0?k:ms[ms.length-1];
+}
+function jrnWhy(k){
+  var t=[],avg=recentAverage(),p=prevOf(k),live=thisMonth();
+  t.push("The big figure is money you have confirmed, nothing else. "+
+    (M(live)&&!isConfirmed(live)
+      ? mShort(live)+" is still open, so what it is on course to add is the pale cap on its column and is kept out of the total."
+      : "Every month on the chart has been confirmed."));
+  if(avg!==null&&avg>0)t.push("Your recent months have averaged \u00A5"+fmt(Math.round(avg))+" saved.");
+  if(streak()>=2)t.push("You have hit your target "+streak()+" months running.");
+  if(p)t.push(journeyRead(k,p));
+  t.push("Monthly shows what each month put away on its own; Total shows the running figure.");
+  return t.join(" ");
+}
+function homeJourney(k){
+  var ms=jrnMonths();
+  if(!ms.length)return "";
+  var mode=jrnMode(),sel=jrnSel(k,ms);
+  var total=cumulativeTo(ms[ms.length-1]),nC=closedMonths().length,st=streak();
+  var vals=ms.map(function(x){return jrnValue(x,mode);});
+  var max=Math.max.apply(null,vals.map(function(v){return v.solid+v.cap;}))||1;
+
+  var bars="",labs="";
+  ms.forEach(function(x,i){
+    var v=vals[i],hs=v.solid/max*100,hc=v.cap/max*100;
+    /* a month that saved something must never draw as nothing */
+    if(hs+hc>0&&hs+hc<4){var f=4/(hs+hc);hs*=f;hc*=f;}
+    var tot=hs+hc,on=x===sel;
+    bars+='<button type="button" class="jcol'+(on?" on":"")+'" id="jcol-'+x+'" data-jsel="'+x+'"'+
+          ' style="--jt:'+tot.toFixed(2)+'%" aria-label="'+esc(mName(x))+'">'+
+          (tot<=0?'<span class="jnil"></span>':'')+
+          (hs>0?'<span class="jsolid'+(hc>0?"":" top")+'" style="height:'+hs.toFixed(2)+'%"></span>':'')+
+          (hc>0?'<span class="jghost" style="height:'+hc.toFixed(2)+'%;bottom:'+hs.toFixed(2)+'%"></span>':'')+
+          '<span class="jline"></span><span class="jmk"></span></button>';
+    labs+='<span class="jlab'+(on?" on":"")+'">'+mShort(x)+'</span>';
+  });
+
+  var m=M(sel),amt=isConfirmed(sel)?savedConfirmed(sel):Math.max(0,savedActual(sel));
+  return '<div class="card jrn" id="jrnCard">'+
+    '<div class="jrn-h"><span class="card-t">Journey'+iq(jrnWhy(k))+'</span>'+
+    '<button class="jmode" type="button" data-jmode="1"><i></i>'+(mode==="total"?"Total":"Monthly")+'</button></div>'+
+    '<div class="jrn-fig"><span class="jrn-big">\u00A5'+fmt(total)+'</span>'+
+    '<span class="jrn-sub">'+nC+' month'+(nC===1?"":"s")+' banked</span></div>'+
+    '<div class="jchart"><div class="jcols" id="jcols">'+bars+'</div>'+
+    '<div class="jlabs" id="jlabs">'+labs+'</div></div>'+
+    '<div class="jread" id="jread">'+jrnRead(sel)+'</div></div>';
+}
+/* the two lines under the chart, kept apart so a tap can redraw only them.
+   The figure has to mean the same thing as the column above it, so it
+   follows the mode: a month on its own, or the running total. */
+function jrnRead(sel){
+  var m=M(sel),total=jrnMode()==="total",
+      own=isConfirmed(sel)?savedConfirmed(sel):Math.max(0,savedActual(sel));
+  return '<div class="jrline"><span class="m">'+mName(sel)+'</span>'+
+    '<span class="a">\u00A5'+fmt(total?cumulativeTo(sel):own)+'</span></div>'+
+    '<div class="jrline"><span class="k">'+savedWord(sel)+
+      (total?' that month':'')+'</span><span class="v">'+
+      (total?'\u00A5'+fmt(own)
+           :(m&&m.salary>0?Math.round(rateOf(sel))+'% of salary kept':'\u2014'))+
+    '</span></div>';
+}
+
+/* A tap moves the light and the reading, and nothing else. Heights are
+   left alone because the figures have not changed \u2014 only which month
+   is being read. */
+function paintJourney(){
+  var cols=document.getElementById("jcols");
+  if(!cols)return;
+  var ms=jrnMonths(),sel=jrnSel(cur(),ms),labs=document.getElementById("jlabs"),
+      read=document.getElementById("jread"),i;
+  ms.forEach(function(x,n){
+    var c=document.getElementById("jcol-"+x);
+    if(c)c.classList.toggle("on",x===sel);
+    if(labs&&labs.children[n])labs.children[n].classList.toggle("on",x===sel);
+  });
+  if(read)read.innerHTML=jrnRead(sel);
+}
+
 function viewHome(k,live){
   var m=M(k),fx=fixedTotal(k),oo=spentOneoff(k);
   var sv=savedNow(k),pl=savedPlanned(k),d=sv-pl;
@@ -2639,26 +2860,7 @@ function viewHome(k,live){
      '<div class="eqrow"><span class="k">One-offs</span><span class="v" style="color:'+(oo>0?"var(--coral)":"var(--faint)")+'">\u2212'+fmt(oo)+'</span></div>'+
      '</div></details></div>';
 
-  /* ── spending decision simulator ── */
-  var pre=Math.max(0,S.wiAmt||0);
-  var cap=Math.max(1000,Math.round((pl||1000)/100)*100,Math.ceil(pre/100)*100),rate=monthlyRate();
-
-  h+='<div class="card" id="wiCard" data-wi-saved="'+Math.max(0,sv)+'" data-wi-planned="'+pl+'"'+
-     ' data-wi-salary="'+m.salary+'" data-wi-rate="'+Math.round(monthlyRate())+'" data-wi-base="'+hs+'">'+
-     '<div class="card-h"><span class="card-t">Before you buy it'+
-     iq('The delay shown is an estimate, '+paceBasis()+'. Health is what your score would become if you spent this, and every goal moves back by the same share of your saving it would have taken.')+
-     '</span></div>'+
-     '<span class="lab">Considering spending</span>'+
-     '<div class="wiamt" id="wiAmt" style="color:'+(pre>0?healthColor(healthFrom(m.salary,Math.max(0,sv-pre),pl)):'')+'">\u00A5'+fmt(pre)+'</div>'+
-     '<input class="slider" id="wiSlider" type="range" min="0" max="'+cap+'" step="100" value="'+pre+'" aria-label="Amount you are considering">'+
-     '<span class="lab" id="wiHead" style="margin-top:8px">If you buy this</span>'+
-     '<div class="scen" style="margin-top:10px">'+
-     '<div class="sc"><div class="k">saved</div><div class="v" id="wiSaved">\u00A5'+fmt(Math.max(0,sv-pre))+'</div></div>'+
-     '<div class="sc"><div class="k">health</div><div class="v" id="wiHealth" style="color:'+healthColor(healthFrom(m.salary,Math.max(0,sv-pre),pl))+'">'+
-       (pre>0?healthText(hs)+'<span class="wiarrow">\u2192</span>'+healthText(healthFrom(m.salary,Math.max(0,sv-pre),pl)):healthText(hs))+'</div></div>'+
-     '<div class="sc"><div class="k">every goal</div><div class="v" id="wiEta">'+delayText(pre)+'</div></div></div>'+
-     '<p class="hint" id="wiWhy" style="margin-top:12px">'+(pre>0?'From your calculator. Drag to adjust.':'Drag the slider before you decide.')+'</p>'+
-     '</div>';
+  h+=homeJourney(k);
 
   if(cardOn()){
     var c=card(),use=cardUsage(),np=nextPayment();
@@ -2679,6 +2881,70 @@ function viewHome(k,live){
   return h+'</div>';
 }
 
+/* ── the allocation, seen ──
+   Every line of the plan as one pill in a single track: the width is the
+   share, the colour is the category, the symbol is the one its row
+   carries below. Amounts of zero keep their place in the DOM but are
+   hidden, so dragging a slider only moves widths and never rebuilds the
+   bar. The last pill is whatever the salary has not been given to. */
+function allocData(k){
+  var m=M(k),sum=0,parts=[];
+  CATS.forEach(function(c){sum+=Math.max(0,m.alloc[c.id]||0);});
+  var sal=Math.max(0,m.salary||0),total=Math.max(sum,sal),free=Math.max(0,sal-sum);
+  CATS.forEach(function(c){
+    var a=Math.max(0,m.alloc[c.id]||0);
+    parts.push({id:c.id,name:c.name,col:COLOR[c.id],ico:CATSYM[c.id],amt:a,
+                pct:total>0?a*100/total:0,free:false});
+  });
+  parts.push({id:"free",name:"Not assigned",col:"#3E3E49",ico:"",amt:free,
+              pct:total>0?free*100/total:0,free:true});
+  var big=parts[0];
+  parts.forEach(function(x){if(!x.free&&x.amt>big.amt)big=x;});
+  return{parts:parts,total:total,sum:sum,free:free,big:big};
+}
+function pctText(p){return p<=0?"0%":p<0.5?"<1%":Math.round(p)+"%";}
+/* dark ink on a pale pill, light ink on a deep one */
+function ink(hex){
+  var h=String(hex).replace("#",""),
+      r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+  return (0.2126*r+0.7152*g+0.0722*b)/255>0.40?"rgba(12,4,24,.72)":"rgba(255,255,255,.94)";
+}
+function allocSay(p){
+  return p.free
+    ? "\u00A5"+fmt(p.amt)+" of your salary is not on any line yet \u2014 "+pctText(p.pct)+" of it."
+    : p.name+" \u00B7 \u00A5"+fmt(p.amt)+" \u00B7 "+pctText(p.pct)+" of your salary";
+}
+function allocVisual(k){
+  var d=allocData(k);
+  if(d.total<=0)
+    return '<p class="hint" style="margin-top:16px">Set your salary and the split appears here.</p>';
+  var segs="";
+  d.parts.forEach(function(p){
+    var vis=p.amt>0;
+    segs+='<button type="button" class="aseg'+(p.free?" free":"")+'" id="aseg-'+p.id+'"'+
+          ' style="flex-grow:'+p.pct.toFixed(3)+';--sc:'+p.col+';--si:'+ink(p.col)+(vis?"":";display:none")+'"'+
+          ' data-iq="'+esc(allocSay(p))+'" aria-label="'+esc(p.name)+'">'+(p.ico?sym(p.ico):"")+'</button>';
+  });
+  return '<div class="allocv"><div class="atrack" id="atrack" style="--ag:'+d.big.col+'59">'+
+         segs+'</div></div>';
+}
+/* widths and percentages only — nothing here creates or removes a node,
+   so it is safe to call on every frame of a drag */
+/* a pill's reading is of one figure; when the figure moves, the reading
+   goes with it rather than sitting there saying the old number */
+function closePillIQ(){if(document.querySelector(".aseg.on"))closeIQ();}
+function paintAlloc(k,live){
+  var d=allocData(k),tr=document.getElementById("atrack");
+  if(!tr)return;
+  closePillIQ();
+  tr.style.setProperty("--ag",d.big.col+"59");
+  if(live)tr.classList.add("live");
+  d.parts.forEach(function(p){
+    var s=document.getElementById("aseg-"+p.id);
+    if(s){s.style.flexGrow=p.pct.toFixed(3);s.style.display=p.amt>0?"":"none";s.dataset.iq=allocSay(p);}
+  });
+}
+
 function viewPlan(k,live){
   var m=M(k),oo=spentOneoff(k),sv=savedNow(k);
   var ed=!isSettled(k);   /* the past is read-only, now and later are not */
@@ -2687,8 +2953,9 @@ function viewPlan(k,live){
   h+='<div class="card"><button class="bigt'+(S.allocInfo?" open":"")+'" data-alloc="1">'+
        '<span class="bigt-w">Allocation</span><span class="bigt-c"></span></button>'+
      (S.allocInfo
-       ? '<p class="hint" style="margin-top:16px">Locked amounts never move. Unlocked ones share what is left, so the total always matches your salary. Every change is recorded in your monthly report.</p>'
+       ? '<p class="hint" style="margin-top:16px">Locked amounts never move. Unlocked ones share what is left, so the total always matches your salary. Tap any pill in the bar to see what it holds. Every change is recorded in your monthly report.</p>'
        : '')+
+     allocVisual(k)+
      (S.clamp&&Date.now()-S.clamp.ts<120000
        ? '<div class="warnbox over" style="margin-top:14px"><b>Capped at \u00A5'+fmt(S.clamp.got)+'.</b> '+
          'You asked for \u00A5'+fmt(S.clamp.want)+', but \u00A5'+fmt(S.clamp.locked)+' of your \u00A5'+fmt(m.salary)+
@@ -2966,62 +3233,6 @@ function viewGoals(noSheets){
      iq('Dates above are estimates, '+basis+'. They move as your saving does.')+'</p>';
   if(S.goals.length>1)h+='<p class="hint" style="margin-top:10px;text-align:center">Hold a goal to move it up or down.</p>';
 
-  h+='<button class="btn" data-sheet="1" style="margin-top:22px">Edit goals</button>';
-  h+='<button class="btn ghost" data-newg="1" style="margin-top:10px">+  Add a goal</button>';
-
-  if(S.sheet&&!noSheets)h+=editGoalsSheetPair();
-  if(S.newg&&!noSheets)h+=newGoalSheetPair();
-  return h+'</div>';
-}
-
-function viewJourney(){
-  var k=cur(),p=prevOf(k),h='<div class="view">';
-  h+=backLink();
-  var months=allMonths().slice(-8);
-  var total=cumulativeTo(k),saved=Math.max(0,savedActual(k));
-  var prevSaved=p?Math.max(0,savedActual(p)):null;
-  var delta=prevSaved===null?null:saved-prevSaved;
-
-  /* the journey so far */
-  var openNow=projectedOn(k);
-  h+='<div class="card" style="padding:24px 22px"><span class="lab">Banked so far</span>'+
-     '<div class="jamt" style="margin-top:12px;font-size:38px">\u00A5'+fmt(total)+'</div>'+
-     '<div class="jof" style="margin-top:7px">confirmed across '+closedMonths().length+
-       ' closed month'+(closedMonths().length===1?'':'s')+
-       iq("Only months you have confirmed count here. "+mShort(k)+" is still open, so what it is on course to add is shown separately and is not part of this total.")+
-       '</div>'+(openNow>0
-       ? '<div class="onopen"><span class="k">'+mShort(k)+' on course to add</span><span class="v">+\u00A5'+fmt(openNow)+'</span></div>'
-       : '');
-  var closedOnly=months.filter(function(x){return isConfirmed(x);});
-  if(closedOnly.length>1)h+='<div style="margin-top:22px">'+
-     areaChart(closedOnly.map(function(x){return cumulativeTo(x);}),closedOnly.map(mShort),"#9E5BFF")+'</div>';
-  else h+='<p class="hint" style="margin-top:16px">The curve appears once a second month has been confirmed.</p>';
-  h+='</div>';
-
-  /* this month against last */
-  if(p){
-    var sp=totalSpendOf(k),spP=totalSpendOf(p),spD=sp-spP;
-    var pct=prevSaved>0?Math.round((saved-prevSaved)/prevSaved*100):null;
-    h+='<div class="card" style="padding:22px"><div class="card-h"><span class="card-t">'+mName(k).split(" ")[0]+' vs '+mShort(p)+'</span></div>'+
-       '<div class="scen">'+
-       '<div class="sc"><div class="k">'+(isConfirmed(k)?"saved":"on course")+'</div><div class="v" style="color:'+(delta>=0?"var(--teal)":"var(--coral)")+'">'+
-         (pct===null?"\u00A5"+fmt(saved):(pct>=0?"+":"")+pct+"%")+'</div></div>'+
-       '<div class="sc"><div class="k">spending</div><div class="v" style="color:'+(spD<=0?"var(--teal)":"var(--coral)")+'">'+
-         (spD===0?"same":(spD<0?"\u2193 ":"\u2191 ")+"\u00A5"+fmt(Math.abs(spD)))+'</div></div>'+
-       '<div class="sc"><div class="k">kept</div><div class="v">'+Math.round(rateOf(k))+'%</div></div>'+
-       '</div>'+
-       '<div class="jvs">'+
-         '<div><span class="k">'+mShort(k)+(isConfirmed(k)?"":" \u00B7 projected")+'</span><span class="v'+(isConfirmed(k)?"":" proj")+'">\u00A5'+fmt(saved)+'</span></div>'+
-         '<div><span class="k">'+mShort(p)+'</span><span class="v">\u00A5'+fmt(prevSaved)+'</span></div>'+
-         (function(){
-           var avg=recentAverage(k);
-           return avg===null?"":'<div><span class="k">recent average</span><span class="v">\u00A5'+fmt(Math.round(avg))+'</span></div>';
-         })()+
-       '</div>'+
-       '<p class="hint" style="margin-top:14px">'+journeyRead(k,p)+'</p>'+
-       '</div>';
-  }
-
   /* how each jar has grown */
   if(closedMonths().length>1){
     var cm=closedMonths().slice(-8);
@@ -3030,53 +3241,23 @@ function viewJourney(){
       var series=cm.map(function(x){return jarBalanceAt(x,g);});
       if(series[series.length-1]<=0)return;
       h+='<div style="margin-top:16px"><div class="dl" style="margin-bottom:8px">'+
-         '<span class="dot" style="background:'+g.col+'"></span><span class="n">'+g.name+'</span>'+
+         '<span class="dot" style="background:'+g.col+'"></span><span class="n">'+esc(g.name)+'</span>'+
          '<span class="p" style="color:'+g.col+'">\u00A5'+fmt(series[series.length-1])+'</span></div>'+
          areaChart(series,cm.map(mShort),g.col)+'</div>';
     });
     h+='</div>';
   }
 
-  /* what changed */
-  var notes=journeyNotes(k,p);
-  if(notes.length){
-    h+='<div class="card" style="padding:22px"><div class="card-h"><span class="card-t">What changed</span></div>';
-    notes.forEach(function(n){h+='<div class="ins"><span class="ic">'+sym(n.i)+'</span><span class="tx">'+n.t+'</span></div>';});
-    h+='</div>';
-  }
+  h+='<button class="btn" data-sheet="1" style="margin-top:22px">Edit goals</button>';
+  h+='<button class="btn ghost" data-newg="1" style="margin-top:10px">+  Add a goal</button>';
+
+  if(S.sheet&&!noSheets)h+=editGoalsSheetPair();
+  if(S.newg&&!noSheets)h+=newGoalSheetPair();
   return h+'</div>';
 }
 
-/* two or three short observations, never a wall of text */
-function journeyNotes(k,p){
-  var out=[],st=streak();
-  if(p){
-    var a=Math.max(0,savedActual(k)),b=Math.max(0,savedActual(p));
-    if(b>0&&Math.abs(a-b)>=100){
-      var d=Math.round((a-b)/b*100);
-      out.push({i:d>0?"up":"down",
-        t:"Your savings "+(d>0?"rose":"fell")+" <b>"+Math.abs(d)+"%</b> against "+mShort(p)+"."});
-    }
-  }
-  var lead=S.goals.filter(function(g){return !jarDone(g);})
-    .sort(function(x,y){return jarPct(y)-jarPct(x);})[0];
-  if(lead&&jarRate(lead)>0)
-    out.push({i:lead.e,t:"Most of your saving goes to <b>"+esc(lead.name)+"</b>. At this rate it lands "+jarETA(lead)+"."});
-  if(out.length<3&&lead){
-    var faster=jarLeft(lead)/(jarRate(lead)+monthlyRate()*0.05);
-    if(jarRate(lead)>0&&isFinite(faster)){
-      var now=Math.ceil(jarLeft(lead)/jarRate(lead)),then=Math.ceil(faster);
-      if(now-then>=1)out.push({i:"bolt",
-        t:"Give <b>"+esc(lead.name)+"</b> 5% more and it arrives "+ahead(then)+" instead of "+ahead(now)+"."});
-    }
-  }
-  if(out.length<3&&st>=2)out.push({i:"flame",t:"You have hit your target <b>"+st+" months</b> running."});
-  return out.slice(0,3);
-}
-
-var MORE_PAGES=["journey","backup","export","tools","note","settings","outside"];
+var MORE_PAGES=["backup","export","tools","note","settings","outside"];
 var MENU=[
-  {id:"journey",e:"compass",t:"Journey",s:"Track your financial progress",col:"#9E5BFF",live:true},
   {id:"tools",  e:"calculator",t:"Tools",  s:"Calculator and notes",        col:"#D45CE8",live:true},
   {id:"outside",e:"person",   t:"Money outside",s:"",                        col:"#8A8A98",live:true},
   {id:"settings",e:"gear",t:"Settings",s:"Your month, your card, your data",col:"#C9A6FF",live:true}
@@ -3302,7 +3483,7 @@ function viewTools(){
      key("1")+key("2")+key("3")+'<button class="key eq" data-ck="=" style="grid-row:span 2">=</button>'+
      '<button class="key wide" data-ck="0">0</button>'+key(".")+
      '</div></div>'+
-     '<button class="btn" id="calcToImpact" style="margin-top:12px">Test this against my goals</button></div>';
+     '<button class="btn" id="calcToImpact" style="margin-top:12px">See what this does to my month</button></div>';
 
   /* notes */
   var q=(S.noteQ||"").toLowerCase();
@@ -4080,41 +4261,17 @@ function bind(){
     r.oninput=function(){
       if(start===null)start=m.alloc[id]||0;
       m.alloc[id]=+r.value;balance(k,id);
-      var segs=q(".seg"),i=0;
-      CATS.forEach(function(c){var a=m.alloc[c.id]||0;if(a>0&&segs[i]){segs[i].style.flexGrow=a;i++;}});
+      paintAlloc(k,true);
       q("[data-a]").forEach(function(x){x.value=m.alloc[x.dataset.a]||0;});};
     r.onchange=function(){if(start!==null)recordChange(k,id,start,m.alloc[id]);save();updatePlanDOM();};});
 
-  var wi=document.getElementById("wiSlider");
-  if(wi){
-    var D=(wi.parentNode&&wi.parentNode.dataset)||{};
-    var base=+D.wiSaved,planned=+D.wiPlanned,salary=+D.wiSalary,mrate=+D.wiRate,baseH=+D.wiBase;
-    var basis=paceBasis();
-    var elA=document.getElementById("wiAmt"),elS=document.getElementById("wiSaved"),
-        elH=document.getElementById("wiHealth"),elE=document.getElementById("wiEta"),
-        elW=document.getElementById("wiWhy"),elHd=document.getElementById("wiHead");
-    wi.oninput=function(){
-      S.wiAmt=0;
-      var x=+wi.value,left=Math.max(0,base-x),sc=healthFrom(salary,left,planned),col=healthColor(sc);
-      var scT=healthText(sc);
-      var days=mrate>0?Math.round(x/mrate*30):0;
-      elA.textContent="\u00A5"+fmt(x);
-      elA.style.color=x>0?col:"";
-      elS.textContent="\u00A5"+fmt(left);
-      elS.style.color=x>0?col:"";
-      elH.innerHTML=x>0?(healthText(baseH)+'<span class="wiarrow">\u2192</span>'+scT):healthText(baseH);
-      elH.style.color=x>0?col:healthColor(baseH);
-      elE.textContent=delayText(x);
-      elE.style.color=x>0?col:"";
-      elHd.textContent=x>0?"If you buy this":"If you buy something";
-      if(x===0){elW.textContent="Drag the slider before you decide.";elW.style.color="";return;}
-      var share=base>0?Math.round(x/base*100):0;
-      elW.innerHTML="\u00A5"+fmt(x)+" is <b>"+share+"% of a month\u2019s saving</b> and leaves you \u00A5"+fmt(left)+
-        " this month. "+(sc<35?"That is overspending territory.":sc<60?"That puts real pressure on the month.":"Still comfortably within reach.")+
-        "<br><span style=\'opacity:.65\'>Delay is an estimate \u2014 "+basis+"</span>";
-      elW.style.color=sc<35?"var(--coral)":sc<60?"var(--saffron)":"var(--muted)";
-    };
-  }
+  /* the journey chart: a tap lights another column and rewrites the two
+     lines under it \u2014 nothing else on the page moves */
+  q("[data-jsel]").forEach(function(b){b.onclick=function(){
+    S.jSel=b.dataset.jsel;save();paintJourney();};});
+  var jm=document.getElementById("jrnCard");
+  if(jm){var mb=jm.querySelector("[data-jmode]");
+    if(mb)mb.onclick=function(){S.jMode=jrnMode()==="total"?"month":"total";save();updateViewDOM();};}
 
   var ovr=document.getElementById("ovr");
   if(ovr)ovr.onchange=function(){var v=String(this.value).trim();m.override=v===""?null:Math.max(0,+v||0);save();updatePlanDOM();};
@@ -4210,6 +4367,8 @@ function bind(){
     if(pin)pin.dataset.purseIq=purseWhy(cur(),parseFloat(amtF&&amtF.value)||0);
   }
   if(purse){
+    /* a figure sent over from the calculator arrives in the field, once */
+    if(S.wiAmt>0&&amtF&&!amtF.value){amtF.value=S.wiAmt;S.wiAmt=0;save();}
     paintPurse();
     if(amtF&&!amtF.__purseBound){amtF.__purseBound=true;amtF.addEventListener('input',paintPurse);}
     var pin=purse.querySelector('.purse-i');
@@ -4282,8 +4441,8 @@ function bind(){
   var c2i=document.getElementById("calcToImpact");
   if(c2i)c2i.onclick=function(){
     S.wiAmt=Math.max(0,Math.round(calcValue()));
-    S.tab="home";S.more=false;save();render();
-    var el=document.getElementById("wiSlider");
+    S.tab="log";S.more=false;save();render();
+    var el=document.getElementById("purse");
     if(el)el.scrollIntoView({behavior:"smooth",block:"center"});};
 
   /* notes */
