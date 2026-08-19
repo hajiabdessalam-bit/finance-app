@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Plan">
-<meta name="theme-color" content="#0B0918">
+<meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
@@ -15,14 +15,21 @@
 <title>Plan</title>
 <style>
 :root{
-  --void:#0B0918;--surface:#171531;--surface-2:#1E1B3C;--surface-3:#272348;
-  --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.14);
-  --majorelle:#7B72FF;--teal:#2FD4BC;--saffron:#FFB33D;--violet:#B08CFF;
-  --coral:#FF7A5C;--rose:#FF5C8A;--sage:#8DA88F;--dim:#5A52D9;
-  --text:#F2F0FF;--muted:#A29CC7;--faint:#7B75A6;
+  /* GRAPHITE — true black canvas, graphite panes, one plum light.
+     Names are kept from the old palette so nothing has to be renamed:
+     --majorelle is the interactive colour, --teal is the positive one. */
+  --void:#000000;--surface:#141418;--surface-2:#1C1C21;--surface-3:#26262D;
+  --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+  --majorelle:#9E5BFF;--teal:#D45CE8;--saffron:#E8A23C;--violet:#C9A6FF;
+  --coral:#FF4D62;--rose:#FF7BA8;--sage:#8A8A98;--dim:#6E3FD1;
+  --text:#F5F5F7;--muted:#9B9BA6;--faint:#6C6C78;
   --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
-  --round:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
-  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+  /* display face: SF Pro Display on the phone, not the rounded one —
+     the rounded figures were most of what read as "app template" */
+  --round:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+  /* labels are set in the sans, not a typewriter face */
+  --mono:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --code:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
   --ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1);
   --navh:65px;                     /* the bar, without the home indicator */
   /* The strip the home indicator sits over. Installed on the Home Screen
@@ -40,9 +47,9 @@ body{margin:0;background:var(--void);color:var(--text);font-family:var(--sans);
   -webkit-font-smoothing:antialiased;overscroll-behavior-y:none;
   height:100%;overflow:hidden}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(58% 32% at 16% 0%,rgba(123,114,255,.19),transparent 70%),
-  radial-gradient(46% 28% at 96% 10%,rgba(47,212,188,.09),transparent 70%),
-  radial-gradient(70% 38% at 50% 103%,rgba(255,179,61,.06),transparent 70%)}
+  background:radial-gradient(58% 32% at 16% 0%,rgba(158,91,255,.19),transparent 70%),
+  radial-gradient(46% 28% at 96% 10%,rgba(212,92,232,.09),transparent 70%),
+  radial-gradient(70% 38% at 50% 103%,rgba(232,162,60,.06),transparent 70%)}
 .scroll{position:relative;z-index:1;max-width:540px;margin:0 auto;
   padding:calc(env(safe-area-inset-top) + 20px) 20px calc(var(--navtotal) + 28px)}
 /* ── the app shell ──
@@ -105,13 +112,13 @@ button{background:none;border:none;cursor:pointer;padding:0}
 .ms:last-child{border-bottom:none;padding-bottom:0}
 .ms .badge{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:16px;flex:none;
   background:var(--surface-2);filter:grayscale(1);opacity:.38}
-.ms.on .badge{filter:none;opacity:1;background:rgba(255,179,61,.14)}
+.ms.on .badge{filter:none;opacity:1;background:rgba(232,162,60,.14)}
 .ms .t{flex:1;font-size:14px;font-weight:600;color:var(--faint)}
 .ms.on .t{color:var(--text)}
 .ms .s{font-family:var(--mono);font-size:10px;color:var(--faint)}
 .ms.on .s{color:var(--saffron)}
 .streak{display:flex;align-items:center;gap:13px;padding:15px;border-radius:16px;
-  background:rgba(255,179,61,.09);border:1px solid rgba(255,179,61,.24)}
+  background:rgba(232,162,60,.09);border:1px solid rgba(232,162,60,.24)}
 .streak .n{font-family:var(--round);font-size:30px;font-weight:800;color:var(--saffron);letter-spacing:-.04em;line-height:1}
 .streak .t{font-size:13px;color:var(--muted);line-height:1.45}
 
@@ -139,11 +146,16 @@ button{background:none;border:none;cursor:pointer;padding:0}
 @keyframes breathe{0%,100%{transform:scale(1);opacity:.26}50%{transform:scale(1.14);opacity:.44}}
 @keyframes bloom{from{opacity:0}}
 .glass{position:relative;z-index:1;border-radius:26px;padding:22px;
-  background:rgba(20,18,42,.62);
+  background:rgba(22,22,26,.66);
   -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);
   border:1px solid rgba(255,255,255,.10);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 22px 50px -26px rgba(0,0,0,.85)}
 .hero .salary-line{margin-top:10px}
+.heroval{font-family:var(--round);font-size:44px;font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+.herosal{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.herosal .k{font-size:13px;color:var(--muted);flex:none}
+.herosal #sal{flex:1 1 0;min-width:0;width:auto;text-align:right;background:none;padding:0;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.herosal #sal:focus{color:var(--majorelle)}
 .hstatus{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:12px}
 .hpill{display:inline-flex;align-items:center;gap:9px;padding:7px 14px 7px 11px;border-radius:99px;
   background:var(--hc-soft);border:1px solid var(--hc-line);font-size:13px;font-weight:600;color:var(--hc)}
@@ -174,8 +186,8 @@ details.more .eqrow{font-size:13px}
 /* At rest every goal card looks the same. Rank is said in words on the
    card, not shouted in light — the glow is reserved for the one thing
    the finger is actually holding.                                     */
-.jarcard.quiet{background:rgba(21,19,44,.86);box-shadow:0 12px 28px -28px rgba(0,0,0,.8)}
-.jarcard.quiet .jname{color:#E4E1F5}
+.jarcard.quiet{background:rgba(18,18,22,.88);box-shadow:0 12px 28px -28px rgba(0,0,0,.8)}
+.jarcard.quiet .jname{color:#E9E9EE}
 .jhead{display:flex;align-items:center;gap:12px}
 .jico{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:23px;flex:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
@@ -221,7 +233,7 @@ details.more .eqrow{font-size:13px}
 .ngline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
 
 /* ── adjust sheet ── */
-.shbg{position:fixed;inset:0;z-index:30;background:rgba(6,5,16,.62);
+.shbg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.66);
   -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);animation:fadein .25s var(--ease) both}
 @keyframes fadein{from{opacity:0}}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;max-width:540px;margin:0 auto;
@@ -304,9 +316,9 @@ details.more .eqrow{font-size:13px}
 .key{height:58px;border-radius:19px;background:var(--surface-3);font-family:var(--round);font-size:22px;
   font-weight:600;display:grid;place-items:center;transition:transform .13s var(--spring),background .18s}
 .key:active{transform:scale(.9);background:var(--dim)}
-.key.op{background:rgba(123,114,255,.16);color:var(--majorelle)}
+.key.op{background:rgba(158,91,255,.16);color:var(--majorelle)}
 .key.eq{background:var(--majorelle);color:#fff}
-.key.fn{background:rgba(255,122,92,.13);color:var(--coral);font-size:19px}
+.key.fn{background:rgba(255,77,98,.13);color:var(--coral);font-size:19px}
 .key.wide{grid-column:span 2}
 
 /* ── impact rows ── */
@@ -324,7 +336,7 @@ details.more .eqrow{font-size:13px}
 .notedel{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;flex:none;
   color:var(--faint);font-size:19px;transition:all .18s var(--spring)}
 .notedel:active{transform:scale(.88)}
-.notedel.armed{background:rgba(255,122,92,.16);color:var(--coral);width:auto;padding:0 13px;font-size:12.5px;font-weight:700}
+.notedel.armed{background:rgba(255,77,98,.16);color:var(--coral);width:auto;padding:0 13px;font-size:12.5px;font-weight:700}
 .notedot{width:9px;height:9px;border-radius:9px;flex:none}
 .notetxt{flex:1;min-width:0}
 .notet{display:block;font-size:15px;font-weight:600;letter-spacing:-.012em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -352,9 +364,9 @@ details.more .eqrow{font-size:13px}
 .cardrow b{color:var(--text);font-weight:500}
 .methodrow{display:flex;gap:7px;margin-bottom:10px}
 .warnbox{border-radius:15px;padding:14px;margin-top:12px;border:1px solid;font-size:13px;line-height:1.55}
-.warnbox.clear{background:rgba(47,212,188,.08);border-color:rgba(47,212,188,.24);color:var(--muted)}
-.warnbox.tight{background:rgba(255,179,61,.09);border-color:rgba(255,179,61,.26);color:var(--muted)}
-.warnbox.over{background:rgba(255,122,92,.1);border-color:rgba(255,122,92,.3);color:var(--muted)}
+.warnbox.clear{background:rgba(212,92,232,.08);border-color:rgba(212,92,232,.24);color:var(--muted)}
+.warnbox.tight{background:rgba(232,162,60,.09);border-color:rgba(232,162,60,.26);color:var(--muted)}
+.warnbox.over{background:rgba(255,77,98,.1);border-color:rgba(255,77,98,.3);color:var(--muted)}
 .warnbox b{color:var(--text)}
 
 .spectrum{display:flex;gap:3px;height:44px;margin-top:16px}
@@ -377,7 +389,7 @@ details.more .eqrow{font-size:13px}
 .lockbtn{width:30px;height:30px;border-radius:10px;border:1px solid transparent;display:grid;place-items:center;
   transition:all .25s var(--ease);flex:none}
 .lockbtn svg{width:13px;height:13px;stroke:var(--faint);fill:none;stroke-width:1.9;stroke-linecap:round}
-.lockbtn.on{background:rgba(255,179,61,.12);border-color:rgba(255,179,61,.28)}
+.lockbtn.on{background:rgba(232,162,60,.12);border-color:rgba(232,162,60,.28)}
 .lockbtn.on svg{stroke:var(--saffron)}
 .lockbtn:active{transform:scale(.9)}
 .stepper{display:flex;align-items:center;gap:1px;flex:none}
@@ -403,13 +415,13 @@ details.more .eqrow{font-size:13px}
   font-size:13.5px;font-weight:600;white-space:nowrap;color:var(--muted);transition:all .22s var(--ease);flex:none}
 .chip.on{color:#fff;border-color:currentColor}
 .chip:active{transform:scale(.94)}
-.entry{display:flex;gap:8px;align-items:stretch}
-.amtfield{flex:1 1 0;min-width:0;background:var(--surface-2);border-radius:14px;padding:13px 15px;
-  font-family:var(--round);font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.entry{display:flex;gap:8px}
+.amtfield{flex:1;background:var(--surface-2);border-radius:14px;padding:13px 15px;font-family:var(--round);
+  font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .amtfield::placeholder{color:var(--faint);font-weight:400}
 .notefield{width:100%;background:var(--surface-2);border-radius:14px;padding:12px 15px;font-size:14.5px;margin-top:8px}
 .notefield::placeholder{color:var(--faint)}
-.addb{flex:none;white-space:nowrap;padding:0 20px;border-radius:14px;background:var(--majorelle);color:#fff;font-weight:700;font-size:15px;
+.addb{padding:0 20px;border-radius:14px;background:var(--majorelle);color:#fff;font-weight:700;font-size:15px;
   transition:transform .18s var(--spring)}
 .addb:active{transform:scale(.94)}
 .sp{padding:13px 0;border-bottom:1px solid var(--line)}
@@ -427,12 +439,12 @@ details.more .eqrow{font-size:13px}
 .log .n em{display:block;font-style:normal;font-size:11px;color:var(--faint);margin-top:2px}
 .log .a{font-family:var(--round);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
 .del{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;color:var(--faint);font-size:17px;flex:none}
-.del:active{background:rgba(255,122,92,.15);color:var(--coral)}
+.del:active{background:rgba(255,77,98,.15);color:var(--coral)}
 .empty{padding:28px 18px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.6}
 
 .verdict{border-radius:16px;padding:16px;border:1px solid}
-.verdict.good{background:rgba(47,212,188,.09);border-color:rgba(47,212,188,.26)}
-.verdict.bad{background:rgba(255,122,92,.09);border-color:rgba(255,122,92,.26)}
+.verdict.good{background:rgba(212,92,232,.09);border-color:rgba(212,92,232,.26)}
+.verdict.bad{background:rgba(255,77,98,.09);border-color:rgba(255,77,98,.26)}
 .verdict.flat{background:var(--surface-2);border-color:var(--line)}
 .verdict b{display:block;font-family:var(--round);font-size:19px;font-weight:800;letter-spacing:-.03em;margin-bottom:5px}
 .verdict.good b{color:var(--teal)}.verdict.bad b{color:var(--coral)}
@@ -490,9 +502,9 @@ details.more .eqrow{font-size:13px}
 .btn.warn{color:var(--coral)}
 .btn.go{background:var(--majorelle);color:#fff}
 textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:14px;padding:12px;
-  font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:9px;resize:none}
+  font-family:var(--code);font-size:10px;color:var(--muted);margin-top:9px;resize:none}
 .bkwarn{display:flex;gap:10px;align-items:center;padding:13px;border-radius:14px;
-  background:rgba(255,179,61,.09);border:1px solid rgba(255,179,61,.24);font-size:12.5px;color:var(--muted);line-height:1.45}
+  background:rgba(232,162,60,.09);border:1px solid rgba(232,162,60,.24);font-size:12.5px;color:var(--muted);line-height:1.45}
 
 /* -- backup page: three plain actions, the machinery folded away -- */
 .bkstep{margin-top:22px}
@@ -508,7 +520,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .bigt-w{position:relative;padding-bottom:11px}
 .bigt-w::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.5px;border-radius:3px;
   background:linear-gradient(90deg,var(--majorelle),var(--teal));
-  box-shadow:0 3px 16px -1px rgba(123,114,255,.7),0 3px 22px -2px rgba(47,212,188,.45)}
+  box-shadow:0 3px 16px -1px rgba(158,91,255,.7),0 3px 22px -2px rgba(212,92,232,.45)}
 .bigt-c{width:9px;height:9px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);
   transform:rotate(45deg) translate(-3px,-3px);transition:transform .25s var(--ease)}
 .bigt.open .bigt-c{transform:rotate(225deg) translate(-1px,-1px)}
@@ -525,12 +537,12 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .srow .st span{display:block;font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
 .srow .chev{flex:none;width:8px;height:8px;border-right:2px solid var(--faint);
   border-bottom:2px solid var(--faint);transform:rotate(-45deg)}
-.card.hero{background:linear-gradient(168deg,rgba(123,114,255,.10),rgba(47,212,188,.03) 62%),var(--surface);
-  border-color:rgba(123,114,255,.26);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 24px 56px -34px rgba(123,114,255,.9)}
+.card.hero{background:linear-gradient(168deg,rgba(158,91,255,.10),rgba(212,92,232,.03) 62%),var(--surface);
+  border-color:rgba(158,91,255,.26);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 24px 56px -34px rgba(158,91,255,.9)}
 .heroamt{font-family:var(--round);font-size:34px;font-weight:800;letter-spacing:-.042em;
   font-variant-numeric:tabular-nums;
-  text-shadow:0 0 28px rgba(123,114,255,.55),0 0 60px rgba(47,212,188,.22)}
+  text-shadow:0 0 28px rgba(158,91,255,.55),0 0 60px rgba(212,92,232,.22)}
 .purse{display:flex;align-items:baseline;gap:10px;margin-top:14px;padding:13px 15px;
   border-radius:16px;background:var(--surface-2);border:1px solid var(--line)}
 .pursebig{font-family:var(--round);font-size:24px;font-weight:800;letter-spacing:-.035em;
@@ -561,7 +573,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .whyb{margin-top:8px;font-size:12.5px;line-height:1.55;color:var(--muted)}
 .osum{display:flex;gap:10px;margin-top:18px}
 .ocell{flex:1;min-width:0;padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2)}
-.ocell.owe{background:rgba(255,179,61,.08);border-color:rgba(255,179,61,.22)}
+.ocell.owe{background:rgba(232,162,60,.08);border-color:rgba(232,162,60,.22)}
 .ocell .k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--faint)}
 .ocell.owe .k{color:var(--saffron)}
@@ -581,44 +593,64 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   padding:8px 13px;font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--muted);
   line-height:1.2}
 .obtn:active{opacity:.6}
-.obtn.warn{color:var(--coral);border-color:rgba(255,122,92,.22);background:rgba(255,122,92,.07)}
+.obtn.warn{color:var(--coral);border-color:rgba(255,77,98,.22);background:rgba(255,77,98,.07)}
 .jplan{color:var(--faint)}
+
+/* ── how far through the period you are ── */
+.daybar{height:2px;border-radius:2px;background:var(--surface-3);margin:12px 2px 0;overflow:hidden}
+.daybar i{display:block;height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--majorelle),var(--teal));
+  transition:width .6s var(--ease)}
+
+/* ── rank as a numeral ──
+   Grey while the goal is unfinished, because rank is not an achievement.
+   It takes the goal's own colour only once the goal is complete, which
+   is the one moment the colour means something. The allocation
+   percentage never touches it. */
+.jrank{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:6px;
+  margin-right:8px;vertical-align:.06em;
+  background:var(--surface-3);color:var(--faint);
+  font-family:var(--mono);font-size:9.5px;font-style:normal;font-weight:700;
+  transition:background .3s var(--ease),color .3s var(--ease)}
+.jrank.done{background:var(--jc-soft);color:var(--jc)}
+
+/* ── an empty list is a line, not a card full of nothing ── */
+.emptyline{display:flex;align-items:center;gap:9px;padding:14px 2px;
+  font-size:13px;color:var(--faint)}
+.emptyline .sym{width:16px;height:16px;color:var(--sage);flex:none}
+
+/* ── a compact way into a form, rather than a form that never closes ── */
+.addrow{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;
+  padding:13px 16px;border-radius:16px;text-align:left;
+  background:var(--surface);border:1px dashed var(--line-2);color:var(--muted);
+  font-family:var(--sans);font-size:13.5px;font-weight:600;
+  transition:transform .15s var(--spring),border-color .2s var(--ease),color .2s var(--ease)}
+.addrow .sym{width:16px;height:16px;color:var(--majorelle)}
+.addrow:active{transform:scale(.985);border-color:var(--majorelle);color:var(--text)}
+
+/* ── 6. the Plan row has been wider than its card ──
+   icon + name + tag + lock + stepper + a hard 70px field came to more
+   than the row, so the "+" was clipped off the edge and unreachable.
+   The name yields and the field flexes; nothing else moves. */
+.row-t{min-width:0}
+.nm{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.tag{flex:none}
+.amtin{flex:0 1 74px;width:74px;min-width:56px;padding:0 4px}
+
+/* nothing anywhere may push its own container wider than the column */
+.eqrow .v{flex:none;white-space:nowrap}
+.entry{align-items:stretch}
+.amtfield{flex:1 1 0;min-width:0}
+.addb{flex:none;white-space:nowrap}
+.eqrow .k{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.sc{padding:10px 9px}
+.aline .lab{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .unal{margin-top:16px;padding:12px 14px;border-radius:14px;
-  background:rgba(255,179,61,.08);border:1px solid rgba(255,179,61,.22)}
+  background:rgba(232,162,60,.08);border:1px solid rgba(232,162,60,.22)}
 .unal .u1{display:block;font-family:var(--round);font-size:14px;font-weight:750;
   letter-spacing:-.02em;color:var(--saffron)}
 .unal .u2{display:block;margin-top:4px;font-size:12px;line-height:1.5;color:var(--muted)}
 .pctin:disabled,.step:disabled{opacity:.4}
-/* the open month, stated beside history but never inside it */
-/* the month-close card: the only thing on Home that asks for something */
-/* the figure you came to find out, and the salary that produced it */
-.heroval{font-family:var(--round);font-size:44px;font-weight:800;letter-spacing:-.045em;
-  font-variant-numeric:tabular-nums;line-height:1}
-.herosal{display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)}
-.herosal .k{font-size:13px;color:var(--muted);flex:none}
-.herosal #sal{flex:1 1 0;min-width:0;width:auto;text-align:right;background:none;padding:0;
-  font-family:var(--round);font-size:17px;font-weight:700;letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums;color:var(--text)}
-.herosal #sal:focus{color:var(--majorelle)}
-.closecard{border-color:rgba(123,114,255,.26);
-  box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 20px 44px -26px rgba(123,114,255,.75)}
-.closehead{margin-bottom:18px}
-.closek{display:block;font-family:var(--round);font-size:20px;font-weight:800;letter-spacing:-.03em}
-.closet{display:block;margin-top:6px;font-size:12.5px;line-height:1.5;color:var(--muted)}
-.closerow{display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:11px 0;border-top:1px solid var(--line)}
-.closerow .k{display:inline-flex;align-items:center;font-size:13.5px;color:var(--muted)}
-.closerow .v{font-family:var(--round);font-size:16px;font-weight:750;letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums}
-.closelab{display:block;margin-top:18px;font-family:var(--mono);font-size:10px;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-.onopen{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
-  margin-top:16px;padding-top:14px;border-top:1px dashed var(--line-2)}
-.onopen .k{font-size:12.5px;color:var(--faint)}
-.onopen .v{font-family:var(--round);font-size:17px;font-weight:750;letter-spacing:-.02em;
-  color:var(--muted);font-variant-numeric:tabular-nums}
-.jvs .v.proj{color:var(--muted)}
 .jvs{display:flex;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 .jvs>div{flex:1;min-width:0}
 .jvs .k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
@@ -631,8 +663,8 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .oneins .sym{width:17px;height:17px;flex:none;margin-top:1px;color:var(--oic)}
 .oneins b{font-weight:700;color:var(--text)}
 .offl{display:flex;gap:9px;align-items:flex-start;margin-top:22px;padding:13px;border-radius:14px;font-size:12.5px;line-height:1.45;
-  background:rgba(47,212,188,.07);border:1px solid rgba(47,212,188,.2);color:var(--muted)}
-.offl.warn{background:rgba(255,179,61,.09);border-color:rgba(255,179,61,.24)}
+  background:rgba(212,92,232,.07);border:1px solid rgba(212,92,232,.2);color:var(--muted)}
+.offl.warn{background:rgba(232,162,60,.09);border-color:rgba(232,162,60,.24)}
 .xlist{margin-top:18px}
 .xrow{padding:13px 0;border-top:1px solid var(--line)}
 .xrow>b{display:block;font-size:14.5px;font-weight:650;margin-bottom:3px}
@@ -643,7 +675,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .advbtn:active{opacity:.6}
 #toast{position:fixed;left:50%;bottom:calc(var(--navtotal) + 14px);
   transform:translateX(-50%) translateY(10px);max-width:80%;text-align:center;
-  background:rgba(30,27,60,.97);border:1px solid var(--line-2);color:var(--text);
+  background:rgba(24,24,28,.96);border:1px solid var(--line-2);color:var(--text);
   padding:12px 20px;border-radius:16px;font-size:13.5px;font-weight:600;
   box-shadow:0 14px 34px rgba(0,0,0,.45);z-index:120;opacity:0;pointer-events:none;
   transition:opacity .22s var(--ease),transform .22s var(--ease)}
@@ -659,15 +691,15 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   will-change:transform,opacity}
 #glow{position:fixed;top:0;left:0;z-index:3;width:300px;height:300px;margin:-150px 0 0 -150px;
   border-radius:50%;pointer-events:none;opacity:0;
-  background:radial-gradient(circle,rgba(123,114,255,.20),rgba(47,212,188,.085) 46%,transparent 70%);
+  background:radial-gradient(circle,rgba(158,91,255,.20),rgba(212,92,232,.085) 46%,transparent 70%);
   transition:opacity .32s var(--ease)}
 #glow i{position:absolute;top:0;left:0;right:0;bottom:0;border-radius:50%;opacity:0;
   transition:opacity .26s var(--ease);
-  background:radial-gradient(circle,rgba(255,179,61,.15),transparent 62%)}
+  background:radial-gradient(circle,rgba(232,162,60,.15),transparent 62%)}
 #glow.armed i{opacity:1}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;
   height:var(--navtotal);padding:8px 12px var(--sab);
-  background:rgba(11,9,24,.72);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
+  background:rgba(10,10,12,.72);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);
   border-top:1px solid var(--line);display:flex;justify-content:center;align-items:flex-start;gap:2px}
 .tab{flex:1;max-width:92px;padding:8px 3px 5px;border-radius:14px;display:flex;flex-direction:column;
   align-items:center;gap:4px;color:var(--faint);transition:color .25s var(--ease),transform .18s var(--spring)}
@@ -735,13 +767,13 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
    Only ever a tint of the shadow, never a halo around the card. */
 @supports selector(:has(*)){
   .card:has(.warnbox.over),.card:has(.bkwarn),.card:has(.unal),.card:has(.offl.warn){
-    box-shadow:var(--edge),var(--lift-1),0 14px 34px -28px rgba(255,122,92,.5);
+    box-shadow:var(--edge),var(--lift-1),0 14px 34px -28px rgba(255,77,98,.5);
   }
   .card:has(.unal),.card:has(.bkwarn){
-    box-shadow:var(--edge),var(--lift-1),0 14px 34px -28px rgba(255,179,61,.5);
+    box-shadow:var(--edge),var(--lift-1),0 14px 34px -28px rgba(232,162,60,.5);
   }
   .card:has(.warnbox.clear),.card:has(.offl:not(.warn)){
-    box-shadow:var(--edge),var(--lift-1),0 14px 34px -30px rgba(47,212,188,.45);
+    box-shadow:var(--edge),var(--lift-1),0 14px 34px -30px rgba(212,92,232,.45);
   }
 }
 
@@ -755,13 +787,13 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   box-shadow:inset 0 2px 7px rgba(0,0,0,.34);
   filter:brightness(.95);
 }
-.btn.go{box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(123,114,255,.55)}
+.btn.go{box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(158,91,255,.55)}
 .btn.go:active{box-shadow:inset 0 2px 9px rgba(0,0,0,.3);filter:brightness(.93)}
 .btn.ghost{box-shadow:none}
 .btn.ghost:active{box-shadow:none;background:rgba(255,255,255,.03)}
 
 .addb{
-  box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 10px 22px -13px rgba(123,114,255,.6);
+  box-shadow:var(--edge-2),0 1px 2px rgba(0,0,0,.3),0 10px 22px -13px rgba(158,91,255,.6);
   transition:transform .15s var(--spring),box-shadow .15s var(--ease),filter .15s var(--ease);
 }
 .addb:active{transform:scale(.955);box-shadow:inset 0 2px 9px rgba(0,0,0,.32);filter:brightness(.93)}
@@ -788,7 +820,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 
 /* ── the lock, and the small icons that change meaning ── */
 .lockbtn svg{transition:stroke .25s var(--ease),transform .3s var(--spring)}
-.lockbtn.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 10px -6px rgba(255,179,61,.7)}
+.lockbtn.on{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 10px -6px rgba(232,162,60,.7)}
 .lockbtn.on svg{transform:scale(1.07)}
 .jico,.menuico,.ins .ic,.ico{transition:box-shadow .25s var(--ease),transform .25s var(--spring)}
 
@@ -817,12 +849,12 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   transition:color .2s var(--ease),background .2s var(--ease),transform .14s var(--spring);
 }
 .iq .sym{width:15px;height:15px;stroke-width:1.6}
-.iq:active,.iq.on{color:var(--majorelle);background:rgba(123,114,255,.14);transform:scale(.92)}
+.iq:active,.iq.on{color:var(--majorelle);background:rgba(158,91,255,.14);transform:scale(.92)}
 .iq.on{transform:none}
 
 .iqpop{
   position:fixed;z-index:140;padding:12px 14px;border-radius:14px;
-  background:rgba(30,27,60,.98);border:1px solid var(--line-2);
+  background:rgba(24,24,28,.97);border:1px solid var(--line-2);
   color:var(--muted);font-size:12.5px;line-height:1.5;
   box-shadow:0 2px 6px rgba(0,0,0,.4),0 22px 48px -22px rgba(0,0,0,.95);
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
@@ -833,7 +865,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .iqpop::after{
   content:"";position:absolute;top:-5px;left:var(--arrow,50%);margin-left:-5px;
   width:9px;height:9px;transform:rotate(45deg);
-  background:rgba(30,27,60,.98);border-left:1px solid var(--line-2);border-top:1px solid var(--line-2);
+  background:rgba(24,24,28,.97);border-left:1px solid var(--line-2);border-top:1px solid var(--line-2);
 }
 .iqpop.above::after{top:auto;bottom:-5px;border:0;
   border-right:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
@@ -845,7 +877,6 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   background:var(--coral);box-shadow:0 0 10px -1px var(--coral);
 }
 .eqrow.total .k{display:inline-flex;align-items:center}
-.eqrow.total .v{font-size:19px}
 
 /* ── the projected figure on the spending screen ──
    Large number, small icon for what it is, quiet control for why. The
@@ -855,9 +886,9 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
    Nothing else on the page is treated this way. */
 .purse{
   --pc:var(--teal);
-  --pc-soft:rgba(47,212,188,.14);
-  --pc-line:rgba(47,212,188,.30);
-  --pc-edge:rgba(47,212,188,.13);
+  --pc-soft:rgba(212,92,232,.14);
+  --pc-line:rgba(212,92,232,.30);
+  --pc-edge:rgba(212,92,232,.13);
   position:relative;overflow:hidden;
   display:flex;align-items:center;gap:14px;
   padding:15px 15px 15px 16px;
@@ -869,8 +900,8 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
              0 0 22px -12px var(--pc-edge);
   transition:box-shadow .3s var(--ease),border-color .3s var(--ease);
 }
-.purse.tone-warn{--pc:var(--saffron);--pc-soft:rgba(255,179,61,.14);--pc-line:rgba(255,179,61,.30);--pc-edge:rgba(255,179,61,.15)}
-.purse.tone-bad {--pc:var(--coral); --pc-soft:rgba(255,122,92,.14);--pc-line:rgba(255,122,92,.32);--pc-edge:rgba(255,122,92,.17)}
+.purse.tone-warn{--pc:var(--saffron);--pc-soft:rgba(232,162,60,.14);--pc-line:rgba(232,162,60,.30);--pc-edge:rgba(232,162,60,.15)}
+.purse.tone-bad {--pc:var(--coral); --pc-soft:rgba(255,77,98,.14);--pc-line:rgba(255,77,98,.32);--pc-edge:rgba(255,77,98,.17)}
 /* the soft internal highlight, so it reads as a shaped surface */
 .purse::before{
   content:"";position:absolute;left:-6%;top:-70%;width:56%;height:220%;
@@ -909,7 +940,23 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
   transition:color .2s var(--ease),background .2s var(--ease),transform .14s var(--spring);
 }
 .purse-i .sym{width:17px;height:17px}
-.purse-i:active{color:var(--pc);background:var(--pc-soft);transform:scale(.9)}
+.purse-i:active,.purse-i.on{color:var(--pc);background:var(--pc-soft);transform:scale(.9)}
+
+/* Goals summary: compact, distinct, and never larger than the goal jars below. */
+.goals-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;min-height:78px;margin-top:12px;padding:13px 15px 13px 16px;border-radius:22px;background:linear-gradient(135deg,rgba(158,91,255,.13),rgba(212,92,232,.045) 72%),var(--surface);border:1px solid rgba(158,91,255,.20);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -28px rgba(158,91,255,.42)}
+.goals-hero::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--majorelle),var(--teal));box-shadow:0 0 14px rgba(158,91,255,.55)}
+.goals-mark{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;flex:none;color:var(--teal);background:rgba(212,92,232,.10);border:1px solid rgba(212,92,232,.22);box-shadow:0 0 24px -10px rgba(212,92,232,.75),inset 0 1px 0 rgba(255,255,255,.06)}
+.goals-mark .sym{width:23px;height:23px;stroke-width:1.6}
+.goals-copy{flex:1;min-width:0}.goals-hero .goals-kicker{font-family:var(--mono);font-size:8.5px;letter-spacing:.20em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:3px;text-shadow:0 0 10px rgba(212,92,232,.35)}
+.goals-hero .goals-title{font-family:var(--round);font-size:18.5px;font-weight:800;letter-spacing:-.03em;display:block}.goals-hero .goals-sub{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+/* the right side is one stacked column — number on top, its caption
+   directly beneath — so "4 active" sits on the amount's own axis
+   instead of floating beside it */
+.goals-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.goals-amount{display:flex;align-items:baseline;gap:3px;white-space:nowrap}.goals-amount .cur{font-size:14px;color:var(--teal);transform:none}
+/* its own class, not .heroamt: the Home hero's glow belongs to Home */
+.goals-amount .goals-num{font-family:var(--round);font-size:26px;font-weight:800;letter-spacing:-.045em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1}
+.goals-hero .goals-count{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);white-space:nowrap;text-align:right}.goals-hero .goals-divider{display:none}
 
 /* the number is nudged when it changes, so the eye follows it */
 @keyframes bump{from{transform:translateY(2px);opacity:.55}to{transform:none;opacity:1}}
@@ -921,9 +968,9 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
    the month is going. Nothing floats, nothing spins, nothing pulses. */
 body::before{
   background:
-    radial-gradient(58% 32% at 16% 0%,rgba(123,114,255,.19),transparent 70%),
-    radial-gradient(46% 28% at 96% 10%,rgba(47,212,188,.09),transparent 70%),
-    radial-gradient(70% 38% at 50% 103%,var(--amb,rgba(255,179,61,.06)),transparent 70%);
+    radial-gradient(58% 32% at 16% 0%,rgba(158,91,255,.19),transparent 70%),
+    radial-gradient(46% 28% at 96% 10%,rgba(212,92,232,.09),transparent 70%),
+    radial-gradient(70% 38% at 50% 103%,var(--amb,rgba(232,162,60,.06)),transparent 70%);
   transition:background 1.2s var(--ease);
   animation:drift 68s ease-in-out infinite;
   will-change:transform;
@@ -932,13 +979,269 @@ body::before{
   0%,100%{transform:translate3d(0,0,0) scale(1)}
   50%    {transform:translate3d(-1.2%,1%,0) scale(1.05)}
 }
-html.mood-good{--amb:rgba(47,212,188,.07)}
-html.mood-warn{--amb:rgba(255,179,61,.07)}
-html.mood-bad {--amb:rgba(255,122,92,.06)}
+html.mood-good{--amb:rgba(212,92,232,.07)}
+html.mood-warn{--amb:rgba(232,162,60,.07)}
+html.mood-bad {--amb:rgba(255,77,98,.06)}
 
 @media (prefers-reduced-motion:reduce){
   body::before{animation:none}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   b37 · GRAPHITE
+   The old skin was a purple-and-teal gradient dashboard: every
+   surface tinted, every label typed in a console face, figures set
+   in a rounded font. That combination is what read as generic.
+
+   This layer changes the material, not the machinery. Nothing here
+   moves an element, renames a class or touches a number — it only
+   decides what the app is made of:
+
+     · a true black field, so the phone's own glass is the canvas
+     · graphite panes that differ by one step of grey, not by hue
+     · ONE colour — a plum light — used where something is alive
+     · figures set in the display face, large and tight
+     · labels set in the sans, never a typewriter
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── the field ──
+   Two washes, far apart, very low. On black, restraint is the
+   whole effect: light means something only where there is none. */
+body::before{
+  background:
+    radial-gradient(54% 26% at 14% -4%,rgba(158,91,255,.17),transparent 72%),
+    radial-gradient(38% 20% at 102% 6%,rgba(212,92,232,.07),transparent 74%),
+    radial-gradient(78% 34% at 50% 104%,var(--amb,rgba(158,91,255,.05)),transparent 72%);
+}
+html.mood-good{--amb:rgba(212,92,232,.07)}
+html.mood-warn{--amb:rgba(232,162,60,.06)}
+html.mood-bad {--amb:rgba(255,77,98,.06)}
+
+/* A single tile of noise over the black. It is there to stop large
+   dark areas banding on an OLED panel, and it costs no geometry. */
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='.045'/></svg>");
+  background-size:120px 120px;
+}
+
+/* ── the month header stays with you ──
+   Black fading into nothing, so cards pass under it instead of
+   being cut off by it. No blur, no bar, no hard edge. */
+.mbar{
+  position:sticky;top:calc(env(safe-area-inset-top,0px) - 2px);z-index:6;
+  margin:-6px -20px 14px;padding:6px 20px 14px;
+  background:linear-gradient(180deg,#000 0%,#000 62%,rgba(0,0,0,0) 100%);
+}
+.mtitle b{font-size:19px;font-weight:800;letter-spacing:-.035em}
+.mnav{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.055);
+  border:1px solid var(--line)}
+.mnav svg{width:14px;height:14px;stroke-width:1.9}
+.daybar{background:rgba(255,255,255,.07);margin-top:2px}
+
+/* ── labels ──
+   The console face is gone. What is left is a quiet sans, spaced
+   just enough to read as a label rather than as a sentence. */
+.lab,.sect{font-size:9.5px;letter-spacing:.11em;font-weight:600;color:var(--faint)}
+.mtitle span,.jsub,.ocell .k,.jvs .k,.sc .k,.hscore,.jends,.menusoon,
+.ring .mid span,.donut .mid span,.wk-s,.notes2,.g-p{
+  letter-spacing:.1em;font-weight:600;
+}
+.tag{letter-spacing:.09em;font-weight:600;font-size:8.5px;
+  border-color:rgba(255,255,255,.12);color:var(--faint)}
+.mtitle span.live{color:var(--teal)}
+
+/* ── figures ──
+   Set in the display face, larger and much tighter than before.
+   This is most of the difference between "an app" and "a product". */
+.heroval{font-size:48px;font-weight:800;letter-spacing:-.052em}
+.hero .cur{font-size:19px;font-weight:600;color:var(--muted);transform:translateY(-4px)}
+.verdict-h{font-size:35px;letter-spacing:-.045em}
+.eqrow.total .v{font-size:27px;letter-spacing:-.04em}
+.jamt{font-size:31px;letter-spacing:-.045em}
+.goals-amount .goals-num{font-size:27px;letter-spacing:-.05em}
+.calcout{font-size:42px;letter-spacing:-.05em}
+.card-t{font-size:17px;font-weight:700;letter-spacing:-.03em}
+.bigt{font-size:21px;letter-spacing:-.035em}
+.jname{font-size:16.5px;letter-spacing:-.028em}
+
+/* ── panes ──
+   One step of grey above the field, a hairline of light on the top
+   edge, and a shadow that is only ever a soft settling — on true
+   black a big drop shadow is invisible anyway. */
+.card{
+  border-radius:24px;padding:19px;
+  border:1px solid rgba(255,255,255,.075);
+  background:var(--sheen),var(--surface);
+  box-shadow:var(--edge),0 1px 2px rgba(0,0,0,.5),0 18px 36px -30px rgba(0,0,0,1);
+}
+.jarcard{border-radius:26px;border-color:rgba(255,255,255,.075)}
+.srow,.menucard{border-radius:22px;border-color:rgba(255,255,255,.075)}
+.menucard{border-radius:24px}
+.warnbox,.ablock,.calcwrap,.ocell,.oneins,.offl{border-radius:18px}
+.ablock{background:rgba(255,255,255,.035);border:1px solid var(--line)}
+
+/* the hero: graphite glass over its own plum light */
+.glass{
+  border-radius:28px;
+  background:linear-gradient(168deg,rgba(255,255,255,.055),rgba(255,255,255,.012) 54%),rgba(22,22,26,.72);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 24px 54px -30px rgba(0,0,0,1);
+}
+.aura{opacity:.2;filter:blur(52px)}
+.aura.two{opacity:.16}
+
+/* ── one control, everywhere: the segmented pill ──
+   A track holding options, the chosen one filled. It is the single
+   most recognisable control in a modern phone app, and the chip rows
+   this app already had were one rule away from being it. */
+.chiprow,.methodrow,.fmtbar,.goalpick{
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:99px;padding:4px;gap:4px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.4);
+}
+.chiprow{margin-bottom:12px}
+.methodrow{display:inline-flex;margin-bottom:12px}
+.fmtbar{display:inline-flex;margin:4px 0 14px}
+.chip,.fmtb{
+  background:transparent;border:1px solid transparent;border-radius:99px;
+  padding:9px 15px;color:var(--muted);font-weight:600;font-size:13.5px;
+  box-shadow:none;
+}
+.chip.on{
+  color:var(--text);background:var(--surface-3);border-color:rgba(255,255,255,.09);
+  box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.chip:active,.fmtb:active{transform:scale(.95)}
+.chip .sym{width:14px;height:14px}
+
+/* ── the bar is an island ──
+   Lifted off the bottom edge and rounded, so the app has an end.
+   The chosen tab sits in a lit pill rather than merely changing
+   colour, which is what makes the row read as a control. */
+.bar{
+  left:12px;right:12px;bottom:calc(var(--sab) + 9px);
+  height:64px;padding:5px 6px;border-radius:26px;
+  border:1px solid rgba(255,255,255,.09);
+  background:rgba(16,16,19,.76);
+  -webkit-backdrop-filter:saturate(180%) blur(26px);backdrop-filter:saturate(180%) blur(26px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 1px 2px rgba(0,0,0,.6),
+             0 22px 44px -22px rgba(0,0,0,1);
+  align-items:center;gap:3px;
+}
+.tab{
+  border-radius:18px;padding:6px 3px 6px;gap:4px;
+  border:1px solid transparent;color:var(--faint);
+  transition:color .22s var(--ease),background .22s var(--ease),
+             border-color .22s var(--ease),transform .16s var(--spring);
+}
+.tab svg{width:20px;height:20px;stroke-width:1.6}
+.tab span{font-size:9.5px;font-weight:600;letter-spacing:-.005em}
+.tab.on{
+  color:var(--text);
+  background:linear-gradient(180deg,rgba(158,91,255,.24),rgba(158,91,255,.11));
+  border-color:rgba(158,91,255,.30);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 6px 16px -10px rgba(158,91,255,.9);
+}
+
+/* Content fades into the black around the island instead of sliding
+   out beside it. Sits above the scroller and below the bar. */
+html::after{
+  content:"";position:fixed;left:0;right:0;bottom:0;z-index:15;pointer-events:none;
+  height:calc(var(--sab) + 104px);
+  background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.55) 34%,#000 74%);
+}
+
+/* ── a plan row that never has to break a word ──
+   Before this, icon + name + tag + lock + stepper could not all fit,
+   and the name was the thing that gave — one letter per line. Now the
+   row wraps as a row: the stepper drops beneath the name when the name
+   needs the width, and short names still sit on one line. */
+.row-t{flex-wrap:wrap;row-gap:11px}
+.nm{flex:1 1 auto;min-width:104px;overflow-wrap:normal;word-break:normal}
+.stepper{margin-left:auto}
+
+/* ── fields look like fields ──
+   Inset, hairlined, and lit only when the caret is in them. */
+.amtfield,.notefield,.searchbox,.nmin,.duein,.atgtin,.tgt input,textarea.dump{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.35);
+  transition:border-color .2s var(--ease),background .2s var(--ease);
+}
+.amtfield:focus,.notefield:focus,.searchbox:focus,.nmin:focus,.duein:focus,
+.atgtin:focus,.tgt input:focus{
+  border-color:rgba(158,91,255,.45);background:rgba(158,91,255,.07);outline:none;
+}
+:focus-visible{outline-color:var(--majorelle)}
+
+/* ── progress ──
+   Bars carry the app's own light left to right, and a track is a
+   groove rather than a slab. */
+.jbar,.gtrack,.mini,.cardbar{background:rgba(255,255,255,.07);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.45)}
+.jfill{background:linear-gradient(90deg,var(--majorelle),var(--teal))}
+.daybar i,.bigt-w::after{background:linear-gradient(90deg,var(--majorelle),var(--teal))}
+.bigt-w::after{box-shadow:0 3px 18px -2px rgba(158,91,255,.65)}
+.slider::-webkit-slider-runnable-track{background:rgba(255,255,255,.08)}
+.slider::-webkit-slider-thumb{box-shadow:0 1px 3px rgba(0,0,0,.6),0 6px 18px -6px rgba(158,91,255,.9)}
+
+/* ── press states, on graphite ── */
+.step:active,.key:active{background:rgba(158,91,255,.22);color:var(--text)}
+.step,.key,.mnav,.shx,.emrow button{background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.06)}
+.key.op{background:rgba(158,91,255,.16);color:var(--majorelle);border-color:rgba(158,91,255,.24)}
+.key.eq{background:var(--majorelle);color:#fff;border-color:transparent;
+  box-shadow:0 8px 22px -12px rgba(158,91,255,1)}
+.key.fn{background:rgba(255,77,98,.12);color:var(--coral);border-color:rgba(255,77,98,.2)}
+.addb,.btn.go{box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 10px 24px -12px rgba(158,91,255,.95)}
+
+/* ── sheets ── */
+.sheet{border-radius:30px 30px 0 0;background:var(--surface);
+  border-top:1px solid rgba(255,255,255,.12);
+  box-shadow:0 -1px 0 rgba(255,255,255,.05),0 -30px 70px -30px #000}
+.shbg{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.grab{background:rgba(255,255,255,.18)}
+
+/* ── the toast and the popover are the same material as a sheet ── */
+#toast,.iqpop{border:1px solid rgba(255,255,255,.12);border-radius:16px}
+
+/* ── the one card that is allowed to glow ── */
+.card.hero{
+  background:linear-gradient(168deg,rgba(158,91,255,.13),rgba(212,92,232,.035) 62%),var(--surface);
+  border-color:rgba(158,91,255,.26);
+}
+.heroamt{text-shadow:0 0 30px rgba(158,91,255,.55),0 0 64px rgba(212,92,232,.2)}
+.goals-hero{border-radius:24px}
+
+/* ── a row that was written but never styled ──
+   "<month> on course to add" and its figure were two bare spans, so
+   they ran together as one string. It is a row like any other row. */
+.onopen{display:flex;align-items:baseline;justify-content:space-between;
+  gap:12px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.onopen .k{font-size:13px;color:var(--muted)}
+.onopen .v{font-family:var(--round);font-size:17px;font-weight:750;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--teal)}
+
+/* ── charts ── */
+.chart{overflow:visible}
+.legend b,.dl .n{letter-spacing:-.01em}
+
+/* ── everything the eye should not stop on ── */
+.hint,.menus,.srow .st span{color:var(--muted)}
+.note,.empty{color:var(--faint)}
+.emptyline .sym{color:var(--muted)}
+.sym{stroke-width:1.6}
+.lockbtn svg{stroke-width:1.8}
+.backlink{border-radius:16px;background:rgba(255,255,255,.05);border-color:var(--line)}
+.backlink svg{stroke-width:2.2}
+.addrow{border-radius:18px;background:rgba(255,255,255,.03)}
+.obtn{border-radius:12px;background:rgba(255,255,255,.05)}
+.noterow{border-radius:20px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.streak{border-radius:18px}
+.unal,.verdict{border-radius:18px}
+.purse{border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 58%),rgba(255,255,255,.035)}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -962,11 +1265,11 @@ var store=(function(){
   }
 })();
 var KEY="plan.v4";
-var BUILD="b34 \u00B7 planned, projected, banked";
+var BUILD="b37 \u00B7 graphite";
 
 /* ═══ 2. DEFINITIONS ═══ */
-var COLOR={savings:"#2FD4BC",rent:"#7B72FF",utilities:"#B08CFF",household:"#FFB33D",
-           personal:"#FF5C8A",us:"#FF7A5C",installments:"#5A52D9",buffer:"#8DA88F",oneoff:"#FF5C8A"};
+var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
+           personal:"#F07AD8",us:"#FF7BA8",installments:"#5B3AA8",buffer:"#8A8A98",oneoff:"#FF4D62"};
 /* which drawn symbol stands for each category */
 var CATSYM={savings:"savings",rent:"house",utilities:"bolt",household:"cart",
             personal:"person",us:"heart",installments:"card",buffer:"buffer",oneoff:"warning"};
@@ -987,14 +1290,14 @@ var CATS=[
 var BASE_ALLOC={savings:2000,rent:3000,utilities:300,household:2000,personal:1000,us:800,installments:0,buffer:900};
 var BASE_LOCK={rent:true,utilities:true,installments:true};
 var BASE_GOALS=[
-  {id:"emergency",name:"Emergency Fund",e:"shield",target:40000,pct:40,col:"#2FD4BC",lock:false},
-  {id:"morocco",name:"House Deposit",e:"house",target:168000,pct:40,col:"#7B72FF",lock:false},
-  {id:"study",name:"Wife Study",e:"graduation",target:10000,pct:10,col:"#FFB33D",lock:false},
-  {id:"travel",name:"Travel Fund",e:"plane",target:20000,pct:10,col:"#FF7A5C",lock:false}
+  {id:"emergency",name:"Emergency Fund",e:"shield",target:40000,pct:40,col:"#9E5BFF",lock:false},
+  {id:"morocco",name:"House Deposit",e:"house",target:168000,pct:40,col:"#D45CE8",lock:false},
+  {id:"study",name:"Wife Study",e:"graduation",target:10000,pct:10,col:"#FF7BA8",lock:false},
+  {id:"travel",name:"Travel Fund",e:"plane",target:20000,pct:10,col:"#C9A6FF",lock:false}
 ];
 function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)),months:{},
   tab:"home",monthCursor:null,weekIdx:null,pick:"household",lastBackup:null,name:"",wiGoal:null,more:false,returnTab:"home",wiAmt:0,cycleStart:15,clamp:null,card:{limit:0,used:0,payDay:18,lastPaid:null},payMethod:"bank",
-  notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false,
+  notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false,addGiven:false,addBorrowed:false,
   outside:{given:[],borrowed:[]},outTab:"given",outArm:null};}
 
 var S=(function(){
@@ -1009,33 +1312,31 @@ if(!S.goals){
     if(S.targets.morocco)S.goals[1].target=S.targets.morocco;
   }
 }
-/* Until now a month counted as confirmed simply by ending, so everything
-   already closed was already banked. Confirmation is now something you
-   give, and applying that rule to old months would silently empty a
-   history the user has been reading for weeks. So every month that had
-   already closed is confirmed once, at the figure it was already
-   showing, and only months closing from here on are ever asked about. */
-(function migrateConfirm(){
-  var t=thisMonth(),k,m,changed=false;
-  for(k in S.months){
-    if(!Object.prototype.hasOwnProperty.call(S.months,k))continue;
-    if(k>=t)continue;
-    m=S.months[k];
-    if(!m||m.override!==null&&m.override!==undefined)continue;
-    if(S.closeSeen)continue;              /* only ever on the first upgrade */
-    m.override=Math.max(0,savedProjected(k));
-    changed=true;
-  }
-  if(!S.closeSeen){S.closeSeen=true;changed=true;}
-  if(changed)try{store.setItem(KEY,JSON.stringify(S));}catch(e){}
-})();
-
 /* Money outside arrived after some saves were written, so make room for
    it without touching anything else that is already there. */
 (function migrateOutside(){
   if(!S.outside||typeof S.outside!=="object")S.outside={given:[],borrowed:[]};
   if(!(S.outside.given instanceof Array))S.outside.given=[];
   if(!(S.outside.borrowed instanceof Array))S.outside.borrowed=[];
+})();
+
+/* Goals made before the graphite palette hold one of the old colours in
+   `col`. The colour is decoration, not data, so it is carried across to
+   the nearest colour in the new set — one goal never lands on the same
+   colour as another, and a colour that is not in the old set is left
+   exactly as the user chose it. */
+var CLEGACY={"#7B72FF":"#9E5BFF","#2FD4BC":"#D45CE8","#FFB33D":"#FF7BA8",
+             "#FF7A5C":"#C9A6FF","#5AC8FA":"#B98CFF","#C77DFF":"#F0A6FF",
+             "#4ADE80":"#6E3FD1","#F472B6":"#8A8A98","#B08CFF":"#C9A6FF",
+             "#5A52D9":"#6E3FD1","#8DA88F":"#8A8A98","#FF5C8A":"#F07AD8"};
+(function migrateColours(){
+  if(!(S.goals instanceof Array))return;
+  var moved=false;
+  S.goals.forEach(function(g){
+    var c=String(g.col||"").toUpperCase();
+    if(CLEGACY[c]){g.col=CLEGACY[c];moved=true;}
+  });
+  if(moved)try{save();}catch(e){}
 })();
 
 /* A closed month with no split of its own used to fall back to today's
@@ -1280,8 +1581,9 @@ function savedActual(k){
 }
 function savedNow(k){return savedActual(k);}
 function savedPlanned(k){return M(k).alloc.savings||0;}
-/* one-offs are unplanned, so they come straight out of savings */
-function effSavings(k){return (M(k).alloc.savings||0)-spentOneoff(k);}
+/* one-offs are unplanned, but the buffer takes them first — only the
+   part past the buffer ever touches savings, matching the equation */
+function effSavings(k){return (M(k).alloc.savings||0)-oneoffOverflow(k);}
 /* ═══ FINANCIAL HEALTH ═══
    Two questions blended, because either alone lies.
 
@@ -1310,7 +1612,9 @@ function healthScore(k){return healthFrom(M(k).salary,savedActual(k),savedPlanne
 function healthText(v){return v===null?"\u2014":String(v);}
 /* Four stops, interpolated — the colour slides through the scale
    rather than snapping between four fixed states. */
-var HEALTH_STOPS=[[0,[255,77,77]],[35,[255,122,61]],[65,[255,193,61]],[100,[47,212,188]]];
+/* red → amber → a pale neutral → the app's own plum. The neutral stop
+   in the middle keeps the warm and cool halves from mixing into mud. */
+var HEALTH_STOPS=[[0,[255,77,98]],[38,[232,162,60]],[70,[214,200,220]],[100,[212,92,232]]];
 function healthRGB(v){
   v=Math.max(0,Math.min(100,v));
   for(var i=1;i<HEALTH_STOPS.length;i++){
@@ -1319,26 +1623,23 @@ function healthRGB(v){
       return [0,1,2].map(function(j){return Math.round(a[1][j]+(b[1][j]-a[1][j])*t);});
     }
   }
-  return [47,212,188];
+  return [212,92,232];
 }
 function healthColor(v){return v===null?"var(--muted)":"rgb("+healthRGB(v).join(",")+")";}
-function healthRGBA(v,al){return v===null?"rgba(162,156,199,"+al+")":"rgba("+healthRGB(v).join(",")+","+al+")";}
+function healthRGBA(v,al){return v===null?"rgba(155,155,166,"+al+")":"rgba("+healthRGB(v).join(",")+","+al+")";}
 function healthWhy(k,v){
   var m=M(k),saved=savedActual(k),planned=savedPlanned(k),oo=spentOneoff(k);
   var rate=m.salary>0?Math.round(Math.max(0,saved)/m.salary*100):0;
-  var word=savedWord(k);
   if(m.salary<=0)return "Set your salary and this comes alive.";
   if(saved<0)return "You are spending \u00A5"+fmt(-saved)+" more than you earn this month.";
   if(oo>0&&saved<planned)
-    return "\u00A5"+fmt(oo)+" of unplanned spending has taken this month from \u00A5"+fmt(planned)+
+    return "\u00A5"+fmt(oo)+" of unplanned spending has taken your savings from \u00A5"+fmt(planned)+
            " down to \u00A5"+fmt(saved)+" \u2014 "+rate+"% of what you earn.";
-  /* The buffer earning its keep deserves saying out loud, not erasing. */
   if(oo>0&&saved>=planned)
     return "\u00A5"+fmt(oo)+" of unplanned spending, absorbed by your buffer \u2014 the plan held at \u00A5"+
            fmt(saved)+", "+rate+"% of what you earn.";
   if(saved>=planned)return "On target at \u00A5"+fmt(saved)+", "+rate+"% of what you earn. Nothing unplanned so far.";
-  return word.charAt(0).toUpperCase()+word.slice(1)+" \u00A5"+fmt(saved)+" against a \u00A5"+fmt(planned)+
-         " target \u2014 "+rate+"% of what you earn.";
+  return "Saving \u00A5"+fmt(saved)+" against a \u00A5"+fmt(planned)+" target \u2014 "+rate+"% of what you earn.";
 }
 function healthLabel(v){
   if(v===null)return "Not enough to go on";
@@ -1354,7 +1655,7 @@ function loggingThin(k){
 
 /* ═══ 5. GOALS · STREAK · MILESTONES ═══ */
 function closedMonths(){var t=thisMonth();return allMonths().filter(function(k){return k<t;});}
-function banked(){return closedMonths().reduce(function(s,k){return s+Math.max(0,savedConfirmed(k));},0);}
+function banked(){return closedMonths().reduce(function(s,k){return s+Math.max(0,savedActual(k));},0);}
 /* ── how a month's saving is divided ──
    A goal is a pool. Its percentage decides how much of THIS month's
    saving joins the pool; the pool itself is the sum of every month's
@@ -1409,6 +1710,7 @@ function stampSplit(){
 function isConfirmed(k){
   var m=M(k);
   if(!m)return false;
+  if(isSettled(k))return true;                       /* the past is finished */
   return m.override!==null&&m.override!==undefined;  /* you told us yourself */
 }
 /* What to call a month's saving, given whether the money is real yet */
@@ -1526,7 +1828,7 @@ function dueText(g){
    A new goal takes its share out of the unlocked ones, exactly as
    moving a slider does. Closed months keep the split they froze, so
    nothing already banked is re-cut. */
-var GCOL=["#7B72FF","#2FD4BC","#FFB33D","#FF7A5C","#5AC8FA","#C77DFF","#4ADE80","#F472B6"];
+var GCOL=["#9E5BFF","#D45CE8","#FF7BA8","#C9A6FF","#B98CFF","#F0A6FF","#6E3FD1","#8A8A98"];
 var GEMO=["shield","house","graduation","plane","car","gift","laptop","star"];
 function nextCol(){
   var used=S.goals.map(function(g){return g.col;});
@@ -1621,7 +1923,7 @@ function bindGoalDrag(){
 }
 function monthlyRate(){
   var past=closedMonths();
-  if(past.length){var r=past.slice(-3);return r.reduce(function(s,k){return s+Math.max(0,savedConfirmed(k));},0)/r.length;}
+  if(past.length){var r=past.slice(-3);return r.reduce(function(s,k){return s+Math.max(0,savedActual(k));},0)/r.length;}
   return Math.max(0,savedPlanned(cur()));
 }
 function totalSpendOf(k){return fixedTotal(k)+assumedSpend(k)+spentOneoff(k);}
@@ -1630,23 +1932,17 @@ function consumedOf(k){return fixedTotal(k)+assumedSpend(k)+consumedOneoff(k);}
 /* what left your hands without being consumed */
 function handedOverOf(k){return givenOf(k)+repaidOf(k);}
 function rateOf(k){var m=M(k);return m&&m.salary>0?Math.max(0,savedActual(k))/m.salary*100:0;}
-/* the same, but only counting money that is really there */
-function rateBanked(k){var m=M(k);return m&&m.salary>0?Math.max(0,savedConfirmed(k))/m.salary*100:0;}
-/* Everything actually banked up to and including a month. A month that
-   is still running contributes only once you have confirmed it, so a
-   projection can never inflate your history. */
 function cumulativeTo(k){
   return allMonths().filter(function(x){return x<=k;})
     .reduce(function(s,x){return s+Math.max(0,savedConfirmed(x));},0);
 }
-/* and what the live month expects to add on top, kept separate */
 function projectedOn(k){
   return isConfirmed(k)?0:Math.max(0,savedActual(k));
 }
 /* The spread of what you have actually saved recently. A single average
    pretends next month is settled; a range says what the record supports. */
 function paceRange(){
-  var v=closedMonths().slice(-6).map(function(k){return Math.max(0,savedConfirmed(k));})
+  var v=closedMonths().slice(-6).map(function(k){return Math.max(0,savedActual(k));})
         .filter(function(x){return x>0;});
   if(v.length<2)return null;
   return {lo:Math.min.apply(null,v),hi:Math.max.apply(null,v),n:v.length};
@@ -1676,7 +1972,7 @@ function etaFor(remaining,rate){
 }
 function streak(){
   var p=closedMonths(),n=0;
-  for(var i=p.length-1;i>=0;i--){if(savedConfirmed(p[i])>=savedPlanned(p[i]))n++;else break;}
+  for(var i=p.length-1;i>=0;i--){if(savedPlanned(p[i])>0&&savedActual(p[i])>=savedPlanned(p[i]))n++;else break;}
   return n;
 }
 /* ═══ 6. INSIGHTS ═══
@@ -1688,7 +1984,7 @@ function streak(){
    least two, or there is no "usual" to compare against. */
 function recentAverage(exclude){
   var v=closedMonths().filter(function(k){return k!==exclude;}).slice(-3)
-        .map(function(k){return Math.max(0,savedConfirmed(k));});
+        .map(function(k){return Math.max(0,savedActual(k));});
   if(v.length<2)return null;
   return v.reduce(function(a,b){return a+b;},0)/v.length;
 }
@@ -1814,25 +2110,6 @@ function recordChange(k,id,from,to){
 }
 
 /* ═══ 9. HELPERS ═══ */
-/* ── one number language ──
-   Money reads the same everywhere: ¥11,500, never 11500. A number input
-   cannot show a separator, so money fields are text fields carrying a
-   formatted value that hand you raw digits the moment you focus them.
-   numVal() is the only way the app reads such a field, so a separator
-   can never be mistaken for the end of a number. */
-function numVal(el){
-  if(!el)return 0;
-  var v=String(el.value==null?"":el.value).replace(/[,\s\u00A5]/g,"");
-  var n=parseFloat(v);
-  return isFinite(n)?n:0;
-}
-function isBlank(el){return !el||String(el.value||"").trim()==="";}
-function moneyField(attrs,value,placeholder){
-  return '<input type="text" inputmode="decimal" data-money="1" '+attrs+
-    ' value="'+(value===null||value===undefined||value===""?"":fmt(value))+'"'+
-    (placeholder?' placeholder="'+placeholder+'"':'')+'>';
-}
-
 function fmt(n){return Math.round(n).toLocaleString("en-US");}
 function catOf(id){return CATS.find(function(c){return c.id===id;})||{id:"oneoff",name:"One-off",type:"oneoff"};}
 /* ── an explanation you can open ──
@@ -1853,7 +2130,7 @@ function closeIQ(){
   el.classList.remove("on");
   clearTimeout(el.__t);
   el.__t=setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-  var was=document.querySelector(".iq.on");
+  var was=document.querySelector(".iq.on,.purse-i.on");
   if(was)was.classList.remove("on");
 }
 function openIQ(btn){
@@ -1911,10 +2188,7 @@ function standsHelp(k){
   return out;
 }
 
-function why(html,label){
-  return '<details class="why"><summary>'+(label||"How this works")+'</summary>'+
-         '<div class="whyb">'+html+'</div></details>';
-}
+
 
 function esc(s){return String(s==null?"":s).replace(/[<>&"]/g,function(c){return{"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c];});}
 function tint(c){return c+"1f";}
@@ -1929,57 +2203,57 @@ function tint(c){return c+"1f";}
    thirty glyphs would cost more than it is worth. */
 var SYM={
   /* money and the categories */
-  savings:'<rect x="2.2" y="6.8" width="19.6" height="10.4" rx="2.2"/><circle cx="12" cy="12" r="2.5"/><path d="M5.6 12h.6M17.8 12h.6"/>',
-  house:'<path d="M3.7 10.4 12 4l8.3 6.4"/><path d="M5.9 9.1v9.9a1.4 1.4 0 0 0 1.4 1.4h9.4a1.4 1.4 0 0 0 1.4-1.4V9.1"/>',
-  bolt:'<path d="M13.1 3.2 6.4 13.1a.5.5 0 0 0 .4.8h3.7l-.5 6.9 6.9-9.9a.5.5 0 0 0-.4-.8h-3.8z"/>',
-  cart:'<path d="M2.6 4h2.1a1 1 0 0 1 1 .8l2.2 9.9a1.6 1.6 0 0 0 1.6 1.3h7.7a1.6 1.6 0 0 0 1.6-1.2l1.5-6.3H6.2"/><circle cx="10" cy="19.6" r="1.3"/><circle cx="17.4" cy="19.6" r="1.3"/>',
-  person:'<circle cx="12" cy="7.9" r="3.7"/><path d="M4.9 20.3a7.1 7.1 0 0 1 14.2 0"/>',
-  heart:'<path d="M12 20.3C8.8 18 3.7 14.3 3.7 9.9a4.3 4.3 0 0 1 8.3-1.6 4.3 4.3 0 0 1 8.3 1.6c0 4.4-5.1 8.1-8.3 10.4z"/>',
-  card:'<rect x="2.4" y="5.2" width="19.2" height="13.6" rx="2.8"/><path d="M2.4 9.9h19.2M6 14.6h4.2"/>',
-  buffer:'<circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.3"/><path d="M6 6l3 3M18 6l-3 3M18 18l-3-3M6 18l3-3"/>',
-  warning:'<path d="M10.6 4.5 2.7 18.2a1.6 1.6 0 0 0 1.4 2.4h15.8a1.6 1.6 0 0 0 1.4-2.4L13.4 4.5a1.6 1.6 0 0 0-2.8 0z"/><path d="M12 9.6v4.1"/><circle cx="12" cy="17.2" r=".55" fill="currentColor" stroke="none"/>',
+  savings:'<rect x="2.8" y="5.6" width="18.4" height="12.8" rx="3.2"/><path d="M21.2 10.4h-4.4a1.6 1.6 0 0 0 0 3.2h4.4"/>',
+  house:'<path d="M3.9 10.3 12 4.1l8.1 6.2"/><path d="M6.1 8.9V19a1.3 1.3 0 0 0 1.3 1.3h9.2a1.3 1.3 0 0 0 1.3-1.3V8.9"/>',
+  bolt:'<path d="M13.1 3.5 6.7 12.8a.5.5 0 0 0 .41.79h3.5l-.51 6.5 6.4-9.3a.5.5 0 0 0-.41-.79h-3.5z"/>',
+  cart:'<path d="M2.8 4.4h1.9a1 1 0 0 1 .98.79l2.05 9.4a1.5 1.5 0 0 0 1.47 1.18h7.2a1.5 1.5 0 0 0 1.46-1.14l1.34-5.6H6.2"/><circle cx="9.8" cy="19.2" r="1.25"/><circle cx="17" cy="19.2" r="1.25"/>',
+  person:'<circle cx="12" cy="8" r="3.5"/><path d="M5.2 20.2a6.8 6.8 0 0 1 13.6 0"/>',
+  heart:'<path d="M12 20.1C8.9 17.9 4 14.3 4 10.1A4.1 4.1 0 0 1 12 8.3a4.1 4.1 0 0 1 8 1.8c0 4.2-4.9 7.8-8 10z"/>',
+  card:'<rect x="2.8" y="5.4" width="18.4" height="13.2" rx="3.2"/><path d="M2.8 9.9h18.4"/><path d="M6.4 14.6h3.6"/>',
+  buffer:'<ellipse cx="12" cy="6.8" rx="7.1" ry="2.7"/><path d="M4.9 6.8v4.4c0 1.5 3.18 2.7 7.1 2.7s7.1-1.2 7.1-2.7V6.8"/><path d="M4.9 11.2v4.4c0 1.5 3.18 2.7 7.1 2.7s7.1-1.2 7.1-2.7v-4.4"/>',
+  warning:'<path d="M10.74 4.5 3 17.9A1.45 1.45 0 0 0 4.26 20.1h15.48A1.45 1.45 0 0 0 21 17.9L13.26 4.5a1.45 1.45 0 0 0-2.52 0z"/><path d="M12 10.1v3.9"/><circle cx="12" cy="16.9" r=".6" fill="currentColor" stroke="none"/>',
 
   /* goals */
-  shield:'<path d="M12 3.3 4.9 5.9v5.4c0 4.3 2.9 7.5 7.1 9.2 4.2-1.7 7.1-4.9 7.1-9.2V5.9z"/>',
-  plane:'<path d="M12 2.7a1.8 1.8 0 0 1 1.8 1.8v4.8l7 4.1v2.2l-7-2.1v4.1l2.3 1.7v1.5L12 19.7l-4.1 1.1v-1.5l2.3-1.7v-4.1l-7 2.1v-2.2l7-4.1V4.5A1.8 1.8 0 0 1 12 2.7z"/>',
-  graduation:'<path d="M2.7 9.1 12 5l9.3 4.1L12 13.2z"/><path d="M6.6 11v4.7c0 1.6 2.4 2.8 5.4 2.8s5.4-1.2 5.4-2.8V11"/><path d="M21.3 9.4v5"/>',
-  car:'<path d="M5.4 11.5 6.9 7.6A2.2 2.2 0 0 1 9 6.2h6a2.2 2.2 0 0 1 2.1 1.4l1.5 3.9"/><rect x="2.6" y="11.5" width="18.8" height="6.1" rx="1.8"/><path d="M6.6 17.6v1.6M17.4 17.6v1.6M5.6 14.5h1.8M16.6 14.5h1.8"/>',
-  gift:'<path d="M3.4 12.3h17.2v6.9a1.4 1.4 0 0 1-1.4 1.4H4.8a1.4 1.4 0 0 1-1.4-1.4z"/><rect x="2.5" y="8.3" width="19" height="4" rx="1.2"/><path d="M12 8.3v12.3"/><path d="M12 8.3S10.8 4 8.6 4a2.2 2.2 0 0 0 0 4.3zM12 8.3S13.2 4 15.4 4a2.2 2.2 0 0 1 0 4.3z"/>',
-  laptop:'<path d="M5.2 6.4h13.6a1 1 0 0 1 1 1v8.2H4.2V7.4a1 1 0 0 1 1-1z"/><path d="M2.4 15.6h19.2l-1.1 2.3a1.4 1.4 0 0 1-1.3.8H4.8a1.4 1.4 0 0 1-1.3-.8z"/>',
-  star:'<path d="m12 3.7 2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 10l6-.8z"/>',
-  umbrella:'<path d="M12 4.1a8.4 8.4 0 0 0-8.4 8.4h16.8A8.4 8.4 0 0 0 12 4.1z"/><path d="M12 12.5v5.6a2.1 2.1 0 0 0 4.2 0"/><path d="M12 4.1V2.6"/>',
-  briefcase:'<rect x="2.8" y="7.5" width="18.4" height="11.7" rx="2"/><path d="M8.6 7.5V6a1.6 1.6 0 0 1 1.6-1.6h3.6A1.6 1.6 0 0 1 15.4 6v1.5"/><path d="M2.8 12.4h18.4"/>',
-  cross:'<rect x="3.4" y="3.4" width="17.2" height="17.2" rx="4.4"/><path d="M12 8.2v7.6M8.2 12h7.6"/>',
-  ring:'<circle cx="12" cy="14.7" r="5"/><path d="M9.1 9.5 10.6 5.6h2.8l1.5 3.9"/>',
+  shield:'<path d="M12 3.5 5.2 6v5.1c0 4.1 2.8 7.2 6.8 8.8 4-1.6 6.8-4.7 6.8-8.8V6z"/>',
+  plane:'<path d="M12 2.9a1.6 1.6 0 0 1 1.6 1.6v4.6l6.9 4v2.1l-6.9-2v3.9l2.2 1.6v1.4L12 19.1l-3.8 1v-1.4l2.2-1.6v-3.9l-6.9 2v-2.1l6.9-4V4.5A1.6 1.6 0 0 1 12 2.9z"/>',
+  graduation:'<path d="M2.9 9.2 12 5.2l9.1 4-9.1 4z"/><path d="M6.7 11v4.5c0 1.5 2.37 2.7 5.3 2.7s5.3-1.2 5.3-2.7V11"/><path d="M21.1 9.5v4.9"/>',
+  car:'<path d="M5.3 11.4 6.8 7.7a2.2 2.2 0 0 1 2.05-1.4h6.3a2.2 2.2 0 0 1 2.05 1.4l1.5 3.7"/><rect x="2.9" y="11.4" width="18.2" height="6" rx="2"/><path d="M6.6 17.4v1.6M17.4 17.4v1.6"/><circle cx="6.7" cy="14.4" r=".7" fill="currentColor" stroke="none"/><circle cx="17.3" cy="14.4" r=".7" fill="currentColor" stroke="none"/>',
+  gift:'<rect x="3.2" y="8.3" width="17.6" height="4" rx="1.4"/><path d="M4.9 12.3v6.4a1.4 1.4 0 0 0 1.4 1.4h11.4a1.4 1.4 0 0 0 1.4-1.4v-6.4"/><path d="M12 8.3v11.8"/><path d="M12 8.3S11 4.3 8.9 4.3a2 2 0 0 0 0 4zM12 8.3s1-4 3.1-4a2 2 0 0 1 0 4z"/>',
+  laptop:'<rect x="4.4" y="5.7" width="15.2" height="9.5" rx="1.8"/><path d="M2.6 17.9h18.8"/>',
+  star:'<path d="m12 3.9 2.55 5.16 5.7.83-4.12 4.02.97 5.67L12 16.9l-5.1 2.68.97-5.67-4.12-4.02 5.7-.83z"/>',
+  umbrella:'<path d="M12 4.3a8 8 0 0 0-8 8h16a8 8 0 0 0-8-8z"/><path d="M12 12.3v5.5a2 2 0 0 0 4 0"/><path d="M12 4.3V2.9"/>',
+  briefcase:'<rect x="2.9" y="7.5" width="18.2" height="11.4" rx="2.6"/><path d="M8.8 7.5V6.1a1.6 1.6 0 0 1 1.6-1.6h3.2a1.6 1.6 0 0 1 1.6 1.6v1.4"/><path d="M2.9 12.3h18.2"/>',
+  cross:'<rect x="3.6" y="3.6" width="16.8" height="16.8" rx="4.8"/><path d="M12 8.4v7.2M8.4 12h7.2"/>',
+  ring:'<circle cx="12" cy="14.6" r="4.7"/><path d="m9.5 10 1.2-3.4h2.6L14.5 10"/><path d="M8.7 6.6h6.6"/>',
 
   /* the tab bar */
-  home:'<path d="M3.7 10.4 12 4l8.3 6.4"/><path d="M5.9 9.1v9.9a1.4 1.4 0 0 0 1.4 1.4h9.4a1.4 1.4 0 0 0 1.4-1.4V9.1"/>',
-  plan:'<path d="M4.4 20V10.6M9.6 20V4.6M14.8 20v-6.4M20 20V8"/>',
-  log:'<rect x="3.4" y="5" width="17.2" height="15.6" rx="3.2"/><path d="M3.4 9.8h17.2M8.2 3.4v3.2M15.8 3.4v3.2"/>',
-  goals:'<path d="M12 20.6s6.9-5.6 6.9-10.8a6.9 6.9 0 1 0-13.8 0c0 5.2 6.9 10.8 6.9 10.8z"/><circle cx="12" cy="9.6" r="2.4"/>',
-  more:'<circle cx="5.2" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18.8" cy="12" r="1.5"/>',
+  home:'<path d="M3.9 10.3 12 4.1l8.1 6.2"/><path d="M6.1 8.9V19a1.3 1.3 0 0 0 1.3 1.3h9.2a1.3 1.3 0 0 0 1.3-1.3V8.9"/>',
+  plan:'<path d="M4.7 19.3v-7.1M9.6 19.3V5.4M14.4 19.3v-4.4M19.3 19.3V9.1"/>',
+  log:'<rect x="3.4" y="5.2" width="17.2" height="15.4" rx="3.6"/><path d="M3.4 9.9h17.2"/><path d="M8.3 3.4v3.4M15.7 3.4v3.4"/><circle cx="8.6" cy="14.2" r=".85" fill="currentColor" stroke="none"/><circle cx="12" cy="14.2" r=".85" fill="currentColor" stroke="none"/>',
+  goals:'<path d="M12 20.4c4.3-4.2 6.5-7.6 6.5-10.5a6.5 6.5 0 0 0-13 0c0 2.9 2.2 6.3 6.5 10.5z"/><circle cx="12" cy="9.8" r="2.3"/>',
+  more:'<circle cx="5.6" cy="12" r="1.35"/><circle cx="12" cy="12" r="1.35"/><circle cx="18.4" cy="12" r="1.35"/>',
 
   /* the More menu and Settings */
-  compass:'<circle cx="12" cy="12" r="8.6"/><path d="m15.3 8.7-2 4.6-4.6 2 2-4.6z"/>',
-  calculator:'<rect x="5" y="2.8" width="14" height="18.4" rx="2.8"/><rect x="8" y="6" width="8" height="3.2" rx="1"/><path d="M8.6 13h.01M12 13h.01M15.4 13h.01M8.6 17h.01M12 17h.01M15.4 17h.01" stroke-width="2.2"/>',
-  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M18.9 14.6a1.5 1.5 0 0 0 .3 1.7l.1.1a1.7 1.7 0 1 1-2.4 2.4l-.1-.1a1.5 1.5 0 0 0-1.7-.3 1.5 1.5 0 0 0-.9 1.4v.2a1.7 1.7 0 0 1-3.4 0v-.1a1.5 1.5 0 0 0-1-1.4 1.5 1.5 0 0 0-1.7.3l-.1.1a1.7 1.7 0 1 1-2.4-2.4l.1-.1a1.5 1.5 0 0 0 .3-1.7 1.5 1.5 0 0 0-1.4-.9h-.2a1.7 1.7 0 0 1 0-3.4h.1a1.5 1.5 0 0 0 1.4-1 1.5 1.5 0 0 0-.3-1.7l-.1-.1a1.7 1.7 0 1 1 2.4-2.4l.1.1a1.5 1.5 0 0 0 1.7.3h.1a1.5 1.5 0 0 0 .9-1.4v-.2a1.7 1.7 0 0 1 3.4 0v.1a1.5 1.5 0 0 0 .9 1.4 1.5 1.5 0 0 0 1.7-.3l.1-.1a1.7 1.7 0 1 1 2.4 2.4l-.1.1a1.5 1.5 0 0 0-.3 1.7v.1a1.5 1.5 0 0 0 1.4.9h.2a1.7 1.7 0 0 1 0 3.4h-.1a1.5 1.5 0 0 0-1.4.9z"/>',
-  save:'<path d="M5.4 3.6h9.9l5.1 5.1v10.3a1.4 1.4 0 0 1-1.4 1.4H5.4A1.4 1.4 0 0 1 4 19V5a1.4 1.4 0 0 1 1.4-1.4z"/><path d="M8.4 3.6v5.2h6.2V3.6M7.6 20.4v-6.2h8.8v6.2"/>',
-  doc:'<path d="M13.6 3.6H7.2a1.6 1.6 0 0 0-1.6 1.6v13.6a1.6 1.6 0 0 0 1.6 1.6h9.6a1.6 1.6 0 0 0 1.6-1.6V8.6z"/><path d="M13.6 3.6v5h4.8"/><path d="M8.8 13.2h6.4M8.8 16.6h4.4"/>',
-  refresh:'<path d="M20.4 6.8v5.1h-5.1"/><path d="M19.6 11.9a7.6 7.6 0 1 1-2-5.7l2.8 2.6"/>',
+  compass:'<circle cx="12" cy="12" r="8.4"/><path d="m15.2 8.8-1.9 4.5-4.5 1.9 1.9-4.5z"/>',
+  calculator:'<rect x="5.2" y="2.9" width="13.6" height="18.2" rx="3.2"/><rect x="8.1" y="6" width="7.8" height="2.9" rx="1.1"/><circle cx="9.2" cy="13" r=".85" fill="currentColor" stroke="none"/><circle cx="14.8" cy="13" r=".85" fill="currentColor" stroke="none"/><circle cx="9.2" cy="17.2" r=".85" fill="currentColor" stroke="none"/><circle cx="14.8" cy="17.2" r=".85" fill="currentColor" stroke="none"/>',
+  gear:'<path d="M3.6 7.6h9.4M18.2 7.6h2.2M3.6 16.4h2.2M11 16.4h9.4"/><circle cx="15.6" cy="7.6" r="2.6"/><circle cx="8.4" cy="16.4" r="2.6"/>',
+  save:'<path d="M12 3.8v10.5"/><path d="m7.9 10.2 4.1 4.1 4.1-4.1"/><path d="M4.5 16.1v1.9a2.2 2.2 0 0 0 2.2 2.2h10.6a2.2 2.2 0 0 0 2.2-2.2v-1.9"/>',
+  doc:'<path d="M13.4 3.6H7.5a1.9 1.9 0 0 0-1.9 1.9v13a1.9 1.9 0 0 0 1.9 1.9h9a1.9 1.9 0 0 0 1.9-1.9V8.6z"/><path d="M13.4 3.6v5h5"/><path d="M8.9 13.4h6.2M8.9 16.6h4.1"/>',
+  refresh:'<path d="M20.4 12a8.4 8.4 0 1 1-2.46-5.94l2.46 2.34"/><path d="M20.4 3.6v5h-5"/>',
 
   /* the small print */
-  up:'<path d="M7.2 16.8 16.8 7.2"/><path d="M9.6 7.2h7.2v7.2"/>',
-  down:'<path d="M7.2 7.2 16.8 16.8"/><path d="M16.8 9.6v7.2H9.6"/>',
-  sparkle:'<path d="m10.4 3.4 1.5 4.1 4.1 1.5-4.1 1.5-1.5 4.1-1.5-4.1L4.8 9l4.1-1.5z"/><path d="m17.8 14.2.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
-  flame:'<path d="M12 3.2s5.5 3.9 5.5 8.6a5.5 5.5 0 0 1-11 0c0-1.6.6-3 1.4-4.1.4 1 1 1.7 1.9 2.1 0-2.6.9-5 2.2-6.6z"/>',
-  speed:'<path d="M4.4 17.6a8.6 8.6 0 1 1 15.2 0"/><path d="m12 12.4 3.7-3.1"/><circle cx="12" cy="13.6" r="1.2" fill="currentColor" stroke="none"/>',
-  check:'<path d="m5.4 12.6 4.4 4.4 8.8-10"/>',
+  up:'<path d="M7.2 16.8 16.8 7.2"/><path d="M10 7.2h6.8V14"/>',
+  down:'<path d="M7.2 7.2 16.8 16.8"/><path d="M16.8 10v6.8H10"/>',
+  sparkle:'<path d="m10.2 3.7 1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path d="m17.6 14.7.85 2.25 2.25.85-2.25.85-.85 2.25-.85-2.25-2.25-.85 2.25-.85z"/>',
+  flame:'<path d="M12 3.5s5.3 3.9 5.3 8.5a5.3 5.3 0 0 1-10.6 0c0-1.5.55-2.9 1.35-4 .4 1 1 1.6 1.85 2 0-2.5.9-4.9 2.1-6.5z"/>',
+  speed:'<path d="M4.6 17.3a8.4 8.4 0 1 1 14.8 0"/><path d="m12 12.7 3.5-3"/><circle cx="12" cy="13.7" r="1.1" fill="currentColor" stroke="none"/>',
+  check:'<path d="m6 12.7 3.9 3.9 8.1-8.9"/>',
   /* which way this month is being pushed */
-  impact:'<path d="M3.4 16.6 9 11l3.6 3.6L20.6 6.6"/><path d="M15.4 6.6h5.2v5.2"/><path d="M3.4 20.6h17.2"/>',
-  impactDown:'<path d="M3.4 7.4 9 13l3.6-3.6 8 8"/><path d="M20.6 15.6h-5.2v-5.2"/><path d="M3.4 20.6h17.2"/>',
-  info:'<circle cx="12" cy="12" r="8.6"/><path d="M12 11.2v5"/><circle cx="12" cy="8.1" r=".62" fill="currentColor" stroke="none"/>',
-  plus:'<path d="M12 5.6v12.8M5.6 12h12.8"/>',
-  minus:'<path d="M5.6 12h12.8"/>'
+  impact:'<path d="M3.8 16.4 9.2 11l3.5 3.5 7.5-7.5"/><path d="M15.4 7h4.8v4.8"/>',
+  impactDown:'<path d="M3.8 7.6 9.2 13l3.5-3.5 7.5 7.5"/><path d="M20.2 12.2V17h-4.8"/>',
+  info:'<circle cx="12" cy="12" r="8.4"/><path d="M12 11.3v4.9"/><circle cx="12" cy="8.2" r=".62" fill="currentColor" stroke="none"/>',
+  plus:'<path d="M12 6.4v11.2M6.4 12h11.2"/>',
+  minus:'<path d="M6.4 12h11.2"/>'
 };
 /* Goals made before this build stored an emoji in `e`. Those are still
    in the saved data, so they keep working: the old character maps onto
@@ -2009,13 +2283,13 @@ function gSym(e){
 /* ICON is kept as the name the rest of the app already calls, now
    pointing at the drawn set instead of its own one-off paths. */
 var ICON={
-  lock:'<svg class="sym" viewBox="0 0 24 24"><rect x="4.8" y="10.6" width="14.4" height="10.2" rx="2.8"/><path d="M7.9 10.6V7.4a4.1 4.1 0 0 1 8.2 0v3.2"/></svg>',
-  open:'<svg class="sym" viewBox="0 0 24 24"><rect x="4.8" y="10.6" width="14.4" height="10.2" rx="2.8"/><path d="M7.9 10.6V7.4a4.1 4.1 0 0 1 7.7-1.9"/></svg>',
-  l:'<svg class="sym" viewBox="0 0 24 24"><path d="M15 4.8 7.8 12l7.2 7.2"/></svg>',
-  r:'<svg class="sym" viewBox="0 0 24 24"><path d="M9 4.8 16.2 12 9 19.2"/></svg>',
-  up:'<svg class="sym" viewBox="0 0 24 24"><path d="M4.8 15 12 7.8l7.2 7.2"/></svg>',
-  down:'<svg class="sym" viewBox="0 0 24 24"><path d="M4.8 9 12 16.2 19.2 9"/></svg>',
-  x:'<svg class="sym" viewBox="0 0 24 24"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8"/></svg>',
+  lock:'<svg class="sym" viewBox="0 0 24 24"><rect x="4.9" y="10.4" width="14.2" height="10.2" rx="3.2"/><path d="M8.1 10.4V7.6a3.9 3.9 0 0 1 7.8 0v2.8"/><circle cx="12" cy="15.4" r="1" fill="currentColor" stroke="none"/></svg>',
+  open:'<svg class="sym" viewBox="0 0 24 24"><rect x="4.9" y="10.4" width="14.2" height="10.2" rx="3.2"/><path d="M8.1 10.4V7.6a3.9 3.9 0 0 1 7.4-1.8"/><circle cx="12" cy="15.4" r="1" fill="currentColor" stroke="none"/></svg>',
+  l:'<svg class="sym" viewBox="0 0 24 24"><path d="M14.6 5.2 7.8 12l6.8 6.8"/></svg>',
+  r:'<svg class="sym" viewBox="0 0 24 24"><path d="M9.4 5.2 16.2 12l-6.8 6.8"/></svg>',
+  up:'<svg class="sym" viewBox="0 0 24 24"><path d="M5.2 14.8 12 8l6.8 6.8"/></svg>',
+  down:'<svg class="sym" viewBox="0 0 24 24"><path d="M5.2 9.2 12 16l6.8-6.8"/></svg>',
+  x:'<svg class="sym" viewBox="0 0 24 24"><path d="M6.6 6.6 17.4 17.4M17.4 6.6 6.6 17.4"/></svg>',
   plus:sym("plus"),minus:sym("minus"),
   home:sym("home"),plan:sym("plan"),log:sym("log"),goals:sym("goals"),
   journey:sym("compass"),more:sym("more")
@@ -2025,7 +2299,7 @@ var ICON={
 function ringSVG(pct,color){
   var R=44,C=2*Math.PI*R,len=Math.max(0,Math.min(100,pct))/100*C;
   return '<svg viewBox="0 0 100 100"><g transform="rotate(-90 50 50)">'+
-    '<circle cx="50" cy="50" r="'+R+'" fill="none" stroke="#1E1B3C" stroke-width="9"/>'+
+    '<circle cx="50" cy="50" r="'+R+'" fill="none" stroke="#26262D" stroke-width="9"/>'+
     '<circle cx="50" cy="50" r="'+R+'" fill="none" stroke="'+color+'" stroke-width="9" stroke-linecap="round" '+
     'stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'"/></g></svg>';
 }
@@ -2051,7 +2325,7 @@ function barChart(rows,h){
     var x=i*(bw+gap),bh=r.value/max*h,y=h-bh;
     if(r.target){var ty=h-(r.target/max*h);
       s+='<line x1="'+x+'" y1="'+ty+'" x2="'+(x+bw)+'" y2="'+ty+'" stroke="rgba(255,255,255,.32)" stroke-width=".7" stroke-dasharray="1.6 1.4"/>';}
-    s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(bh,.8)+'" rx="1.2" fill="'+(r.color||"#7B72FF")+'" opacity="'+(r.faded?.45:1)+'"/>';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(bh,.8)+'" rx="1.2" fill="'+(r.color||"#9E5BFF")+'" opacity="'+(r.faded?.45:1)+'"/>';
   });
   s+='</svg><div style="display:flex;gap:1.6%;margin-top:5px">';
   rows.forEach(function(r){s+='<div style="flex:1;text-align:center;font-family:var(--mono);font-size:8.5px;color:var(--faint)">'+r.label+'</div>';});
@@ -2065,28 +2339,50 @@ function pairChart(rows){
   var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">';
   rows.forEach(function(r,i){
     var x=i*(grp+gp),ha=r.a/max*H,hb=r.b/max*H;
-    s+='<rect x="'+x+'" y="'+(H-ha)+'" width="'+bw+'" height="'+Math.max(ha,.8)+'" rx="1.1" fill="#7B72FF"/>'+
-       '<rect x="'+(x+bw+1.2)+'" y="'+(H-hb)+'" width="'+bw+'" height="'+Math.max(hb,.8)+'" rx="1.1" fill="#FF7A5C"/>';
+    s+='<rect x="'+x+'" y="'+(H-ha)+'" width="'+bw+'" height="'+Math.max(ha,.8)+'" rx="1.1" fill="#9E5BFF"/>'+
+       '<rect x="'+(x+bw+1.2)+'" y="'+(H-hb)+'" width="'+bw+'" height="'+Math.max(hb,.8)+'" rx="1.1" fill="#FF4D62"/>';
   });
   s+='</svg><div style="display:flex;gap:3%;margin-top:5px">';
   rows.forEach(function(r){s+='<div style="flex:1;text-align:center;font-family:var(--mono);font-size:8.5px;color:var(--faint)">'+r.label+'</div>';});
   return s+'</div><div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--muted)">'+
-    '<span><i style="display:inline-block;width:8px;height:8px;border-radius:8px;background:#7B72FF;margin-right:6px"></i>In</span>'+
-    '<span><i style="display:inline-block;width:8px;height:8px;border-radius:8px;background:#FF7A5C;margin-right:6px"></i>Out</span></div>';
+    '<span><i style="display:inline-block;width:8px;height:8px;border-radius:8px;background:#9E5BFF;margin-right:6px"></i>In</span>'+
+    '<span><i style="display:inline-block;width:8px;height:8px;border-radius:8px;background:#FF4D62;margin-right:6px"></i>Out</span></div>';
 }
 function areaChart(vals,labels,color){
   if(vals.length<2)return '<div class="empty">Two months of history will draw a curve here.</div>';
-  var W=100,H=52,max=Math.max.apply(null,vals)||1;
-  var pts=vals.map(function(v,i){return[(i/(vals.length-1))*W,H-(v/max)*H];});
-  var d=pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(2)+" "+p[1].toFixed(2);}).join(" ");
-  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
-    '<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">'+
-    '<stop offset="0%" stop-color="'+color+'" stop-opacity=".4"/><stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'+
-    '</linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#ag)"/>'+
-    '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
-  pts.forEach(function(p){s+='<circle cx="'+p[0].toFixed(2)+'" cy="'+p[1].toFixed(2)+'" r="1.1" fill="'+color+'"/>';});
+  /* A real aspect ratio rather than a squashed box: circles stay round,
+     the stroke keeps its weight, and the line can be smoothed. */
+  var W=320,H=132,PAD=9,max=Math.max.apply(null,vals)||1;
+  var pts=vals.map(function(v,i){
+    return[PAD+(i/(vals.length-1))*(W-PAD*2), H-PAD-(v/max)*(H-PAD*2)];
+  });
+  /* Catmull-Rom through the points, expressed as beziers — the flowing
+     curve the flat polyline never had. */
+  var d="M"+pts[0][0].toFixed(2)+" "+pts[0][1].toFixed(2),i;
+  for(i=0;i<pts.length-1;i++){
+    var p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    var c1x=p1[0]+(p2[0]-p0[0])/6, c1y=p1[1]+(p2[1]-p0[1])/6;
+    var c2x=p2[0]-(p3[0]-p1[0])/6, c2y=p2[1]-(p3[1]-p1[1])/6;
+    d+=" C"+c1x.toFixed(2)+" "+c1y.toFixed(2)+","+c2x.toFixed(2)+" "+c2y.toFixed(2)+
+       ","+p2[0].toFixed(2)+" "+p2[1].toFixed(2);
+  }
+  var last=pts[pts.length-1],gid="ag"+Math.round(Math.random()*1e6);
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+
+    '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="'+color+'" stop-opacity=".34"/>'+
+    '<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'+
+    '</linearGradient></defs>'+
+    '<path d="'+d+' L'+last[0].toFixed(2)+' '+H+' L'+pts[0][0].toFixed(2)+' '+H+' Z" fill="url(#'+gid+')"/>'+
+    '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  /* every reading is a small mark; where the line has got to is a
+     lit dot, which is the one thing the eye should land on */
+  pts.slice(0,-1).forEach(function(p){
+    s+='<circle cx="'+p[0].toFixed(2)+'" cy="'+p[1].toFixed(2)+'" r="2.2" fill="'+color+'" opacity=".55"/>';
+  });
+  s+='<circle cx="'+last[0].toFixed(2)+'" cy="'+last[1].toFixed(2)+'" r="8" fill="'+color+'" opacity=".2"/>'+
+     '<circle cx="'+last[0].toFixed(2)+'" cy="'+last[1].toFixed(2)+'" r="4.2" fill="#fff"/>';
   s+='</svg><div style="display:flex;margin-top:5px">';
-  labels.forEach(function(l){s+='<div style="flex:1;text-align:center;font-family:var(--mono);font-size:8.5px;color:var(--faint)">'+l+'</div>';});
+  labels.forEach(function(l){s+='<div style="flex:1;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--faint)">'+l+'</div>';});
   return s+'</div>';
 }
 
@@ -2094,37 +2390,12 @@ function areaChart(vals,labels,color){
 /* The body of a page, built for any tab and written nowhere. render()
    uses it for the tab you are on; the gesture layer uses it for the tab
    you are swiping towards. One builder, so the two can never diverge. */
-/* ── closing a month ──
-   The one moment where a projection becomes money. A month that has
-   ended but was never confirmed is the only thing the app ever asks you
-   for, and it asks once, at the top of Home, until you answer.
-
-   Confirming writes the figure you give into that month's override —
-   the same field the Plan page has always had — so nothing new enters
-   the data model and nothing already recorded is overwritten. */
-function needsClosing(){
-  return allMonths().filter(function(k){
-    return k<thisMonth()&&!isConfirmed(k)&&M(k).salary>0;
-  }).sort()[0]||null;
-}
-function closeCard(k){
-  var planned=savedPlanned(k),projected=savedProjected(k);
-  return '<div class="card closecard"><div class="closehead">'+
-      '<span class="closek">'+mName(k)+' is over</span>'+
-      '<span class="closet">Confirm what you actually saved and it becomes part of your record.</span>'+
-    '</div>'+
-    '<div class="closerow">'+
-      '<span class="k">You planned</span><span class="v">\u00A5'+fmt(planned)+'</span></div>'+
-    '<div class="closerow">'+
-      '<span class="k">The plan expected'+
-        iq("This is what the equation left after your bills, budget, buffer and anything unplanned you logged. If the real figure differs, put the real one in \u2014 that is the number that counts.")+
-      '</span><span class="v">\u00A5'+fmt(Math.max(0,projected))+'</span></div>'+
-    '<label class="closelab" for="closeAmt">What did you actually save?</label>'+
-    '<div class="entry" style="margin-top:8px">'+
-      moneyField('class="amtfield" id="closeAmt" data-close="'+k+'"',Math.max(0,projected))+
-      '<button class="addb" id="closeGo" data-close="'+k+'">Confirm</button></div>'+
-    '<p class="hint" style="margin-top:12px">Once confirmed it joins your banked total, feeds your goals, and stops changing.</p>'+
-    '</div>';
+/* How far through the live period you are, as a 2px line rather than a
+   number you have to read. Only ever shown for the month you are in. */
+function dayBar(k){
+  if(!isLive(k))return "";
+  var d=periodDay(k),n=periodDays(k),pct=Math.max(2,Math.min(100,d/n*100));
+  return '<div class="daybar" aria-label="Day '+d+' of '+n+'"><i style="width:'+pct.toFixed(1)+'%"></i></div>';
 }
 
 function pageHTML(tab,noSheets){
@@ -2134,7 +2405,7 @@ function pageHTML(tab,noSheets){
      '<div class="mtitle"><b>'+mName(k)+'</b><span class="'+(live?"live":"")+'">'+
      (function(){var st=live?"live":isAhead(k)?"upcoming":"closed";
        return cycleStart()===1?st:periodLabel(k)+" \u00B7 "+st;})()+'</span></div>'+
-     '<button class="mnav" data-m="1" aria-label="Next month">'+ICON.r+'</button></div>';
+     '<button class="mnav" data-m="1" aria-label="Next month">'+ICON.r+'</button></div>'+dayBar(k);
   if(!live&&MORE_PAGES.indexOf(tab)<0){
     h+='<div class="card" style="margin-top:0"><div class="warnbox '+(editable?"clear":"tight")+'" style="margin-top:0">'+
        (editable
@@ -2143,9 +2414,6 @@ function pageHTML(tab,noSheets){
          : '<b>This period has closed.</b> It is kept as a record and can no longer be edited.')+
        '</div><button class="btn" data-now="1" style="margin-top:12px">Back to '+mName(thisMonth())+'</button></div>';
   }
-  /* the one thing the app ever asks of you, asked once, at the top */
-  var due=needsClosing();
-  if(tab==="home"&&due&&live)h+=closeCard(due);
   if(tab==="home")h+=viewHome(k,live);
   else if(tab==="plan")h+=viewPlan(k,live);
   else if(tab==="log")h+=viewLog(k);
@@ -2347,19 +2615,16 @@ function viewHome(k,live){
   var hs=healthScore(k),hc=healthColor(hs);
   h+='<div class="hero" style="--hc:'+hc+';--hc-soft:'+healthRGBA(hs,.13)+';--hc-line:'+healthRGBA(hs,.32)+'">'+
      '<div class="aura"></div><div class="aura two"></div><div class="glass">'+
-     '<span class="lab">'+savedWord(k,true)+(isLive(k)?" this month":" in "+mShort(k))+
-       iq(standsHelp(k))+'</span>'+
+     '<span class="lab">'+savedWord(k,true)+(isLive(k)?" this month":" in "+mShort(k))+iq(standsHelp(k))+'</span>'+
      '<div class="salary-line"><span class="cur">\u00A5</span>'+
      '<span class="heroval">'+fmt(Math.max(0,sv))+'</span></div>'+
      '<div class="hstatus"><span class="hpill"><i class="hdot"></i>'+healthLabel(hs)+'</span>'+
      '<span class="hscore">HEALTH <b>'+healthText(hs)+'</b>/100</span></div>'+
      '<div class="herosal"><span class="k">Salary this month</span>'+
-     moneyField('id="sal" aria-label="Salary"'+(isSettled(k)?" disabled":""),m.salary)+'</div>'+
+     '<input id="sal" type="number" inputmode="numeric" value="'+m.salary+'"'+(isSettled(k)?" disabled":"")+' aria-label="Salary">'+'</div>'+
      '<p class="hwhy">'+healthWhy(k,hs)+'</p>'+
      '</div></div>';
 
-  /* The hero sentence and the insight line can land on the same subject.
-     One of them saying it is enough, and the hero says it first. */
   var hl=headline(k),heroSaid=healthWhy(k,hs);
   var doubled=hl&&hl.i==="warning"&&/unplanned/i.test(heroSaid);
   if(hl&&!doubled)h+='<div class="oneins" style="--oic:'+hl.c+'">'+sym(hl.i)+'<span>'+hl.t+'</span></div>';
@@ -2443,18 +2708,19 @@ function viewPlan(k,live){
        (c.type==="variable"?'<span class="tag">tracked</span>':c.type==="fixed"?'<span class="tag">auto</span>':c.type==="buffer"?'<span class="tag">rolls over</span>':'')+
        '<button class="lockbtn'+(lk?" on":"")+'" data-lock="'+c.id+'"'+(ed?"":" disabled")+' aria-label="Lock">'+(lk?ICON.lock:ICON.open)+'</button>'+
        '<span class="stepper"><button class="step" data-n="'+c.id+'" data-by="-100"'+(ed?"":" disabled")+' aria-label="Less">'+ICON.minus+'</button>'+
-       moneyField('class="amtin" data-a="'+c.id+'"'+(ed?"":" disabled"),a)+
+       '<input class="amtin" type="number" inputmode="numeric" data-a="'+c.id+'" value="'+a+'"'+(ed?"":" disabled")+'>'+
        '<button class="step" data-n="'+c.id+'" data-by="100"'+(ed?"":" disabled")+' aria-label="More">'+ICON.plus+'</button></span></div>'+
        '<input class="slider" type="range" min="0" max="'+Math.max(m.salary,a)+'" step="100" value="'+a+'" data-r="'+c.id+'"'+((ed&&!lk)?"":" disabled")+'>'+
-       (c.id==="savings"&&oo>0?'<div class="note" style="color:var(--coral)">\u2212\u00A5'+fmt(oo)+' of one-offs comes out of this \u2192 <b>\u00A5'+fmt(Math.max(0,effSavings(k)))+'</b> actually saved</div>':'')+
+       (c.id==="savings"&&oneoffOverflow(k)>0?'<div class="note" style="color:var(--coral)">\u2212\u00A5'+fmt(oneoffOverflow(k))+' of one-offs past the buffer comes out of this \u2192 <b>\u00A5'+fmt(Math.max(0,effSavings(k)))+'</b> actually saved</div>':'')+
        (c.note?'<div class="note">'+c.note+'</div>':'')+'</div>';
   });
   h+='</div>';
 
-  h+='<div class="card"><div class="card-h"><span class="card-t">Override</span></div>'+
-     why('If the real figure differs from the equation, put what you actually saved. Leave it empty to let the equation decide.','When to use this')+
+  h+='<div class="card"><div class="card-h"><span class="card-t">Override'+
+     iq('If the real figure differs from the equation, put what you actually saved here. Leave it empty and the equation decides.')+
+     '</span></div>'+
      '<div class="tgt" style="margin-top:12px"><span class="lab" style="flex:1">Actually saved</span>'+
-     moneyField('id="ovr"',m.override!=null?m.override:"",fmt(Math.max(0,sv)))+'</div>';
+     '<input id="ovr" type="number" inputmode="numeric" placeholder="'+fmt(Math.max(0,sv))+'" value="'+(m.override!=null?m.override:"")+'"></div>';
   if(m.override!==null&&m.override!==undefined)
     h+='<div class="note" style="color:var(--saffron);margin-top:10px">Manually set. <button id="clearov" style="color:var(--majorelle);font-weight:600">Use the equation instead</button></div>';
   return h+'</div></div>';
@@ -2494,15 +2760,16 @@ function purseData(k,amt){
    explanation already sitting underneath. The number and its label are
    a stacked block so the label can wrap without dragging the number
    off its own baseline. */
+function purseWhy(k,amt){
+  var d=purseData(k,amt),take=Math.max(0,amt||0),buf=bufferFree(k),sav=Math.max(0,savedActual(k));
+  if(take<=0) return 'This is your current savings for '+mShort(k)+'. If you spend money, the app uses available buffer first, then savings. The figure updates live as you type.';
+  var fromBuf=Math.min(take,buf),fromSav=Math.min(Math.max(0,take-fromBuf),sav),short=Math.max(0,take-fromBuf-fromSav);
+  if(short>0) return 'A ¥'+fmt(take)+' expense would use ¥'+fmt(fromBuf)+' of buffer and ¥'+fmt(fromSav)+' of savings, leaving ¥'+fmt(short)+' uncovered. This is a preview, not money already spent.';
+  return 'After a ¥'+fmt(take)+' expense, you would have ¥'+fmt(Math.max(0,sav-fromSav))+' in savings'+(fromBuf>0?' and ¥'+fmt(Math.max(0,buf-fromBuf))+' of buffer':'')+'. Nothing is deducted until you tap Add.';
+}
 function purseHTML(k,amt){
-  var d=purseData(k,amt);
-  return '<span class="purse-ico" data-ico="'+d.icon+'">'+sym(d.icon)+'</span>'+
-         '<span class="purse-txt">'+
-           '<span class="pursebig">'+d.big+'</span>'+
-           '<span class="pursesub">'+esc(d.line1)+
-             (d.line2?'<em>'+esc(d.line2)+'</em>':'')+'</span>'+
-         '</span>'+
-         '<button class="purse-i" type="button" aria-label="Where this comes from">'+sym("info")+'</button>';
+  var d=purseData(k,amt),why=purseWhy(k,amt);
+  return '<span class="purse-ico" data-ico="'+d.icon+'">'+sym(d.icon)+'</span>'+         '<span class="purse-txt">'+           '<span class="pursebig">'+d.big+'</span>'+           '<span class="pursesub">'+esc(d.line1)+(d.line2?'<em>'+esc(d.line2)+'</em>':'')+'</span>'+         '</span>'+         '<button class="purse-i" type="button" data-purse-iq="'+esc(why)+'" aria-label="Explain this amount">'+sym("info")+'</button>';
 }
 
 function viewLog(k){
@@ -2515,20 +2782,20 @@ function viewLog(k){
   h+='<div class="card"><div class="card-h"><span class="card-t">Add unplanned spending</span></div>'+
      '<div class="methodrow">'+
      '<button class="chip'+(!onCard?" on":"")+'" data-pm="bank" style="'+(!onCard?"color:"+COLOR.oneoff+";background:"+tint(COLOR.oneoff):"")+'">'+sym("warning")+' One-off</button>'+
-     (cardOn()?'<button class="chip'+(onCard?" on":"")+'" data-pm="card" style="'+(onCard?"color:var(--saffron);background:rgba(255,179,61,.14)":"")+'">'+sym("card")+' Credit card</button>':'')+
+     (cardOn()?'<button class="chip'+(onCard?" on":"")+'" data-pm="card" style="'+(onCard?"color:var(--saffron);background:rgba(232,162,60,.14)":"")+'">'+sym("card")+' Credit card</button>':'')+
      '</div>'+
      '<input class="notefield" id="enote" style="margin-top:0" placeholder="What was it? e.g. TV, taxi, repair">'+
-     '<div class="entry" style="margin-top:8px">'+moneyField('class="amtfield" id="eamt"',"","How much?")+
+     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="eamt" type="number" inputmode="decimal" placeholder="How much?">'+
      '<button class="addb" id="eadd">Add</button></div>'+
      '<div id="purse" class="purse tone-ok"></div>'+
      '<div id="cardWarn"></div>'+
-     why(onCard
+     '<p class="hint" style="margin-top:11px">'+(onCard
        ? "Goes on the card. \u00A5"+fmt(cardAvail())+" of \u00A5"+fmt(card().limit)+" credit is free right now."
        : bufferOpen(k)
          ? "Comes out of your buffer first \u2014 \u00A5"+fmt(bufferLeft(k))+" of \u00A5"+fmt(bufferAmount(k))+
            " left \u2014 then out of "+mName(k).split(" ")[0]+"\u2019s savings."
-         : "Your buffer is locked, so this comes straight out of "+mName(k).split(" ")[0]+"\u2019s savings.",
-       "Where this comes from")+'</div>';
+         : "Your buffer is locked, so this comes straight out of "+mName(k).split(" ")[0]+"\u2019s savings.")+
+       '</p></div>';
 
   /* the list */
   var handedNow=handedOverOf(k);
@@ -2548,7 +2815,8 @@ function viewLog(k){
       who:b.person||"someone",what:"repaid to",note:""});
   });
 
-  if(!list.length&&!handed.length)h+='<div class="empty">Nothing unplanned in '+mName(k).split(" ")[0]+'.<br>That is the goal.</div>';
+  if(!list.length&&!handed.length)h+='<div class="emptyline">'+sym("check")+
+     '<span>Nothing unplanned in '+mName(k).split(" ")[0]+' \u2014 that is the goal.</span></div>';
   else list.forEach(function(e){
     var dt=new Date(e.ts),isB=e.cat==="buffer";
     h+='<div class="log"><span class="ico" style="background:'+tint(isB?COLOR.buffer:COLOR.oneoff)+';color:'+(isB?COLOR.buffer:COLOR.oneoff)+'">'+sym(isB?"buffer":"warning")+'</span>'+
@@ -2557,15 +2825,15 @@ function viewLog(k){
        '<button class="del" data-d="'+e.id+'" aria-label="Delete">\u00D7</button></div>';});
 
   handed.forEach(function(x){
-    h+='<div class="log"><span class="ico" style="background:'+tint("#8DA88F")+';color:#8DA88F">'+sym("person")+'</span>'+
+    h+='<div class="log"><span class="ico" style="background:'+tint("#8A8A98")+';color:#8A8A98">'+sym("person")+'</span>'+
        '<span class="n">'+esc(x.what.charAt(0).toUpperCase()+x.what.slice(1))+' '+esc(x.who)+
        '<em>'+prettyDay(x.on)+' \u00B7 not spending \u00B7 in Money outside'+(x.note?' \u00B7 '+esc(x.note):'')+'</em></span>'+
        '<span class="a" style="color:var(--sage)">\u00A5'+fmt(x.amount)+'</span></div>';});
 
   if(handed.length){
     h+='<p class="hint" style="margin-top:14px"><b>\u00A5'+fmt(consumedOneoff(k))+'</b> spent \u00B7 <b>\u00A5'+
-       fmt(handedOverOf(k))+'</b> handed to someone</p>'+
-       why('Both reduce what you have, but only the first is spending. Keeping them apart stops your spending history looking bigger than what you actually consumed.');
+       fmt(handedOverOf(k))+'</b> handed to someone'+
+       iq('Both reduce what you have, but only the first is spending. Keeping them apart stops your spending history looking bigger than what you actually consumed.')+'</p>';
   }
   h+='</div>';
 
@@ -2580,10 +2848,11 @@ function editGoalsSheetPair(){
     h+='<div class="shbg" data-sheet="0"></div><div class="sheet"><div class="grab"></div>'+
        '<div class="shhead"><span class="card-t">Edit goals</span>'+
        '<span class="lab" style="color:'+(tot===100?"var(--teal)":"var(--saffron)")+'">'+tot+'% allocated</span>'+
+       iq('Each share is a slice of what you save that month, and setting one never moves the others. '+
+          'Rename a goal by typing over it, arrows set priority, and a lock holds a share so you cannot change it by accident. '+
+          'Months already closed keep the split they were living under.')+
        '<button class="shx" data-sheet="0" aria-label="Close">'+ICON.x+'</button></div>'+
-       why('Each share is a slice of what you save that month, and setting one never moves the others. '+
-           'Rename a goal by typing over it, arrows set priority, and a lock holds a share so you cannot change it by accident. '+
-           'Months already closed keep the split they were living under.','How shares work')+
+       
        (freeRoom()>0
          ? '<div class="unal" style="margin-bottom:4px"><span class="u1">'+freeRoom()+'% unallocated</span>'+
            '<span class="u2">That part of each month\u2019s saving joins no goal. Raise a share to use it.</span></div>'
@@ -2604,7 +2873,7 @@ function editGoalsSheetPair(){
          '<span class="pctsign">%</span>'+
          '<button class="step" data-gp="'+g.id+'" data-by="5"'+(jarLocked(g)?" disabled":"")+' aria-label="More">'+ICON.plus+'</button></span></div>'+
          '<div class="aline"><span class="lab">Target</span>'+
-         moneyField('class="atgtin" data-jt="'+g.id+'" aria-label="Target"',g.target)+'</div>'+
+         '<input class="atgtin" type="number" inputmode="numeric" data-jt="'+g.id+'" value="'+g.target+'" aria-label="Target"></div>'+
          '<div class="aline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
          '<input class="duein" type="month" data-gd="'+g.id+'" value="'+(g.due||"")+'" aria-label="Deadline"></div>'+
          (S.goals.length>1?'<div class="aline" style="justify-content:flex-end;margin-top:12px">'+
@@ -2626,7 +2895,7 @@ function newGoalSheetPair(){
        '<div class="emrow">'+GEMO.map(function(e,i){
          return '<button data-ne="'+e+'"'+(i===0?' class="on"':'')+' aria-label="'+e+'">'+sym(e)+'</button>';}).join("")+'</div>'+
        '<div class="ngline"><span class="lab">Target</span>'+
-       moneyField('class="atgtin" id="ngTarget" aria-label="Target amount"',"","0")+'</div>'+
+       '<input class="atgtin" type="number" inputmode="numeric" id="ngTarget" placeholder="0" aria-label="Target amount"></div>'+
        '<div class="ngline"><span class="lab">Deadline<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
        '<input class="duein" type="month" id="ngDue" aria-label="Deadline"></div>'+
        '<div class="ngline"><span class="lab">Share of savings</span>'+
@@ -2634,8 +2903,8 @@ function newGoalSheetPair(){
        '<span class="pctsign">%</span></span></div></div>'+
        (room<=0
          ? '<p class="hint" style="margin-top:12px">All 100% is already allocated, so a new goal would start at 0%. Lower another share first.</p>'
-         : '<p class="hint" style="margin-top:12px">There is <b>'+room+'%</b> unallocated.</p>'+
-           why('A new goal can take up to that without moving any other goal. Months already closed keep the split they were living under.'))+
+         : '<p class="hint" style="margin-top:12px">There is <b>'+room+'%</b> unallocated.'+
+           iq('A new goal can take up to that without moving any other goal. Months already closed keep the split they were living under.')+'</p>')+
        '<button class="btn go" id="ngAdd" style="margin-top:16px">Create goal</button>'+
        '<button class="btn" data-newg="0" style="margin-top:10px">Cancel</button></div>';
     return h;
@@ -2664,22 +2933,15 @@ function viewGoals(noSheets){
   var next=open.slice().sort(function(a,b){var ra=jarRate(a),rb=jarRate(b);
     return (ra>0?jarLeft(a)/ra:1e9)-(rb>0?jarLeft(b)/rb:1e9);})[0];
 
-  /* minimal summary — no charts, no allocation repeated */
-  h+='<div class="card hero"><div class="card-h" style="align-items:flex-start">'+
-     '<span class="bigt-w" style="font-family:var(--round);font-size:21px;font-weight:800;letter-spacing:-.032em;flex:1">Your goals</span>'+
-     '<span class="lab">'+open.length+' active</span></div>'+
-     '<div class="salary-line" style="margin-top:20px"><span class="cur">\u00A5</span>'+
-     '<span class="heroamt">'+fmt(heroAmt)+'</span></div>'+
-     '<p class="hint" style="margin-top:8px">'+heroWord+
-     (next?' \u00B7 next to land is <b style="color:'+next.col+'">'+esc(next.name)+'</b>':'')+'</p>'+
-     (function(){
-       var free=freeRoom();
-       if(free<=0)return '';
-       var amt=Math.max(0,savedActual(k))*free/100;
-       return '<div class="unal"><span class="u1">'+free+'% unallocated</span>'+
-              '<span class="u2">\u00A5'+fmt(amt)+' of '+(isLive(k)?"this month\u2019s":mShort(k)+"\u2019s")+' saving is going to no goal. '+
-              'It stays in your savings \u2014 raise a share to put it to work.</span></div>';
-     })()+'</div>';
+  /* Compact summary banner: clearly the section header, not another goal card. */
+  h+='<div class="goals-hero">'+
+     '<div class="goals-mark">'+sym("savings")+'</div>'+
+     '<div class="goals-copy"><span class="goals-kicker">Savings pools</span><span class="goals-title">Your goals</span>'+
+       '<span class="goals-sub">'+heroWord+'</span></div>'+
+     '<div class="goals-side">'+
+       '<div class="goals-amount"><span class="cur">\u00A5</span><span class="goals-num">'+fmt(heroAmt)+'</span></div>'+
+       '<div class="goals-count">'+open.length+' active</div>'+
+     '</div></div>';
 
   var basis=paceBasis();
 
@@ -2689,8 +2951,8 @@ function viewGoals(noSheets){
     var dt=dueText(g),banked=jarBankedThisMonth(g),planned=jarPlannedIn(k,g);
     h+='<div class="jarcard'+(done?"":" quiet")+'" data-gid="'+g.id+'" style="--jc:'+g.col+';--jc-soft:'+g.col+'26;--jc-line:'+g.col+'3d">'+
        '<div class="jhead"><span class="jico" style="background:'+tint(g.col)+';color:'+g.col+'">'+gSym(g.e)+'</span>'+
-       '<span class="jmeta"><div class="jname">'+esc(g.name)+'</div>'+
-       '<div class="jsub">'+(done?"complete":"priority "+(i+1)+" \u00B7 "+jarPct(g)+"% allocation")+'</div></span>'+
+       '<span class="jmeta"><div class="jname"><i class="jrank'+(done?" done":"")+'">'+(i+1)+'</i>'+esc(g.name)+'</div>'+
+       '<div class="jsub">'+(done?"complete":jarPct(g)+"% of what you save")+'</div></span>'+
        '<span class="jpc" style="color:'+(done?"var(--teal)":g.col)+'">'+Math.round(pc)+'%</span></div>'+
        '<div class="jamt" style="color:'+(done?"var(--teal)":"var(--text)")+'">\u00A5'+fmt(bal)+'</div>'+
        '<div class="jof">of \u00A5'+fmt(g.target)+
@@ -2706,7 +2968,8 @@ function viewGoals(noSheets){
   });
   /* Every date above is an estimate. Say so once, and say what it rests
      on, rather than repeating a caveat on each card. */
-  if(S.goals.length)h+=why('Dates above are estimates, '+basis+'. They move as your saving does.','About these dates');
+  if(S.goals.length)h+='<p class="hint" style="margin-top:16px">Dates are estimates'+
+     iq('Dates above are estimates, '+basis+'. They move as your saving does.')+'</p>';
   if(S.goals.length>1)h+='<p class="hint" style="margin-top:10px;text-align:center">Hold a goal to move it up or down.</p>';
 
   h+='<button class="btn" data-sheet="1" style="margin-top:22px">Edit goals</button>';
@@ -2731,14 +2994,13 @@ function viewJourney(){
      '<div class="jamt" style="margin-top:12px;font-size:38px">\u00A5'+fmt(total)+'</div>'+
      '<div class="jof" style="margin-top:7px">confirmed across '+closedMonths().length+
        ' closed month'+(closedMonths().length===1?'':'s')+
-       iq("Only months you have confirmed count here. "+mShort(k)+" is still open, so what it is on course to add is shown separately and is not part of this total.")+'</div>'+
-     (openNow>0
-       ? '<div class="onopen"><span class="k">'+mShort(k)+' on course to add</span>'+
-         '<span class="v">+\u00A5'+fmt(openNow)+'</span></div>'
+       iq("Only months you have confirmed count here. "+mShort(k)+" is still open, so what it is on course to add is shown separately and is not part of this total.")+
+       '</div>'+(openNow>0
+       ? '<div class="onopen"><span class="k">'+mShort(k)+' on course to add</span><span class="v">+\u00A5'+fmt(openNow)+'</span></div>'
        : '');
   var closedOnly=months.filter(function(x){return isConfirmed(x);});
   if(closedOnly.length>1)h+='<div style="margin-top:22px">'+
-     areaChart(closedOnly.map(function(x){return cumulativeTo(x);}),closedOnly.map(mShort),"#7B72FF")+'</div>';
+     areaChart(closedOnly.map(function(x){return cumulativeTo(x);}),closedOnly.map(mShort),"#9E5BFF")+'</div>';
   else h+='<p class="hint" style="margin-top:16px">The curve appears once a second month has been confirmed.</p>';
   h+='</div>';
 
@@ -2805,13 +3067,13 @@ function journeyNotes(k,p){
   var lead=S.goals.filter(function(g){return !jarDone(g);})
     .sort(function(x,y){return jarPct(y)-jarPct(x);})[0];
   if(lead&&jarRate(lead)>0)
-    out.push({i:lead.e,t:"Most of your saving goes to <b>"+lead.name+"</b>. At this rate it lands "+jarETA(lead)+"."});
+    out.push({i:lead.e,t:"Most of your saving goes to <b>"+esc(lead.name)+"</b>. At this rate it lands "+jarETA(lead)+"."});
   if(out.length<3&&lead){
     var faster=jarLeft(lead)/(jarRate(lead)+monthlyRate()*0.05);
     if(jarRate(lead)>0&&isFinite(faster)){
       var now=Math.ceil(jarLeft(lead)/jarRate(lead)),then=Math.ceil(faster);
       if(now-then>=1)out.push({i:"bolt",
-        t:"Give <b>"+lead.name+"</b> 5% more and it arrives "+ahead(then)+" instead of "+ahead(now)+"."});
+        t:"Give <b>"+esc(lead.name)+"</b> 5% more and it arrives "+ahead(then)+" instead of "+ahead(now)+"."});
     }
   }
   if(out.length<3&&st>=2)out.push({i:"flame",t:"You have hit your target <b>"+st+" months</b> running."});
@@ -2820,10 +3082,10 @@ function journeyNotes(k,p){
 
 var MORE_PAGES=["journey","backup","export","tools","note","settings","outside"];
 var MENU=[
-  {id:"journey",e:"compass",t:"Journey",s:"Track your financial progress",col:"#7B72FF",live:true},
-  {id:"tools",  e:"calculator",t:"Tools",  s:"Calculator and notes",        col:"#2FD4BC",live:true},
-  {id:"outside",e:"person",   t:"Money outside",s:"",                        col:"#8DA88F",live:true},
-  {id:"settings",e:"gear",t:"Settings",s:"Your month, your card, your data",col:"#B08CFF",live:true}
+  {id:"journey",e:"compass",t:"Journey",s:"Track your financial progress",col:"#9E5BFF",live:true},
+  {id:"tools",  e:"calculator",t:"Tools",  s:"Calculator and notes",        col:"#D45CE8",live:true},
+  {id:"outside",e:"person",   t:"Money outside",s:"",                        col:"#8A8A98",live:true},
+  {id:"settings",e:"gear",t:"Settings",s:"Your month, your card, your data",col:"#C9A6FF",live:true}
 ];
 function moreSheet(){
   var h='<div class="shbg" data-more="close"></div><div class="sheet more"><div class="grab"></div>'+
@@ -2847,8 +3109,9 @@ function viewBackup(){
 function viewExport(){
   var k=thisMonth(),past=closedMonths(),h='<div class="view">'+backLink("settings");
 
-  h+='<div class="card"><div class="card-h"><span class="card-t">Financial report</span></div>'+
-     why('A PDF of where you stand. Built on this phone from your own numbers \u2014 nothing is sent anywhere.','What the report is')+
+  h+='<div class="card"><div class="card-h"><span class="card-t">Financial report'+
+     iq('A PDF of where you stand. Built on this phone from your own numbers \u2014 nothing is sent anywhere.')+
+     '</span></div>'+
      '<div class="xlist">'+
        '<div class="xrow"><b>This month</b><span>'+mName(k)+' \u00B7 salary, bills, budget, buffer and what you saved</span></div>'+
        '<div class="xrow"><b>Goals</b><span>'+(S.goals.length
@@ -2865,7 +3128,8 @@ function viewExport(){
      '<p class="hint" style="opacity:.55;margin-top:10px">Opens the share sheet, so you can save it to Files or send it on.</p>'+
      '</div>';
 
-  if(!past.length)h+='<div class="card">'+why('You can export now, but the report gets much better once a month or two has closed \u2014 that is where the history and the pace come from.','Worth knowing first')+'</div>';
+  if(!past.length)h+='<div class="card"><p class="hint">The report gets much better once a month or two has closed'+
+     iq('Closed months are where the history, the comparisons and the pace estimates come from. You can export now; it will simply be shorter.')+'</p></div>';
   return h+'</div>';
 }
 
@@ -2901,7 +3165,10 @@ function viewOutside(){
   var gOut=givenOutstanding(),oOut=owedOutstanding(),people=givenPeople();
 
   /* ── the overview, two lines and no more ── */
-  h+='<div class="card"><div class="card-h"><span class="card-t">Money outside</span></div>'+
+  h+='<div class="card"><div class="card-h"><span class="card-t">Money outside'+
+     iq('Money you gave away already left your plan \u2014 the app treats it as gone and never counts it as money coming back. '+
+        'Money you borrowed is an obligation: it is not income, and it changes nothing about what you can spend.')+
+     '</span></div>'+
      '<div class="osum">'+
        '<div class="ocell quiet"><span class="k">Given</span>'+
          '<span class="v">\u00A5'+fmt(gOut)+'</span>'+
@@ -2910,28 +3177,27 @@ function viewOutside(){
          '<span class="v">\u00A5'+fmt(oOut)+'</span>'+
          '<span class="s">'+(oOut>0?debtAgeLine():"nothing borrowed")+'</span></div>'+
      '</div>'+
-     why('Money you gave away already left your plan \u2014 the app treats it as gone and never counts it as money coming back. '+
-         'Money you borrowed is an obligation: it is not income, and it changes nothing about what you can spend.',
-         'How Money outside works')+'</div>';
+     '</div>';
 
   /* ── given ── */
-  h+='<div class="sect">Given</div>';
-  h+='<div class="card">'+
-     why('Recorded on the day it left. It lowers what you have, exactly as an unplanned purchase does, and it is not counted as spending.')+
-     '<input class="notefield" id="gvPerson" style="margin-top:14px" placeholder="Who did you give it to?" maxlength="32">'+
+  h+='<div class="sect">Given'+
+     iq('Recorded on the day it left. It lowers what you have, exactly as an unplanned purchase does, and it is not counted as spending.')+'</div>';
+  h+='<button class="addrow" data-addout="given">'+sym("plus")+'<span>Record money given</span></button>';
+  if(S.addGiven)h+='<div class="card">'+
+     '<input class="notefield" id="gvPerson" placeholder="Who did you give it to?" maxlength="32">'+
      '<input class="notefield" id="gvNote" style="margin-top:8px" placeholder="What was it for? \u00B7 optional" maxlength="48">'+
      '<div class="aline" style="margin-top:8px"><span class="lab">Date given</span>'+
      '<input class="duein" type="date" id="gvDate" value="'+todayISO()+'" aria-label="Date given"></div>'+
-     '<div class="entry" style="margin-top:8px">'+moneyField('class="amtfield" id="gvAmt"',"","How much?")+
+     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="gvAmt" type="number" inputmode="decimal" placeholder="How much?">'+
      '<button class="addb" id="gvAdd">Add</button></div></div>';
 
-  if(!given.length)h+='<div class="card"><div class="empty">You have not given anything out.</div></div>';
+  if(!given.length&&!S.addGiven)h+='<div class="card"><div class="empty">Nothing given out.</div></div>';
   else{
     h+='<div class="card">';
     given.forEach(function(g){
       var back=!!g.backOn,armed=S.outArm===g.id;
       h+='<div class="orow'+(back?" done":"")+'">'+
-         '<span class="ico" style="background:'+tint("#8DA88F")+';color:#8DA88F">'+sym("person")+'</span>'+
+         '<span class="ico" style="background:'+tint("#8A8A98")+';color:#8A8A98">'+sym("person")+'</span>'+
          '<span class="n">Given to '+esc(g.person||"someone")+
            '<em>'+prettyDay(g.on)+(g.note?' \u00B7 '+esc(g.note):'')+
            (back?' \u00B7 came back '+prettyDay(g.backOn):'')+'</em></span>'+
@@ -2947,18 +3213,19 @@ function viewOutside(){
   }
 
   /* ── borrowed ── */
-  h+='<div class="sect">Borrowed</div>';
-  h+='<div class="card">'+
-     why('Borrowing is not income. Recording it changes none of your numbers \u2014 it only keeps count of how long you have had it. Paying it back does cost you real money, on the day you pay.')+
-     '<input class="notefield" id="bwPerson" style="margin-top:14px" placeholder="Who did you borrow from?" maxlength="32">'+
+  h+='<div class="sect">Borrowed'+
+     iq('Borrowing is not income. Recording it changes none of your numbers \u2014 it only keeps count of how long you have had it. Paying it back does cost you real money, on the day you pay.')+'</div>';
+  h+='<button class="addrow" data-addout="borrowed">'+sym("plus")+'<span>Record money borrowed</span></button>';
+  if(S.addBorrowed)h+='<div class="card">'+
+     '<input class="notefield" id="bwPerson" placeholder="Who did you borrow from?" maxlength="32">'+
      '<div class="aline" style="margin-top:8px"><span class="lab">Date borrowed</span>'+
      '<input class="duein" type="date" id="bwDate" value="'+todayISO()+'" aria-label="Date borrowed"></div>'+
      '<div class="aline"><span class="lab">Due<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
      '<input class="duein" type="date" id="bwDue" aria-label="Due date"></div>'+
-     '<div class="entry" style="margin-top:8px">'+moneyField('class="amtfield" id="bwAmt"',"","How much?")+
+     '<div class="entry" style="margin-top:8px"><input class="amtfield" id="bwAmt" type="number" inputmode="decimal" placeholder="How much?">'+
      '<button class="addb" id="bwAdd">Add</button></div></div>';
 
-  if(!owed.length)h+='<div class="card"><div class="empty">You have borrowed from no one. Keep it that way.</div></div>';
+  if(!owed.length&&!S.addBorrowed)h+='<div class="card"><div class="empty">Nothing borrowed. Keep it that way.</div></div>';
   else{
     h+='<div class="card">';
     owed.forEach(function(b){
@@ -3014,7 +3281,7 @@ function calcPress(key){
     if(c.op===null)return;
     var b=parseFloat(c.d)||0,a=c.acc||0,r=a;
     if(c.op==="+")r=a+b; else if(c.op==="-")r=a-b;
-    else if(c.op==="x")r=a*b; else if(c.op==="/")r=b===0?0:a/b;
+    else if(c.op==="x")r=a*b; else if(c.op==="/"){if(b===0){c.memo=trimNum(a)+" \u00F7 0 =";c.d="can\u2019t divide by 0";c.acc=null;c.op=null;c.fresh=true;return;}r=a/b;}
     c.memo=trimNum(a)+" "+opSign(c.op)+" "+trimNum(b)+" =";
     c.d=trimNum(r);c.acc=null;c.op=null;c.fresh=true;
   }
@@ -3149,7 +3416,9 @@ function viewSettings(){
 
   /* ── Month ── */
   h+='<div class="sect">Month</div>';
-  h+='<div class="card"><div class="card-h"><span class="card-t">Financial timeline</span></div>'+
+  h+='<div class="card"><div class="card-h"><span class="card-t">Financial timeline'+
+     iq('Changing the start day re-labels the periods ahead. Anything already recorded stays in the month it was filed under.')+
+     '</span></div>'+
      '<p class="hint">Your month should start when your money arrives, not on the 1st.</p>'+
      '<div class="aline" style="margin-top:18px"><span class="lab">Month starts on</span>'+
      '<span class="pctwrap"><button class="step" data-cyc="-1" aria-label="Earlier">'+ICON.minus+'</button>'+
@@ -3163,17 +3432,18 @@ function viewSettings(){
      (d===1?'Set to the 1st, so periods follow the calendar month.'
            :'Every summary, comparison and projection uses '+ordinal(d)+' \u2192 '+ordinal(d)+' of the next month.')+
      '</p></div>'+
-     '<div class="card">'+why('Changing this re-labels the periods ahead. Anything already recorded stays in the month it was filed under.','What changing this does')+'</div>';
+     '';
 
   /* ── Credit card ── */
   h+='<div class="sect">Credit card</div>';
-  h+='<div class="card"><div class="card-h"><span class="card-t">Your card</span>'+
+  h+='<div class="card"><div class="card-h"><span class="card-t">Your card'+
+     iq('Credit is borrowed, not income. The app only tracks it so you know what is really free to spend.')+
+     '</span>'+
      (cardOn()?'<span class="lab" style="color:'+(cardUsage()>=100?"var(--coral)":"var(--muted)")+'">'+Math.round(cardUsage())+'% used</span>':'')+'</div>'+
-     why('Credit is borrowed, not income. The app only tracks it so you know what is really free.')+
      '<div class="aline" style="margin-top:18px"><span class="lab">Credit limit</span>'+
-     moneyField('class="atgtin" data-card="limit" aria-label="Credit limit"',c.limit||"","0")+'</div>'+
+     '<input class="atgtin" type="number" inputmode="numeric" data-card="limit" value="'+(c.limit||"")+'" placeholder="0"></div>'+
      '<div class="aline"><span class="lab">Currently used</span>'+
-     moneyField('class="atgtin" data-card="used" aria-label="Currently used"',c.used||"","0")+'</div>'+
+     '<input class="atgtin" type="number" inputmode="numeric" data-card="used" value="'+(c.used||"")+'" placeholder="0"></div>'+
      '<div class="aline"><span class="lab">Payment day</span>'+
      '<span class="pctwrap"><button class="step" data-cday="-1" aria-label="Earlier">'+ICON.minus+'</button>'+
      '<input class="pctin" type="number" inputmode="numeric" data-card="payDay" value="'+(c.payDay||18)+'" aria-label="Payment day">'+
@@ -3203,7 +3473,7 @@ function viewSettings(){
      (past?' and '+past+' closed month'+(past===1?'':'s'):'')+'</span></span>'+
      '<span class="chev"></span></button>';
   h+='<button class="srow" id="fresh2">'+
-     '<span class="ico" style="background:'+tint("#7B72FF")+';color:#7B72FF">'+sym("refresh")+'</span>'+
+     '<span class="ico" style="background:'+tint("#9E5BFF")+';color:#9E5BFF">'+sym("refresh")+'</span>'+
      '<span class="st"><b>Reload the newest version</b><span>Fetches the latest code from the web. Your data is not touched.</span></span>'+
      '<span class="chev"></span></button>';
   h+=offlineHTML();
@@ -3214,7 +3484,8 @@ function viewSettings(){
      '<span class="lab" style="color:var(--text)">'+BUILD+'</span></div>'+
      '<div class="aline"><span class="lab">Storage</span>'+
      '<span class="lab" style="color:var(--text)">'+(MEMONLY?"this session only":"on this phone")+'</span></div>'+
-     why('Everything you enter stays on this phone. Nothing is sent anywhere, and there is no account.','Where your data lives')+'</div>';
+     '<p class="hint" style="margin-top:16px">Everything you enter stays on this phone'+
+     iq('Nothing is sent anywhere, there is no account, and the app works with no signal at all.')+'</p></div>';
 
   return h+'</div>';
 }
@@ -3225,7 +3496,8 @@ function backupCard(){
   if(days===null)h+='<div class="bkwarn">'+sym("warning")+'<span>You have never backed up. Everything lives only on this phone.</span></div>';
   else if(days>=30)h+='<div class="bkwarn">'+sym("warning")+'<span>Last backup was '+days+' days ago. Worth doing again.</span></div>';
   else h+='<p class="hint">Last backup '+(days===0?"today":days+" day"+(days>1?"s":"")+" ago")+'.</p>';
-  h+=why('Nothing leaves the phone. A backup is a copy of your months, goals and entries that survives if the phone does not.');
+  h+='<p class="hint" style="margin-top:10px">Nothing leaves the phone'+
+     iq('A backup is a copy of your months, goals and entries that survives if the phone does not.')+'</p>';
 
   h+='<div class="bkstep"><b>Save my data</b>'+
      '<p class="hint">A file you keep in Files, iCloud, or email to yourself.</p>'+
@@ -3236,7 +3508,8 @@ function backupCard(){
      '<button class="btn" id="copy">Copy as text</button></div>';
 
   h+='<div class="bkstep"><b>Bring my data back</b>'+
-     why('Replaces everything here with a backup you saved before. You are asked to confirm first.')+
+     '<p class="hint">Replaces everything here with a backup you saved before'+
+     iq('You are always asked to confirm first, and the file is checked before anything is replaced.')+'</p>'+
      '<input type="file" id="bkfile" accept="application/json,.json,text/plain" style="display:none">'+
      '<button class="btn" id="pick">Restore from file</button>'+
      '<button class="btn ghost" id="paste">Paste backup text instead</button></div>';
@@ -3494,18 +3767,18 @@ function pdfBuild(D){
 }
 
 /* ═══ 11f. THE REPORT ═══ */
-var RINK="#14162B",RSOFT="#454B66",RMUT="#7E859E",RLINE="#E6E8F0",
-    RBLUE="#5A52D9",RTEAL="#0E8F80",RSAF="#B5730A",RRED="#C0392B",RPAPER="#F4F5FA";
+var RINK="#141418",RSOFT="#4A4A55",RMUT="#7E7E8C",RLINE="#E6E6EC",
+    RBLUE="#6E3FD1",RTEAL="#A32FB8",RSAF="#B5730A",RRED="#C62B3E",RPAPER="#F5F5F8";
 function rptHead(D,first){
   D.ops=[];D.pages.push(D.ops);
   if(first){
     pdfFill(D,0,PH-124,PW,124,RINK);
-    pdfText(D,PM,PH-46,"PLAN",8,true,"#8A83FF",2.6);
+    pdfText(D,PM,PH-46,"PLAN",8,true,"#B98CFF",2.6);
     pdfText(D,PM,PH-76,"Financial report",23,true,"#FFFFFF");
     var who=pdfWords(S.name,"");
     who=who?who+" \u00B7 ":"";
     pdfText(D,PM,PH-98,who+"generated "+new Date().getDate()+" "+MOS[new Date().getMonth()]+" "+new Date().getFullYear(),
-      9.5,false,"#A9AFC9");
+      9.5,false,"#A5A5B2");
     D.y=PH-124-34;
   }else{
     pdfFill(D,0,PH-44,PW,44,RINK);
@@ -3576,7 +3849,7 @@ function reportPDF(){
     pdfText(D,PM,D.y,pdfClip(pdfWords(g.name,"Goal"),11.5,true,W-190),11.5,true,RINK);
     pdfTextR(D,PW-PM,D.y,yen(bal)+" of "+yen(tgt),10,false,RSOFT);
     D.y-=13;
-    pdfFill(D,PM,D.y,W,5,"#E9EBF3");
+    pdfFill(D,PM,D.y,W,5,"#ECECF1");
     pdfFill(D,PM,D.y,W*pct/100,5,g.col||RBLUE);
     D.y-=15;
     var eta=jarETA(g),dated=(eta&&eta!=="\u2014"&&eta!=="done");
@@ -3616,7 +3889,7 @@ function reportPDF(){
     D.y-=16;
     past.forEach(function(x){
       rptRoom(D,34);
-      var mm=M(x),sa=savedConfirmed(x);
+      var mm=M(x),sa=savedActual(x);
       pdfText(D,cM,D.y,mName(x),10,false,RINK);
       pdfTextR(D,cI,D.y,yen(mm.salary),10,false,RSOFT);
       pdfTextR(D,cS,D.y,yen(totalSpendOf(x)),10,false,RSOFT);
@@ -3797,7 +4070,7 @@ function bind(){
     if(i>=ms.length){S.monthCursor=makeNext(ms[ms.length-1]);save();render();}};});
 
   var sal=document.getElementById("sal");
-  if(sal)sal.onchange=function(){m.salary=Math.max(0,numVal(this));balance(k,null);save();updatePlanDOM();};
+  if(sal)sal.onchange=function(){m.salary=Math.max(0,+this.value||0);balance(k,null);save();updatePlanDOM();};
 
   q("[data-lock]").forEach(function(b){b.onclick=function(){m.locks[b.dataset.lock]=!m.locks[b.dataset.lock];save();updatePlanDOM();};});
   q("[data-n]").forEach(function(b){b.onclick=function(){
@@ -3806,7 +4079,7 @@ function bind(){
     recordChange(k,id,from,m.alloc[id]);balance(k,id);save();updatePlanDOM();};});
   q("[data-a]").forEach(function(i){i.onchange=function(){
     var id=i.dataset.a,from=m.alloc[id]||0;
-    m.alloc[id]=Math.max(0,numVal(i));
+    m.alloc[id]=Math.max(0,+i.value||0);
     recordChange(k,id,from,m.alloc[id]);balance(k,id);save();updatePlanDOM();};});
   q("[data-r]").forEach(function(r){
     var id=r.dataset.r,start=null;
@@ -3815,7 +4088,7 @@ function bind(){
       m.alloc[id]=+r.value;balance(k,id);
       var segs=q(".seg"),i=0;
       CATS.forEach(function(c){var a=m.alloc[c.id]||0;if(a>0&&segs[i]){segs[i].style.flexGrow=a;i++;}});
-      q("[data-a]").forEach(function(x){if(document.activeElement!==x)x.value=fmt(m.alloc[x.dataset.a]||0);});};
+      q("[data-a]").forEach(function(x){x.value=m.alloc[x.dataset.a]||0;});};
     r.onchange=function(){if(start!==null)recordChange(k,id,start,m.alloc[id]);save();updatePlanDOM();};});
 
   var wi=document.getElementById("wiSlider");
@@ -3850,14 +4123,14 @@ function bind(){
   }
 
   var ovr=document.getElementById("ovr");
-  if(ovr)ovr.onchange=function(){m.override=isBlank(this)?null:Math.max(0,numVal(this));save();updatePlanDOM();};
+  if(ovr)ovr.onchange=function(){var v=String(this.value).trim();m.override=v===""?null:Math.max(0,+v||0);save();updatePlanDOM();};
   var co=document.getElementById("clearov");
   if(co)co.onclick=function(){m.override=null;save();updatePlanDOM();};
 
 
   var add=document.getElementById("eadd");
   if(add)add.onclick=function(){
-    var f=document.getElementById("eamt"),v=numVal(f);
+    var f=document.getElementById("eamt"),v=parseFloat(f.value);
     if(!v||v<=0){f.focus();return;}
     var nf=document.getElementById("enote");
     var meth=(S.payMethod==="card"&&cardOn())?"card":"bank";
@@ -3894,7 +4167,7 @@ function bind(){
 
   q("[data-jt]").forEach(function(i){i.onchange=function(){
     var g=S.goals.find(function(x){return x.id===i.dataset.jt;});
-    if(g){g.target=Math.max(0,numVal(i));save();updateGoalEditorDOM();}};});
+    if(g){g.target=Math.max(0,+i.value||0);save();updateGoalEditorDOM();}};});
   q("[data-more]").forEach(function(b){b.onclick=function(){
     if(b.dataset.more==="close"){S.more=false;save();render();return;}
     var x=MENU.find(function(y){return y.id===b.dataset.more;});
@@ -3903,7 +4176,7 @@ function bind(){
       S.more=false;S.tab=x.id;save();render();appScrollTo(0,true);
     }};});
   q("[data-card]").forEach(function(i){i.onchange=function(){
-    var c=card(),f=i.dataset.card,v=Math.max(0,Math.round(numVal(i)));
+    var c=card(),f=i.dataset.card,v=Math.max(0,parseInt(i.value,10)||0);
     if(f==="payDay")c.payDay=Math.min(31,Math.max(1,v||18));
     else{c[f]=v;if(f==="limit"&&v>0&&!c.lastPaid)c.lastPaid=thisMonth();}
     save();updateCreditCardDOM();};});
@@ -3919,9 +4192,9 @@ function bind(){
      differs, and the number is nudged so the eye follows the change. */
   function paintPurse(){
     if(!purse)return;
-    var d=purseData(cur(),numVal(amtF));
+    var d=purseData(cur(),parseFloat(amtF&&amtF.value)||0);
     var big=purse.querySelector(".pursebig"),sub=purse.querySelector(".pursesub");
-    if(!big||!sub){purse.innerHTML=purseHTML(cur(),numVal(amtF));big=purse.querySelector(".pursebig");sub=purse.querySelector(".pursesub");}
+    if(!big||!sub){purse.innerHTML=purseHTML(cur(),parseFloat(amtF&&amtF.value)||0);big=purse.querySelector(".pursebig");sub=purse.querySelector(".pursesub");}
     if(purse.__tone!==d.tone){
       purse.__tone=d.tone;
       purse.className="purse tone-"+d.tone;
@@ -3939,23 +4212,21 @@ function bind(){
       var want=esc(d.line1)+(d.line2?'<em>'+esc(d.line2)+'</em>':'');
       if(sub.innerHTML!==want)sub.innerHTML=want;
     }
+    var pin=purse.querySelector('.purse-i');
+    if(pin)pin.dataset.purseIq=purseWhy(cur(),parseFloat(amtF&&amtF.value)||0);
   }
   if(purse){
     paintPurse();
-    if(amtF&&!amtF.__purseBound){amtF.__purseBound=true;amtF.addEventListener("input",paintPurse);}
-    /* the information control opens the explanation already on the card */
-    var pin=purse.querySelector(".purse-i");
-    if(pin)pin.onclick=function(){
-      var card=purse.closest?purse.closest(".card"):null;
-      var det=card?card.querySelector("details.why"):null;
-      if(!det)return;
-      det.open=!det.open;
-      if(det.open)det.scrollIntoView({block:"nearest",behavior:"smooth"});
-    };
+    if(amtF&&!amtF.__purseBound){amtF.__purseBound=true;amtF.addEventListener('input',paintPurse);}
+    var pin=purse.querySelector('.purse-i');
+    if(pin&&!pin.__purseIqBound){
+      pin.__purseIqBound=true;
+      pin.onclick=function(e){e.preventDefault();e.stopPropagation();pin.dataset.iq=pin.dataset.purseIq||purseWhy(cur(),parseFloat(amtF&&amtF.value)||0);openIQ(pin);};
+    }
   }
   function creditCheck(){
     if(!wBox)return;
-    var v=numVal(amtF);
+    var v=parseFloat(amtF&&amtF.value)||0;
     if(v<=0){wBox.innerHTML="";return;}
     var mk2=cur(),out="";
     if(S.payMethod==="card"&&cardOn()){
@@ -3994,24 +4265,7 @@ function bind(){
   q("[data-alloc]").forEach(function(b){b.onclick=function(){
     S.allocInfo=!S.allocInfo;save();updatePlanDOM();};});
 
-  /* Money fields carry a formatted value. On focus they hand you the raw
-     digits so typing and the caret behave normally; on blur they put the
-     separators back. The stored value is never touched by either. */
-  q('[data-money]').forEach(function(i){
-    if(i.__moneyBound)return;
-    i.__moneyBound=true;
-    i.addEventListener("focus",function(){
-      var raw=String(i.value||"").replace(/[,\s\u00A5]/g,"");
-      if(i.value!==raw)i.value=raw;
-      setTimeout(function(){try{i.select();}catch(e){}},0);
-    });
-    i.addEventListener("blur",function(){
-      if(isBlank(i)){i.value="";return;}
-      i.value=fmt(numVal(i));
-    });
-  });
-
-  q('input[type="number"], [data-money]').forEach(function(i){
+  q('input[type="number"]').forEach(function(i){
     if(i.__selBound)return;              /* a property, not an attribute: */
     i.__selBound=true;                   /* patching cannot strip it      */
     var grab=function(){setTimeout(function(){
@@ -4109,7 +4363,7 @@ function bind(){
   var ngA=document.getElementById("ngAdd");
   if(ngA)ngA.onclick=function(){
     var nm=String((document.getElementById("ngName")||{}).value||"").trim().slice(0,24);
-    var tg=numVal(document.getElementById("ngTarget"));
+    var tg=+((document.getElementById("ngTarget")||{}).value)||0;
     var pc=+((document.getElementById("ngPct")||{}).value)||0;
     var du=String((document.getElementById("ngDue")||{}).value||"");
     if(!nm){alert("Give the goal a name.");return;}
@@ -4164,27 +4418,31 @@ function bind(){
      not need to draw it — only the service worker finishing does */
 
   /* ── money outside ── */
+  q("[data-addout]").forEach(function(b){b.onclick=function(){
+    var f=b.dataset.addout==="given"?"addGiven":"addBorrowed";
+    S[f]=!S[f];save();updateViewDOM();};});
+
   var gvAdd=document.getElementById("gvAdd");
   if(gvAdd)gvAdd.onclick=function(){
-    var amt=numVal(document.getElementById("gvAmt"));
+    var amt=parseFloat((document.getElementById("gvAmt")||{}).value)||0;
     if(amt<=0){alert("Enter how much you gave.");return;}
     var on=(document.getElementById("gvDate")||{}).value||todayISO();
     OUT().given.push({id:"o"+Date.now().toString(36),
       person:String((document.getElementById("gvPerson")||{}).value||"").trim(),
       note:String((document.getElementById("gvNote")||{}).value||"").trim(),
       amount:amt,on:on});
-    S.outArm=null;save();updateViewDOM();toast("Recorded");};
+    S.outArm=null;S.addGiven=false;save();updateViewDOM();toast("Recorded");};
 
   var bwAdd=document.getElementById("bwAdd");
   if(bwAdd)bwAdd.onclick=function(){
-    var amt=numVal(document.getElementById("bwAmt"));
+    var amt=parseFloat((document.getElementById("bwAmt")||{}).value)||0;
     if(amt<=0){alert("Enter how much you borrowed.");return;}
     OUT().borrowed.push({id:"o"+Date.now().toString(36),
       person:String((document.getElementById("bwPerson")||{}).value||"").trim(),
       amount:amt,
       on:(document.getElementById("bwDate")||{}).value||todayISO(),
       due:(document.getElementById("bwDue")||{}).value||""});
-    S.outArm=null;save();updateViewDOM();toast("Recorded");};
+    S.outArm=null;S.addBorrowed=false;save();updateViewDOM();toast("Recorded");};
 
   /* a return, or a repayment, is dated the day it actually happened */
   q("[data-gback]").forEach(function(b){b.onclick=function(){
@@ -4219,19 +4477,6 @@ function bind(){
     if(S.outArm===id){OUT().borrowed=borrowedList().filter(function(x){return x.id!==id;});S.outArm=null;}
     else S.outArm=id;
     save();updateViewDOM();};});
-
-  /* confirming a month — the only place a projection becomes money */
-  var closeGo=document.getElementById("closeGo");
-  if(closeGo)closeGo.onclick=function(){
-    var k=closeGo.dataset.close,f=document.getElementById("closeAmt");
-    if(!k||!M(k))return;
-    if(isBlank(f)){alert("Put in what you actually saved, then confirm.");return;}
-    var v=Math.max(0,numVal(f));
-    if(!confirm("Confirm "+mName(k)+" at \u00A5"+fmt(v)+"?\n\nIt joins your banked total and stops changing.")) return;
-    M(k).override=v;
-    save();render();
-    toast(mName(k)+" confirmed");
-  };
 
   var rs=document.getElementById("reset");
   if(rs)rs.onclick=function(){
