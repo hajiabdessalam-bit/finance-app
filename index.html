@@ -1116,7 +1116,11 @@ body::after{
    The chosen tab sits in a lit pill rather than merely changing
    colour, which is what makes the row read as a control. */
 .bar{
-  left:12px;right:12px;bottom:var(--sab);
+  /* The island floats clear of the home indicator without leaving the
+     whole 34px inset empty beneath it: half the inset reads as a margin,
+     the other half is the indicator's own breathing room. In a browser
+     tab --sab is 0, so this collapses to flush, exactly as before. */
+  left:12px;right:12px;bottom:calc(var(--sab) * .5);
   height:64px;padding:5px 6px;border-radius:26px;
   border:1px solid rgba(255,255,255,.09);
   background:rgba(16,16,19,.76);
