@@ -1116,11 +1116,13 @@ body::after{
    The chosen tab sits in a lit pill rather than merely changing
    colour, which is what makes the row read as a control. */
 .bar{
-  /* The island floats clear of the home indicator without leaving the
-     whole 34px inset empty beneath it: half the inset reads as a margin,
-     the other half is the indicator's own breathing room. In a browser
-     tab --sab is 0, so this collapses to flush, exactly as before. */
-  left:12px;right:12px;bottom:calc(var(--sab) * .5);
+  /* The float is CAPPED, not derived. A rounded island 12px in from the
+     edge needs roughly 15px of lift to clear the display's own corner
+     curve, and never needs more — so however large an inset the shell
+     reports (some report far more than the 34px home-indicator strip),
+     the bar lifts by at most 17px. In a browser tab --sab is 0 and this
+     collapses to flush, exactly as before. */
+  left:12px;right:12px;bottom:min(var(--sab), 17px);
   height:64px;padding:5px 6px;border-radius:26px;
   border:1px solid rgba(255,255,255,.09);
   background:rgba(16,16,19,.76);
@@ -1392,7 +1394,7 @@ var store=(function(){
 var KEY="plan.v4";
 /* Journey moved onto Home; a save that was left on that page opens Home */
 function dropJourneyTab(st){if(st&&st.tab==="journey")st.tab="home";return st;}
-var BUILD="b40 \u00B7 legend + card dates";
+var BUILD="b42 \u00B7 nav seat";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
@@ -3767,7 +3769,28 @@ function backupCard(){
        '<button class="btn warn" id="reset" style="margin-top:20px">Erase everything</button>';
   }
   h+='</div>';
-  return h+'<p class="hint" style="opacity:.5;margin-top:18px;text-align:center">build '+BUILD+'</p></div>';
+  return h+'<p class="hint" style="opacity:.5;margin-top:18px;text-align:center">build '+BUILD+
+    '<br>'+esc(shellInfo())+'</p></div>';
+}
+
+/* ═══ 11a-2. SHELL READOUT — what the phone actually gives the page ═══
+   Printed under the build line on the settings page. If the black strip
+   under the nav bar ever comes back, these numbers say whether the page
+   is leaving it (gap) or the shell is (screen taller than win). */
+function shellInfo(){
+  var de=document.documentElement,vv=window.visualViewport;
+  var probe=document.createElement("div");
+  probe.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:env(safe-area-inset-bottom,0px)";
+  document.body.appendChild(probe);
+  var inset=Math.round(probe.getBoundingClientRect().height);
+  probe.parentNode.removeChild(probe);
+  var bar=document.getElementById("bar"),gap="-";
+  if(bar)gap=Math.round(window.innerHeight-bar.getBoundingClientRect().bottom);
+  return "screen "+Math.round(screen.width)+"\u00D7"+Math.round(screen.height)
+    +" \u00B7 win "+Math.round(window.innerWidth)+"\u00D7"+Math.round(window.innerHeight)
+    +" \u00B7 vv "+(vv?Math.round(vv.height):"-")
+    +" \u00B7 inset "+inset+" \u00B7 gap "+gap
+    +" \u00B7 "+(de.classList.contains("in-browser")?"browser":"installed");
 }
 
 /* ═══ 11b. TOAST — one small confirmation, never a blocking dialog ═══ */
