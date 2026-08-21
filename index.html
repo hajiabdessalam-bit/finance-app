@@ -343,12 +343,12 @@ details.more .eqrow{font-size:13px}
 .notes2{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:4px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .titlein{width:100%;font-family:var(--round);font-size:24px;font-weight:800;letter-spacing:-.032em;padding:2px 0 10px}
-.bodyin{width:100%;min-height:220px;background:transparent;font-size:17px;line-height:1.7;resize:none;
+.bodyin{width:100%;min-height:96px;background:transparent;font-size:17px;line-height:1.7;resize:none;
   color:var(--text);-webkit-text-fill-color:var(--text);caret-color:var(--majorelle);
   padding:0;border:none;outline:none;font-family:var(--sans);overflow:hidden;display:block}
 .bodyin::placeholder{color:var(--faint)}
 .titlein::placeholder{color:var(--faint)}
-.noteroom{height:44vh}
+.noteroom{height:30vh}
 .fmtbar{display:flex;gap:8px;margin:4px 0 14px}
 .fmtb{padding:9px 14px;border-radius:12px;background:var(--surface-2);font-size:13px;font-weight:600;color:var(--muted);
   transition:transform .14s var(--spring)}
@@ -1370,6 +1370,81 @@ html::after{
 .jread .k,.jread .v{font-size:12px;color:var(--muted)}
 .jread .v{font-variant-numeric:tabular-nums}
 
+/* ── THE PLAN EDITOR ─────────────────────────────────────────
+   Three rules. Everything else in the sheet is markup the Goals editor
+   already had a style for. */
+.pline{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:14px;flex-wrap:wrap}
+.pline .lab{flex:none}
+.pline .methodrow.tiny{margin-left:auto}
+.pline .cnote{flex:1 1 130px}
+.methodrow.tiny{margin-bottom:0;flex:none}
+.methodrow.tiny .chip{padding:8px 13px;font-size:12.5px}
+.cnote{background:var(--surface-3);border-radius:13px;padding:10px 13px;font-size:13.5px;
+  flex:1 1 0;min-width:0;text-align:left;color:var(--text)}
+.cnote::placeholder{color:var(--faint)}
+button.ico.picky{cursor:pointer;transition:box-shadow .2s var(--ease),transform .16s var(--spring)}
+button.ico.picky:active{transform:scale(.9)}
+button.ico.picky.on{box-shadow:inset 0 0 0 1.5px currentColor}
+
+/* ── NOTES ────────────────────────────────────────────────
+   A note has to be readable without being opened. So the card says what
+   the note says — its first words, the prose under them, and whatever is
+   still to be done — and everything else keeps out of the way. */
+.nhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 2px 14px}
+.ncard{position:relative;margin-top:12px}
+.ncopen{display:block;width:100%;text-align:left;padding:17px 18px;border-radius:22px;
+  background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--lift-1),var(--edge);
+  transition:transform .18s var(--spring),border-color .25s var(--ease)}
+.ncopen:active{transform:scale(.985);border-color:rgba(255,255,255,.13)}
+.nc-t{display:block;font-family:var(--round);font-size:16px;font-weight:700;letter-spacing:-.024em;
+  padding-right:42px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nc-b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:13.5px;line-height:1.5;color:var(--muted);margin-top:6px}
+.nc-l{display:block;margin-top:10px}
+.nc-i{display:flex;align-items:center;gap:9px;margin-top:6px;font-size:13px;color:var(--muted)}
+.nc-x{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nc-i.done .nc-x{color:var(--faint);text-decoration:line-through}
+.nc-box{width:14px;height:14px;border-radius:5px;flex:none;box-sizing:border-box;
+  border:1.5px solid var(--line-2);display:grid;place-items:center}
+.nc-box.on{background:var(--majorelle);border-color:var(--majorelle);color:#fff}
+.nc-box .sym{width:9px;height:9px;stroke-width:3.6}
+.nc-more{display:block;font-size:11.5px;color:var(--faint);margin-top:7px;padding-left:23px}
+.nc-m{display:block;font-size:9.5px;letter-spacing:.11em;font-weight:600;color:var(--faint);margin-top:12px}
+.ncard .notedel{position:absolute;top:11px;right:11px}
+
+/* the editor: one surface for prose, one for the things to do */
+.tdrow{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid var(--line)}
+.tdbox{width:25px;height:25px;border-radius:9px;flex:none;box-sizing:border-box;
+  border:1.6px solid var(--line-2);display:grid;place-items:center;color:#fff;
+  transition:transform .16s var(--spring),background .2s var(--ease),border-color .2s var(--ease)}
+.tdbox:active{transform:scale(.84)}
+.tdbox.on{background:var(--majorelle);border-color:var(--majorelle)}
+.tdbox .sym{width:13px;height:13px;stroke-width:3.2}
+.tdin{flex:1 1 0;min-width:0;font-size:15.5px;line-height:1.45;padding:5px 0;
+  background:transparent;color:var(--text);-webkit-text-fill-color:var(--text);
+  caret-color:var(--majorelle)}
+.tdin::placeholder{color:var(--faint)}
+.tdrow.done .tdin{color:var(--faint);-webkit-text-fill-color:var(--faint);text-decoration:line-through}
+.tdx{width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;
+  transition:transform .16s var(--spring)}
+.tdx:active{transform:scale(.84)}
+.tdx svg{width:12px;height:12px;stroke:var(--faint);fill:none;stroke-width:2.2;stroke-linecap:round}
+.tdrow+.addrow{margin-top:12px}
+
+/* the way into a blank note, on the menu row itself */
+.menupair{display:flex;align-items:center;padding:0;gap:0}
+.menupair:active{transform:none}
+.menuhit{display:flex;align-items:center;gap:16px;flex:1 1 0;min-width:0;text-align:left;
+  padding:20px 4px 20px 20px;border-radius:24px;transition:transform .18s var(--spring)}
+.menuhit:active{transform:scale(.985)}
+.menuadd{width:46px;height:46px;border-radius:16px;flex:none;margin-right:14px;
+  display:grid;place-items:center;background:rgba(158,91,255,.15);color:var(--majorelle);
+  box-shadow:var(--edge);transition:transform .16s var(--spring),background .2s var(--ease)}
+.menuadd:active{transform:scale(.88);background:rgba(158,91,255,.26)}
+.menuadd .sym{width:19px;height:19px;stroke-width:2.2}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -1394,7 +1469,7 @@ var store=(function(){
 var KEY="plan.v4";
 /* Journey moved onto Home; a save that was left on that page opens Home */
 function dropJourneyTab(st){if(st&&st.tab==="journey")st.tab="home";return st;}
-var BUILD="b44 \u00B7 opaque status bar";
+var BUILD="b45 \u00B7 plan lines, notes, home order";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
@@ -1404,7 +1479,7 @@ var CATSYM={savings:"savings",rent:"house",utilities:"bolt",household:"cart",
             personal:"person",us:"heart",installments:"card",buffer:"buffer",oneoff:"warning"};
 /* fixed = paid automatically, never logged · variable = you log it
    savings = the target · buffer = slack, becomes savings if unused */
-var CATS=[
+var BASE_CATS=[
   {id:"savings",name:"Savings",type:"savings",note:"Leaves on payday, before anything else"},
   {id:"rent",name:"Rent",type:"fixed",note:""},
   {id:"utilities",name:"Electricity + Wi-Fi",type:"fixed",note:""},
@@ -1414,6 +1489,30 @@ var CATS=[
   {id:"installments",name:"Installments",type:"fixed",note:"Move to savings when they clear"},
   {id:"buffer",name:"Buffer",type:"buffer",note:"Set aside for small surprises. Whatever you don't use becomes savings when the month closes"}
 ];
+/* ══ THE PLAN IS A LIST YOU OWN ══
+   The eight lines above are only where a fresh install starts. From the
+   first load they live in S.plan, so a line can be added, renamed,
+   retyped, reordered or retired the same way a goal can.
+
+   Retiring is the delicate one. A closed month's arithmetic reads its
+   own alloc through this list, so simply deleting a line would rewrite
+   history. Instead a retired line keeps the month it went in `gone`:
+   every month before that still contains it and still adds up to
+   exactly what it always did. If no closed month ever gave the line
+   money, there is nothing to preserve and it goes completely.        */
+function catsAll(){return (S.plan instanceof Array&&S.plan.length)?S.plan:BASE_CATS;}
+function catsIn(k){
+  var g=catsAll();
+  if(!k)return g.filter(function(c){return !c.gone;});
+  return g.filter(function(c){return !c.gone||k<c.gone;});
+}
+/* three lines the machinery reads by name — the equation, the buffer
+   rules and the credit card. They can be renamed, never removed. */
+var CAT_KEEP={savings:1,buffer:1,installments:1};
+function catKeep(c){return !!CAT_KEEP[c.id];}
+function catCol(c){return c.col||COLOR[c.id]||"#8A8A98";}
+function catIco(c){return c.ico||CATSYM[c.id]||"star";}
+function catFind(id){return catsAll().find(function(c){return c.id===id;});}
 /* Neutral starting numbers — this file sits at a public web address, so
    nothing personal is baked in. Your real figures live only on your phone. */
 var BASE_ALLOC={savings:2000,rent:3000,utilities:300,household:2000,personal:1000,us:800,installments:0,buffer:900};
@@ -1424,10 +1523,11 @@ var BASE_GOALS=[
   {id:"study",name:"Wife Study",e:"graduation",target:10000,pct:10,col:"#FF7BA8",lock:false},
   {id:"travel",name:"Travel Fund",e:"plane",target:20000,pct:10,col:"#C9A6FF",lock:false}
 ];
-function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)),months:{},
+function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)),
+  plan:JSON.parse(JSON.stringify(BASE_CATS)),months:{},
   tab:"home",monthCursor:null,weekIdx:null,pick:"household",lastBackup:null,name:"",wiGoal:null,more:false,returnTab:"home",wiAmt:0,cycleStart:15,clamp:null,card:{limit:0,used:0,payDay:18,lastPaid:null},payMethod:"bank",
   notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false,addGiven:false,addBorrowed:false,
-  jMode:"month",jSel:null,
+  jMode:"month",jSel:null,psheet:false,newp:false,pIco:null,focusNote:false,focusItem:null,
   outside:{given:[],borrowed:[]},outTab:"given",outArm:null};}
 
 var S=(function(){
@@ -1448,6 +1548,16 @@ if(!S.goals){
   if(!S.outside||typeof S.outside!=="object")S.outside={given:[],borrowed:[]};
   if(!(S.outside.given instanceof Array))S.outside.given=[];
   if(!(S.outside.borrowed instanceof Array))S.outside.borrowed=[];
+})();
+
+/* The plan used to be a constant, so no save has ever held one. Copy the
+   list in once, exactly as it was, and from then on it is yours to edit.
+   Nothing about any month's arithmetic changes: the same eight lines
+   with the same ids, types and names come out the other side. */
+(function migratePlan(){
+  if(S.plan instanceof Array&&S.plan.length)return;
+  S.plan=JSON.parse(JSON.stringify(BASE_CATS));
+  try{store.setItem(KEY,JSON.stringify(S));}catch(e){}
 })();
 
 /* Goals made before the graphite palette hold one of the old colours in
@@ -1488,6 +1598,33 @@ var CLEGACY={"#7B72FF":"#9E5BFF","#2FD4BC":"#D45CE8","#FFB33D":"#FF7BA8",
     c.lastPaid=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
   }
   try{store.setItem(KEY,JSON.stringify(S));}catch(e){}
+})();
+
+/* A note used to hold its checklist as characters inside the prose, which
+   meant a box you could read but never tick. Lift those lines out into
+   real to-dos, keeping whatever was already ticked, so nothing has to be
+   typed again. Runs once; a note that already has a list is left alone. */
+function normalizeNotes(list){
+  if(!(list instanceof Array))return false;
+  var seq=0,moved=false;
+  list.forEach(function(n){
+    if(!n||n.items instanceof Array)return;
+    n.items=[];moved=true;
+    var keep=[];
+    String(n.body||"").split("\n").forEach(function(ln){
+      var m=ln.match(/^\s*(\u2610|\u2611|\u2612|\u2713|\[\s\]|\[[xX]\]|-\s*\[\s\]|-\s*\[[xX]\])\s*(.*)$/);
+      if(m)n.items.push({id:"t0"+(Date.now().toString(36))+(seq++),
+                         text:String(m[2]||"").trim(),
+                         done:/\u2611|\u2612|\u2713|[xX]\]/.test(m[1])});
+      else keep.push(ln);
+    });
+    n.body=keep.join("\n").replace(/\n{3,}/g,"\n\n").trim();
+  });
+  return moved;
+}
+(function migrateNotes(){
+  if(!(S.notes instanceof Array)){S.notes=[];return;}
+  if(normalizeNotes(S.notes))try{store.setItem(KEY,JSON.stringify(S));}catch(e){}
 })();
 
 (function migrateSplits(){
@@ -1572,8 +1709,8 @@ function isAhead(k){return k>thisMonth();}
 
 /* ═══ 4. THE EQUATION ═══
    saved = salary − fixed bills − actual variable spend − one-offs */
-function fixedTotal(k){var m=M(k),t=0;CATS.forEach(function(c){if(c.type==="fixed")t+=(m.alloc[c.id]||0);});return t;}
-function budgetVariable(k){var m=M(k),t=0;CATS.forEach(function(c){if(c.type==="variable")t+=(m.alloc[c.id]||0);});return t;}
+function fixedTotal(k){var m=M(k),t=0;catsIn(k).forEach(function(c){if(c.type==="fixed")t+=(m.alloc[c.id]||0);});return t;}
+function budgetVariable(k){var m=M(k),t=0;catsIn(k).forEach(function(c){if(c.type==="variable")t+=(m.alloc[c.id]||0);});return t;}
 function spentOn(k,id){return M(k).spend.reduce(function(s,e){return e.cat===id?s+e.amount:s;},0);}
 function spentVariable(k){return M(k).spend.reduce(function(s,e){
   return (e.cat!=="oneoff"&&e.cat!=="buffer")?s+e.amount:s;},0);}
@@ -2224,7 +2361,7 @@ function newId(){return Date.now()*1000+(_seq++%1000);}
    rest. The total can never exceed your salary. */
 function balance(k,pin){
   var m=M(k),lockedSum=0,pool=[];
-  CATS.forEach(function(c){
+  catsIn(k).forEach(function(c){
     if(c.id===pin)return;
     if(m.locks[c.id])lockedSum+=(m.alloc[c.id]||0);else pool.push(c.id);
   });
@@ -2241,7 +2378,7 @@ function balance(k,pin){
   var sum=pool.reduce(function(s,id){return s+(m.alloc[id]||0);},0);
   if(sum<=0){var e=target/pool.length;pool.forEach(function(id){m.alloc[id]=Math.round(e);});}
   else{var r=target/sum;pool.forEach(function(id){m.alloc[id]=Math.max(0,Math.round((m.alloc[id]||0)*r));});}
-  var drift=m.salary-CATS.reduce(function(s,c){return s+(m.alloc[c.id]||0);},0);
+  var drift=m.salary-catsIn(k).reduce(function(s,c){return s+(m.alloc[c.id]||0);},0);
   if(drift!==0){
     var big=pool.reduce(function(x,y){return (m.alloc[x]||0)>=(m.alloc[y]||0)?x:y;});
     m.alloc[big]=Math.max(0,(m.alloc[big]||0)+drift);
@@ -2255,9 +2392,82 @@ function recordChange(k,id,from,to){
   if(ch.length>200)ch.splice(0,ch.length-200);
 }
 
+/* ══ ADDING, EDITING AND RETIRING A LINE ══
+   The same three moves the Goals sheet already offers, applied to the
+   plan. Every one of them works from the live month forward: a month
+   that has closed is a record, and nothing here may reach into one. */
+var PEMO=["flame","cart","heart","car","plane","laptop","briefcase","gift",
+          "bolt","house","graduation","person","speed","star","umbrella","doc"];
+var PCOL=["#B98CFF","#D45CE8","#F07AD8","#FF7BA8","#8A5CF0",
+          "#C9A6FF","#F0A6FF","#6E3FD1","#E4CCFF","#5B3AA8"];
+function nextPCol(){
+  var used=catsAll().map(catCol);
+  for(var i=0;i<PCOL.length;i++)if(used.indexOf(PCOL[i])<0)return PCOL[i];
+  return PCOL[catsAll().length%PCOL.length];
+}
+function ownPlan(){
+  if(!(S.plan instanceof Array&&S.plan.length))S.plan=JSON.parse(JSON.stringify(BASE_CATS));
+  return S.plan;
+}
+/* the months an edit is allowed to touch: now, and anything planned ahead */
+function openMonths(){
+  var t=thisMonth();
+  return allMonths().filter(function(k){return k>=t;});
+}
+function addCat(name,type,amount,ico){
+  var list=ownPlan(),k=thisMonth();
+  var c={id:"c"+Date.now().toString(36),name:String(name).slice(0,24),
+         type:(type==="fixed"?"fixed":"variable"),note:"",
+         col:nextPCol(),ico:ico||PEMO[0]};
+  /* the buffer has the last word on the plan, so a new line goes above it */
+  var bi=list.findIndex(function(x){return x.type==="buffer";});
+  if(bi<0)list.push(c);else list.splice(bi,0,c);
+  var amt=Math.max(0,Math.round(amount||0));
+  openMonths().forEach(function(mk){
+    M(mk).alloc[c.id]=amt;
+    if(M(mk).locks[c.id]===undefined)M(mk).locks[c.id]=false;
+    balance(mk,c.id);          /* the same capping a typed amount gets */
+  });
+  if(M(k))recordChange(k,c.id,0,M(k).alloc[c.id]||0);
+  return c;
+}
+function removeCat(id){
+  var c=catFind(id);
+  if(!c||catKeep(c))return false;
+  var list=ownPlan(),k=thisMonth(),from=M(k)?(M(k).alloc[id]||0):0;
+  /* has a month that already closed ever given this line money? If so the
+     line has to survive inside those months, or their totals would move. */
+  var inRecord=allMonths().some(function(mk){return mk<k&&(M(mk).alloc[id]||0)>0;});
+  openMonths().forEach(function(mk){delete M(mk).alloc[id];delete M(mk).locks[id];});
+  if(inRecord){
+    var t=list.find(function(x){return x.id===id;});
+    if(t)t.gone=k;
+  }else{
+    var i=list.findIndex(function(x){return x.id===id;});
+    if(i>=0)list.splice(i,1);
+    allMonths().forEach(function(mk){delete M(mk).alloc[id];delete M(mk).locks[id];});
+  }
+  /* what it held goes back to the lines still open, which is exactly what
+     dragging it down to zero would have done */
+  openMonths().forEach(function(mk){balance(mk,null);});
+  if(M(k))recordChange(k,id,from,0);
+  return true;
+}
+/* order is display only — no amount, no lock and no history moves with it */
+function moveCat(id,dir){
+  var list=ownPlan(),vis=list.filter(function(c){return !c.gone;});
+  var vi=vis.findIndex(function(x){return x.id===id;});
+  if(vi<0)return false;
+  var vj=vi+dir;
+  if(vj<0||vj>=vis.length)return false;
+  var i=list.indexOf(vis[vi]),j=list.indexOf(vis[vj]),t=list[i];
+  list[i]=list[j];list[j]=t;
+  return true;
+}
+
 /* ═══ 9. HELPERS ═══ */
 function fmt(n){return Math.round(n).toLocaleString("en-US");}
-function catOf(id){return CATS.find(function(c){return c.id===id;})||{id:"oneoff",name:"One-off",type:"oneoff"};}
+function catOf(id){return catFind(id)||{id:"oneoff",name:"One-off",type:"oneoff"};}
 /* ── an explanation you can open ──
    Nothing is removed: the words the app used to say are all still here,
    they just start folded so the numbers reach you first. Built on
@@ -2561,13 +2771,14 @@ function pageHTML(tab,noSheets){
        '</div><button class="btn" data-now="1" style="margin-top:12px">Back to '+mName(thisMonth())+'</button></div>';
   }
   if(tab==="home")h+=viewHome(k,live);
-  else if(tab==="plan")h+=viewPlan(k,live);
+  else if(tab==="plan")h+=viewPlan(k,live,noSheets);
   else if(tab==="log")h+=viewLog(k);
   else if(tab==="goals")h+=viewGoals(noSheets);
   else if(tab==="backup")h+=viewBackup();
   else if(tab==="export")h+=viewExport();
   else if(tab==="outside")h+=viewOutside();
   else if(tab==="tools")h+=viewTools();
+  else if(tab==="notes")h+=viewNotes();
   else if(tab==="note")h+=viewNote();
   else if(tab==="settings")h+=viewSettings();
   else h+=viewHome(k,live);
@@ -2710,6 +2921,17 @@ function updateGoalEditorDOM(){
   var sh=document.querySelector("body > .sheet");
   if(sh&&S.sheet)domSync(sh,editGoalsSheet(),true);       /* the sheet is never unmounted */
   else if(sh&&S.newg)domSync(sh,newGoalSheet(),true);
+  bind();          /* after both, or nodes the sheet patch made get no handler */
+  return true;
+}
+function updatePlanEditorDOM(){
+  var app=appEl();
+  if(!app||!app.firstChild)return render();
+  closePillIQ();
+  domSync(app,pageHTML(S.tab,true));
+  var sh=document.querySelector("body > .sheet");
+  if(sh&&S.psheet)domSync(sh,planEditSheet(),true);
+  else if(sh&&S.newp)domSync(sh,newPlanSheet(),true);
   bind();          /* after both, or nodes the sheet patch made get no handler */
   return true;
 }
@@ -2872,6 +3094,11 @@ function viewHome(k,live){
   var doubled=hl&&hl.i==="warning"&&/unplanned/i.test(heroSaid);
   if(hl&&!doubled)h+='<div class="oneins" style="--oic:'+hl.c+'">'+sym(hl.i)+'<span>'+hl.t+'</span></div>';
 
+  /* Card order on Home: the hero, then how far you have come, then
+     where the money goes. Journey is drawn by the same call as before —
+     only the line it sits on has moved. */
+  h+=homeJourney(k);
+
   var spendTotal=fx+assumedSpend(k)+bufferCharge(k)+oneoffOverflow(k);
   h+='<div class="card"><div class="card-h"><span class="card-t">Where it stands</span>'+
      (live?'<span class="lab">day '+periodDay(k)+' of '+periodDays(k)+'</span>':'')+'</div><div class="eq">'+
@@ -2886,8 +3113,6 @@ function viewHome(k,live){
      '<div class="eqrow"><span class="k">Buffer</span><span class="v" style="color:var(--muted)">\u2212'+fmt(bufferCharge(k))+'</span></div>'+
      '<div class="eqrow"><span class="k">One-offs</span><span class="v" style="color:'+(oo>0?"var(--coral)":"var(--faint)")+'">\u2212'+fmt(oo)+'</span></div>'+
      '</div></details></div>';
-
-  h+=homeJourney(k);
 
   if(cardOn()){
     var c=card(),use=cardUsage(),np=nextPayment();
@@ -2915,12 +3140,12 @@ function viewHome(k,live){
    hidden, so dragging a slider only moves widths and never rebuilds the
    bar. The last pill is whatever the salary has not been given to. */
 function allocData(k){
-  var m=M(k),sum=0,parts=[];
-  CATS.forEach(function(c){sum+=Math.max(0,m.alloc[c.id]||0);});
+  var m=M(k),sum=0,parts=[],mine=catsIn(k);
+  mine.forEach(function(c){sum+=Math.max(0,m.alloc[c.id]||0);});
   var sal=Math.max(0,m.salary||0),total=Math.max(sum,sal),free=Math.max(0,sal-sum);
-  CATS.forEach(function(c){
+  mine.forEach(function(c){
     var a=Math.max(0,m.alloc[c.id]||0);
-    parts.push({id:c.id,name:c.name,col:COLOR[c.id],ico:CATSYM[c.id],amt:a,
+    parts.push({id:c.id,name:c.name,col:catCol(c),ico:catIco(c),amt:a,
                 pct:total>0?a*100/total:0,free:false});
   });
   parts.push({id:"free",name:"Not assigned",col:"#3E3E49",ico:"",amt:free,
@@ -2988,7 +3213,75 @@ function paintAlloc(k,live){
   if(lg)lg.innerHTML=allocLegendInner(d);
 }
 
-function viewPlan(k,live){
+/* The plan's editor is the goals editor with different words in it:
+   same sheet, same blocks, same arm-then-confirm on anything that
+   destroys something. */
+function planEditSheetPair(){
+  var k=cur(),ed=!isSettled(k),mine=catsIn(k).filter(function(c){return !c.gone;});
+  var h='<div class="shbg" data-psheet="0"></div><div class="sheet"><div class="grab"></div>'+
+     '<div class="shhead"><span class="card-t">Edit plan</span>'+
+     '<span class="lab">'+mine.length+' lines</span>'+
+     iq('Type over a name to rename it, and the arrows set the order the lines appear in. '+
+        'Auto is a bill that leaves without you logging it; tracked is everyday spending you give yourself a budget for. '+
+        'Removing a line hands its money back to the lines that are left. Months that have already closed keep it exactly as it was.')+
+     '<button class="shx" data-psheet="0" aria-label="Close">'+ICON.x+'</button></div>';
+  mine.forEach(function(c,i){
+    var armed=S.delArm===c.id,keep=catKeep(c),pick=S.pIco===c.id;
+    h+='<div class="ablock" id="pblk-'+c.id+'"><div class="atop"><span class="amove">'+
+       '<button data-cmv="'+c.id+'" data-dir="-1"'+(i===0?" disabled":"")+' aria-label="Move up">'+ICON.up+'</button>'+
+       '<button data-cmv="'+c.id+'" data-dir="1"'+(i===mine.length-1?" disabled":"")+' aria-label="Move down">'+ICON.down+'</button></span>'+
+       '<button class="ico picky'+(pick?" on":"")+'" data-cpick="'+c.id+'" style="background:'+tint(catCol(c))+';color:'+catCol(c)+'" aria-label="Change symbol">'+sym(catIco(c))+'</button>'+
+       '<input class="nmin" type="text" maxlength="24" data-cn="'+c.id+'" value="'+esc(c.name)+'" aria-label="Name"></div>'+
+       (pick?'<div class="emrow">'+PEMO.map(function(e){
+          return '<button data-ce="'+c.id+'" data-sym="'+e+'"'+(catIco(c)===e?' class="on"':'')+' aria-label="'+e+'">'+sym(e)+'</button>';}).join("")+'</div>':'')+
+       '<div class="pline"><span class="lab">How it is paid</span>'+
+       (keep
+         ? '<span class="lab" style="color:var(--faint);flex:none">set by the app</span>'
+         : '<span class="methodrow tiny">'+
+           '<button class="chip'+(c.type==="fixed"?" on":"")+'" data-ct="'+c.id+'" data-type="fixed">Auto</button>'+
+           '<button class="chip'+(c.type==="variable"?" on":"")+'" data-ct="'+c.id+'" data-type="variable">Tracked</button></span>')+
+       '</div>'+
+       '<div class="pline"><span class="lab">Note</span>'+
+       '<input class="cnote" type="text" maxlength="80" data-cnote="'+c.id+'" value="'+esc(c.note||"")+'" placeholder="what it covers" aria-label="Note"></div>'+
+       ((keep||!ed)?'':'<div class="pline" style="justify-content:flex-end;margin-top:12px">'+
+         '<button class="delg" data-cdel="'+c.id+'">'+(armed?"Tap again to remove":"Remove line")+'</button></div>')+
+       '</div>';
+  });
+  return h+'<button class="btn go" data-psheet="0" style="margin-top:20px">Done</button></div>';
+}
+function newPlanSheetPair(){
+  return '<div class="shbg" data-newp="0"></div><div class="sheet"><div class="grab"></div>'+
+     '<div class="shhead"><span class="card-t">New plan line</span>'+
+     '<button class="shx" data-newp="0" aria-label="Close">'+ICON.x+'</button></div>'+
+     '<div class="ablock" style="margin-top:16px">'+
+     '<div class="atop"><input class="nmin" type="text" maxlength="24" id="npName" placeholder="Gym, Phone, Transport\u2026" aria-label="Name"></div>'+
+     '<div class="emrow">'+PEMO.map(function(e){
+       return '<button data-npe="'+e+'"'+(NEWPE===e?' class="on"':'')+' aria-label="'+e+'">'+sym(e)+'</button>';}).join("")+'</div>'+
+     '<div class="ngline"><span class="lab">Every month</span>'+
+     '<input class="atgtin" type="number" inputmode="numeric" id="npAmt" placeholder="0" aria-label="Monthly amount"></div>'+
+     '<div class="ngline pline"><span class="lab">How it is paid</span>'+
+     '<span class="methodrow tiny">'+
+     '<button class="chip'+(NEWPT==="fixed"?" on":"")+'" data-npt="fixed">Auto</button>'+
+     '<button class="chip'+(NEWPT==="variable"?" on":"")+'" data-npt="variable">Tracked</button></span></div></div>'+
+     '<p class="hint" style="margin-top:12px">It joins '+mName(thisMonth())+' and every month after.'+
+     iq('Auto is a bill that leaves on its own, like rent. Tracked is everyday spending you budget for and watch. '+
+        'Either way it is paid out of the same salary, so the other unlocked lines shift to make room for it. '+
+        'Months that have already closed are never touched.')+'</p>'+
+     '<button class="btn go" id="npAdd" style="margin-top:16px">Add to plan</button>'+
+     '<button class="btn" data-newp="0" style="margin-top:10px">Cancel</button></div>';
+}
+/* just the sheet element, for patching one that is already mounted */
+function planEditSheet(){
+  var p=planEditSheetPair(),i=p.indexOf('<div class="sheet">');
+  return i<0?p:p.slice(i);
+}
+function newPlanSheet(){
+  var p=newPlanSheetPair(),i=p.indexOf('<div class="sheet">');
+  return i<0?p:p.slice(i);
+}
+var NEWPE=PEMO[0],NEWPT="variable";
+
+function viewPlan(k,live,noSheets){
   var m=M(k),oo=spentOneoff(k),sv=savedNow(k);
   var ed=!isSettled(k);   /* the past is read-only, now and later are not */
   var h='<div class="view">';
@@ -3004,11 +3297,11 @@ function viewPlan(k,live){
          'You asked for \u00A5'+fmt(S.clamp.want)+', but \u00A5'+fmt(S.clamp.locked)+' of your \u00A5'+fmt(m.salary)+
          ' is locked elsewhere. Unlock a line or raise your income to go higher.</div>'
        : '')+'</div><div class="card">';
-  CATS.forEach(function(c){
+  catsIn(k).forEach(function(c){
     var a=m.alloc[c.id]||0,lk=!!m.locks[c.id];
     h+='<div class="row'+(lk?" locked":"")+'"><div class="row-t">'+
-       '<span class="ico" style="background:'+tint(COLOR[c.id])+';color:'+COLOR[c.id]+'">'+sym(CATSYM[c.id])+'</span>'+
-       '<span class="nm">'+c.name+'</span>'+
+       '<span class="ico" style="background:'+tint(catCol(c))+';color:'+catCol(c)+'">'+sym(catIco(c))+'</span>'+
+       '<span class="nm">'+esc(c.name)+'</span>'+
        (c.type==="variable"?'<span class="tag">tracked</span>':c.type==="fixed"?'<span class="tag">auto</span>':c.type==="buffer"?'<span class="tag">rolls over</span>':'')+
        '<button class="lockbtn'+(lk?" on":"")+'" data-lock="'+c.id+'"'+(ed?"":" disabled")+' aria-label="Lock">'+(lk?ICON.lock:ICON.open)+'</button>'+
        '<span class="stepper"><button class="step" data-n="'+c.id+'" data-by="-100"'+(ed?"":" disabled")+' aria-label="Less">'+ICON.minus+'</button>'+
@@ -3016,9 +3309,14 @@ function viewPlan(k,live){
        '<button class="step" data-n="'+c.id+'" data-by="100"'+(ed?"":" disabled")+' aria-label="More">'+ICON.plus+'</button></span></div>'+
        '<input class="slider" type="range" min="0" max="'+Math.max(m.salary,a)+'" step="100" value="'+a+'" data-r="'+c.id+'"'+((ed&&!lk)?"":" disabled")+'>'+
        (c.id==="savings"&&oneoffOverflow(k)>0?'<div class="note" style="color:var(--coral)">\u2212\u00A5'+fmt(oneoffOverflow(k))+' of one-offs past the buffer comes out of this \u2192 <b>\u00A5'+fmt(Math.max(0,effSavings(k)))+'</b> actually saved</div>':'')+
-       (c.note?'<div class="note">'+c.note+'</div>':'')+'</div>';
+       (c.note?'<div class="note">'+esc(c.note)+'</div>':'')+'</div>';
   });
   h+='</div>';
+
+  if(ed){
+    h+='<button class="btn" data-psheet="1" style="margin-top:22px">Edit plan</button>'+
+       '<button class="btn ghost" data-newp="1" style="margin-top:10px">+  Add a line</button>';
+  }
 
   h+='<div class="card"><div class="card-h"><span class="card-t">Override'+
      iq('If the real figure differs from the equation, put what you actually saved here. Leave it empty and the equation decides.')+
@@ -3027,7 +3325,10 @@ function viewPlan(k,live){
      '<input id="ovr" type="number" inputmode="numeric" placeholder="'+fmt(Math.max(0,sv))+'" value="'+(m.override!=null?m.override:"")+'"></div>';
   if(m.override!==null&&m.override!==undefined)
     h+='<div class="note" style="color:var(--saffron);margin-top:10px">Manually set. <button id="clearov" style="color:var(--majorelle);font-weight:600">Use the equation instead</button></div>';
-  return h+'</div></div>';
+  h+='</div>';
+  if(S.psheet&&!noSheets)h+=planEditSheetPair();
+  if(S.newp&&!noSheets)h+=newPlanSheetPair();
+  return h+'</div>';
 }
 
 /* What you have to spend, shown before anything is typed and moved as
@@ -3299,21 +3600,33 @@ function viewGoals(noSheets){
   return h+'</div>';
 }
 
-var MORE_PAGES=["backup","export","tools","note","settings","outside"];
+var MORE_PAGES=["backup","export","tools","notes","note","settings","outside"];
+/* Notes used to sit inside Tools, behind the calculator, which is a long
+   way to reach for something you want the moment you think of it. It has
+   its own row now, at the top, and the row carries a way straight into a
+   blank note so writing something down is two taps from anywhere. */
 var MENU=[
-  {id:"tools",  e:"calculator",t:"Tools",  s:"Calculator and notes",        col:"#D45CE8",live:true},
-  {id:"outside",e:"person",   t:"Money outside",s:"",                        col:"#8A8A98",live:true},
-  {id:"settings",e:"gear",t:"Settings",s:"Your month, your card, your data",col:"#C9A6FF",live:true}
+  {id:"notes",  e:"doc",       t:"Notes",   s:"",                            col:"#9E5BFF",live:true,quick:true},
+  {id:"tools",  e:"calculator",t:"Calculator",s:"Test a number against your month",col:"#D45CE8",live:true},
+  {id:"outside",e:"person",    t:"Money outside",s:"",                       col:"#8A8A98",live:true},
+  {id:"settings",e:"gear",     t:"Settings",s:"Your month, your card, your data",col:"#C9A6FF",live:true}
 ];
 function moreSheet(){
   var h='<div class="shbg" data-more="close"></div><div class="sheet more"><div class="grab"></div>'+
         '<div class="shhead"><span class="card-t">More</span>'+
         '<button class="shx" data-more="close" aria-label="Close">'+ICON.x+'</button></div>';
   MENU.forEach(function(x){
-    h+='<button class="menucard'+(x.live?"":" soon")+'" data-more="'+x.id+'"'+(x.live?"":" disabled")+'>'+
-       '<span class="menuico" style="background:'+tint(x.col)+';color:'+x.col+'">'+sym(x.e)+'</span>'+
-       '<span class="menutxt"><span class="menut">'+x.t+'</span><span class="menus">'+(x.id==="outside"?outSum(cur()):x.s)+'</span></span>'+
-       (x.live?'<span class="menuchev"></span>':'<span class="menusoon">soon</span>')+'</button>';
+    var sub=x.id==="outside"?outSum(cur()):x.id==="notes"?noteSum():x.s;
+    var body='<span class="menuico" style="background:'+tint(x.col)+';color:'+x.col+'">'+sym(x.e)+'</span>'+
+             '<span class="menutxt"><span class="menut">'+x.t+'</span><span class="menus">'+sub+'</span></span>';
+    if(x.quick){
+      h+='<div class="menucard menupair">'+
+         '<button class="menuhit" data-more="'+x.id+'">'+body+'</button>'+
+         '<button class="menuadd" data-quicknote="1" aria-label="New note">'+sym("plus")+'</button></div>';
+    }else{
+      h+='<button class="menucard'+(x.live?"":" soon")+'" data-more="'+x.id+'"'+(x.live?"":" disabled")+'>'+body+
+         (x.live?'<span class="menuchev"></span>':'<span class="menusoon">soon</span>')+'</button>';
+    }
   });
   return h+'<div style="height:8px"></div></div>';
 }
@@ -3471,7 +3784,7 @@ function viewOutside(){
 
 function backLink(to){
   return '<button class="backlink" data-back="'+(to||"1")+'">'+ICON.l+
-         'Back to '+(to==="settings"?"Settings":to==="tools"?"Tools":"More")+'</button>';
+         'Back to '+(to==="settings"?"Settings":to==="notes"?"Notes":to==="tools"?"Tools":"More")+'</button>';
 }
 /* ═══ TOOLS ═══
    Two things the phone's own apps can't do: run a number against the
@@ -3527,28 +3840,6 @@ function viewTools(){
      '<button class="key wide" data-ck="0">0</button>'+key(".")+
      '</div></div>'+
      '<button class="btn" id="calcToImpact" style="margin-top:12px">See what this does to my month</button></div>';
-
-  /* notes */
-  var q=(S.noteQ||"").toLowerCase();
-  var list=(S.notes||[]).filter(function(n){
-    return !q||(n.title+" "+n.body).toLowerCase().indexOf(q)>-1;
-  }).sort(function(a,b){return b.updated-a.updated;});
-  h+='<div class="card"><div class="card-h"><span class="card-t">Notes</span>'+
-     '<span class="lab">'+(S.notes||[]).length+'</span></div>';
-  if((S.notes||[]).length>2)h+='<input class="searchbox" id="noteQ" placeholder="Search notes" value="'+esc(S.noteQ||"")+'">';
-  h+='<button class="btn go" data-note="new">New note</button>';
-  if(!list.length)h+='<div class="empty" style="margin-top:12px">'+(q?"Nothing matches.":"No notes yet.<br>Plans, prices, things to remember.")+'</div>';
-  else list.forEach(function(n){
-    var peek=(n.body||"").replace(/\s+/g," ").trim().slice(0,44);
-    var armed=S.delArm===n.id;
-    h+='<div class="noterow">'+
-       '<button class="noteopen" data-note="'+n.id+'">'+
-       '<span class="notet">'+esc(n.title||"Untitled")+'</span>'+
-       '<span class="notes2">'+relDate(n.updated)+(peek?" \u00B7 "+esc(peek):"")+'</span></button>'+
-       '<button class="notedel'+(armed?" armed":"")+'" data-delnote="'+n.id+'" aria-label="Delete note">'+
-       (armed?"Delete?":"\u00D7")+'</button></div>';
-  });
-  h+='</div>';
   return h+'</div>';
 }
 function key(k,cls,label){
@@ -3564,20 +3855,122 @@ function relDate(ts){
   if(diff<7)return diff+" days ago";
   return d.getDate()+" "+MOS[d.getMonth()];
 }
-function curNote(){return (S.notes||[]).find(function(n){return n.id===S.noteId;});}
+/* ══ NOTES ══
+   A place to put a thought down before it goes. A note is a title, some
+   prose, and a list of things to do.
+
+   The to-dos are their own field rather than characters inside the
+   prose, because a character cannot be tapped, and a box you cannot
+   tick is only a sentence with a square in front of it.            */
+function notes(){if(!(S.notes instanceof Array))S.notes=[];return S.notes;}
+function noteItems(n){if(!(n.items instanceof Array))n.items=[];return n.items;}
+function noteReal(n){return noteItems(n).filter(function(x){return /\S/.test(x.text||"");});}
+function noteDone(n){return noteItems(n).filter(function(x){return x.done;}).length;}
+function noteLines(n){return String(n.body||"").split("\n").filter(function(x){return /\S/.test(x);});}
+/* what to call a note that was never given a name — whatever it starts
+   with, so the list never fills up with the word Untitled */
+function noteTitle(n){
+  var t=String(n.title||"").trim();
+  if(t)return t;
+  var b=noteLines(n)[0];
+  if(b)return b.trim().slice(0,42);
+  var i=noteReal(n)[0];
+  return i?String(i.text).trim().slice(0,42):"Untitled";
+}
+/* the prose under the title, with the line already used as the title
+   dropped, so a card never says the same thing twice */
+function notePeek(n){
+  var ls=noteLines(n);
+  if(!String(n.title||"").trim()&&ls.length)ls=ls.slice(1);
+  return ls.join(" \u00B7 ").slice(0,180);
+}
+function noteSorted(){
+  var s=String(S.noteQ||"").toLowerCase();
+  return notes().filter(function(n){
+    if(!s)return true;
+    return (n.title+" "+n.body+" "+noteItems(n).map(function(x){return x.text;}).join(" "))
+             .toLowerCase().indexOf(s)>-1;
+  }).sort(function(a,b){return b.updated-a.updated;});
+}
+/* the one line the More menu shows, so the row says something */
+function noteSum(){
+  var n=notes().length,open=0;
+  if(!n)return "Nothing written down yet";
+  notes().forEach(function(x){open+=noteReal(x).filter(function(i){return !i.done;}).length;});
+  return n+" note"+(n===1?"":"s")+(open?" \u00B7 "+open+" to-do"+(open===1?"":"s")+" left":"");
+}
+function newNote(){
+  var id=newId();
+  notes().unshift({id:id,title:"",body:"",items:[],created:Date.now(),updated:Date.now()});
+  S.noteId=id;S.delArm=null;
+  return id;
+}
+function noteItemId(){return "t"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);}
+function curNote(){return notes().find(function(n){return n.id===S.noteId;});}
+/* The list. Every card says enough that you do not have to open it to
+   know what is in there — the first thing written, the prose under it,
+   and whatever is still to be done. */
+function viewNotes(){
+  var all=notes(),list=noteSorted(),s=String(S.noteQ||"").trim();
+  var h='<div class="view">'+backLink()+
+    '<div class="nhead"><span class="card-t">Notes</span>'+
+    (all.length?'<span class="lab">'+all.length+' note'+(all.length===1?"":"s")+'</span>':'')+'</div>'+
+    '<button class="btn go" data-note="new">New note</button>';
+  if(all.length>2)h+='<input class="searchbox" id="noteQ" style="margin:14px 0 0" placeholder="Search notes" value="'+esc(S.noteQ||"")+'">';
+  if(!list.length)
+    return h+'<div class="emptyline" style="margin-top:18px">'+sym(s?"compass":"doc")+
+      '<span>'+(s?"Nothing matches that.":"A price, a plan, a thing to do \u2014 put it here before it goes.")+'</span></div></div>';
+
+  list.forEach(function(n){
+    var armed=S.delArm===n.id,items=noteReal(n),peek=notePeek(n),
+        done=items.filter(function(x){return x.done;}).length;
+    h+='<div class="ncard"><button class="ncopen" data-note="'+n.id+'">'+
+       '<span class="nc-t">'+esc(noteTitle(n))+'</span>'+
+       (peek?'<span class="nc-b">'+esc(peek)+'</span>':'')+
+       (items.length
+         ? '<span class="nc-l">'+items.slice(0,3).map(function(x){
+             return '<span class="nc-i'+(x.done?" done":"")+'"><i class="nc-box'+(x.done?" on":"")+'">'+
+                    (x.done?sym("check"):"")+'</i><span class="nc-x">'+esc(x.text)+'</span></span>';
+           }).join("")+
+           (items.length>3?'<span class="nc-more">and '+(items.length-3)+' more</span>':'')+'</span>'
+         : '')+
+       '<span class="nc-m">'+relDate(n.updated)+
+         (items.length?' \u00B7 '+done+' of '+items.length+' done':'')+'</span>'+
+       '</button>'+
+       '<button class="notedel'+(armed?" armed":"")+'" data-delnote="'+n.id+'" aria-label="Delete note">'+
+       (armed?"Delete?":"\u00D7")+'</button></div>';
+  });
+  return h+'</div>';
+}
+
+/* The editor. Prose on one surface, things to do on another, because
+   they are read differently and only one of them can be ticked. */
 function viewNote(){
   var n=curNote();
-  if(!n)return '<div class="view">'+backLink()+'<div class="empty">That note is gone.</div></div>';
-  var h='<div class="view"><button class="backlink" data-back="tools">'+ICON.l+'Back to Tools</button>'+
-        '<div class="card" style="padding:20px">'+
-        '<input class="titlein" id="nTitle" value="'+esc(n.title)+'" placeholder="Title">'+
-        '<div class="fmtbar">'+
-        '<button class="fmtb" data-ins="\u2610 ">\u2610 Checklist</button>'+
-        '<button class="fmtb" data-ins="\u2022 ">\u2022 Bullet</button>'+
-        '</div>'+
-        '<textarea class="bodyin" id="nBody" placeholder="Start writing\u2026" rows="1">'+esc(n.body)+'</textarea>'+
-        '</div><div class="noteroom"></div>';
-  h+='<button class="btn warn" data-delnote="'+n.id+'">'+(S.delArm===n.id?"Tap again to delete":"Delete note")+'</button>';
+  if(!n)return '<div class="view">'+backLink("notes")+'<div class="empty">That note is gone.</div></div>';
+  var items=noteItems(n),done=noteDone(n);
+  var h='<div class="view">'+backLink("notes")+
+    '<div class="card" style="padding:20px">'+
+    '<input class="titlein" id="nTitle" value="'+esc(n.title)+'" placeholder="Title">'+
+    '<textarea class="bodyin" id="nBody" placeholder="Start writing\u2026" rows="1">'+esc(n.body)+'</textarea>'+
+    '<div class="fmtbar" style="margin:12px 0 0"><button class="fmtb" data-ins="\u2022 ">\u2022 Bullet</button></div>'+
+    '</div>';
+
+  h+='<div class="card" style="padding:16px 18px"><div class="card-h"><span class="card-t">To-do</span>'+
+     (items.length?'<span class="lab">'+done+' of '+items.length+' done</span>':'')+'</div>';
+  items.forEach(function(it){
+    h+='<div class="tdrow'+(it.done?" done":"")+'" id="td-'+it.id+'">'+
+       '<button class="tdbox'+(it.done?" on":"")+'" data-ntog="'+it.id+'" aria-label="'+
+       (it.done?"Mark not done":"Mark done")+'">'+(it.done?sym("check"):"")+'</button>'+
+       '<input class="tdin" type="text" maxlength="120" data-ntx="'+it.id+'" value="'+esc(it.text)+
+       '" placeholder="Something to do" aria-label="To-do">'+
+       '<button class="tdx" data-ndel="'+it.id+'" aria-label="Remove">'+ICON.x+'</button></div>';
+  });
+  h+='<button class="addrow" data-nadd="1">'+sym("plus")+'<span>Add a to-do</span></button></div>';
+
+  h+='<div class="noteroom"></div>'+
+     '<button class="btn warn" data-delnote="'+n.id+'">'+
+     (S.delArm===n.id?"Tap again to delete":"Delete note")+'</button>';
   return h+'</div>';
 }
 
@@ -3884,6 +4277,10 @@ function readBackup(raw){
   if(!out.goals||!out.goals.length)out.goals=JSON.parse(JSON.stringify(BASE_GOALS));
   if(!out.card)out.card={limit:0,used:0,payDay:18,lastPaid:null};
   if(!out.notes)out.notes=[];
+  /* a backup written before to-dos existed gets the same lift a save on
+     disk gets, so a restore never lands you on an older shape */
+  normalizeNotes(out.notes);
+  if(!(out.plan instanceof Array)||!out.plan.length)out.plan=JSON.parse(JSON.stringify(BASE_CATS));
   return{data:out};
 }
 function restoreFrom(raw){
@@ -4541,6 +4938,7 @@ function bind(){
   });
 
   q("[data-back]").forEach(function(b){b.onclick=function(){
+    if(b.dataset.back==="notes"){S.tab="notes";S.noteId=null;S.delArm=null;save();render();appScrollTo(0,true);return;}
     if(b.dataset.back==="tools"){S.tab="tools";S.noteId=null;save();render();appScrollTo(0,true);return;}
     if(b.dataset.back==="settings"){S.tab="settings";save();render();appScrollTo(0,true);return;}
     S.tab=S.returnTab||"home";S.more=true;save();render();appScrollTo(0,true);};});
@@ -4561,17 +4959,18 @@ function bind(){
   var nq=document.getElementById("noteQ");
   if(nq)nq.oninput=function(){S.noteQ=nq.value;updateViewDOM();};
   q("[data-note]").forEach(function(b){b.onclick=function(){
-    if(b.dataset.note==="new"){
-      var id=newId();
-      S.notes=S.notes||[];
-      S.notes.unshift({id:id,title:"",body:"",created:Date.now(),updated:Date.now()});
-      S.noteId=id;
-    }else S.noteId=+b.dataset.note;
-    S.delArm=null;
-    S.tab="note";save();render();appScrollTo(0,true);};});
+    var blank=b.dataset.note==="new";
+    if(blank)newNote();
+    else{S.noteId=+b.dataset.note;S.delArm=null;}
+    S.tab="note";save();
+    S.focusNote=blank;          /* a blank note opens with the keyboard up */
+    render();appScrollTo(0,true);};});
+  q("[data-quicknote]").forEach(function(b){b.onclick=function(){
+    newNote();S.more=false;S.tab="note";save();
+    S.focusNote=true;render();appScrollTo(0,true);};});
 
   var nT=document.getElementById("nTitle"),nB=document.getElementById("nBody");
-  function grow(){if(!nB)return;nB.style.height="auto";nB.style.height=Math.max(220,nB.scrollHeight)+"px";}
+  function grow(){if(!nB)return;nB.style.height="auto";nB.style.height=Math.max(96,nB.scrollHeight)+"px";}
   function touchNote(){var n=curNote();if(!n)return;
     if(nT)n.title=nT.value; if(nB)n.body=nB.value; n.updated=Date.now(); save();}
   if(nT)nT.oninput=touchNote;
@@ -4581,6 +4980,50 @@ function bind(){
     nB.onfocus=function(){setTimeout(function(){
       try{nB.scrollIntoView({behavior:"smooth",block:"nearest"});}catch(e){}},250);};
   }
+  if(S.focusNote){
+    S.focusNote=false;
+    if(nT)try{nT.focus();}catch(e){}
+  }
+
+  /* ── the to-do list ── */
+  q("[data-ntog]").forEach(function(b){b.onclick=function(){
+    var n=curNote();if(!n)return;
+    var it=noteItems(n).find(function(x){return x.id===b.dataset.ntog;});
+    if(!it)return;
+    it.done=!it.done;n.updated=Date.now();save();updateViewDOM();};});
+  q("[data-ntx]").forEach(function(i){
+    /* typed straight into state: the field already holds the letters, so
+       redrawing here would only put the caret somewhere else */
+    i.oninput=function(){
+      var n=curNote();if(!n)return;
+      var it=noteItems(n).find(function(x){return x.id===i.dataset.ntx;});
+      if(!it)return;
+      it.text=i.value;n.updated=Date.now();save();};
+    /* return starts the next one, the way a list is actually written */
+    i.onkeydown=function(e){
+      if(e.key!=="Enter")return;
+      e.preventDefault();
+      var n=curNote();if(!n)return;
+      var arr=noteItems(n),at=arr.findIndex(function(x){return x.id===i.dataset.ntx;});
+      var nid=noteItemId();
+      arr.splice(at+1,0,{id:nid,text:"",done:false});
+      n.updated=Date.now();save();S.focusItem=nid;updateViewDOM();};
+  });
+  q("[data-ndel]").forEach(function(b){b.onclick=function(){
+    var n=curNote();if(!n)return;
+    n.items=noteItems(n).filter(function(x){return x.id!==b.dataset.ndel;});
+    n.updated=Date.now();save();updateViewDOM();};});
+  q("[data-nadd]").forEach(function(b){b.onclick=function(){
+    var n=curNote();if(!n)return;
+    var nid=noteItemId();
+    noteItems(n).push({id:nid,text:"",done:false});
+    n.updated=Date.now();save();S.focusItem=nid;updateViewDOM();};});
+  if(S.focusItem){
+    var fi=document.querySelector('[data-ntx="'+S.focusItem+'"]');
+    S.focusItem=null;
+    if(fi)try{fi.focus();}catch(e){}
+  }
+
   q("[data-ins]").forEach(function(b){b.onclick=function(){
     if(!nB)return;
     var v=nB.value,p0=nB.selectionStart;
@@ -4588,6 +5031,48 @@ function bind(){
     nB.value=v.slice(0,ls)+b.dataset.ins+v.slice(ls);
     nB.selectionStart=nB.selectionEnd=p0+b.dataset.ins.length;
     nB.focus();grow();touchNote();};});
+
+  /* ── the plan editor ── */
+  q("[data-psheet]").forEach(function(b){b.onclick=function(){
+    S.psheet=b.dataset.psheet==="1";S.delArm=null;S.pIco=null;save();render();};});
+  q("[data-newp]").forEach(function(b){b.onclick=function(){
+    S.newp=b.dataset.newp==="1";NEWPE=PEMO[0];NEWPT="variable";S.delArm=null;save();render();};});
+  q("[data-npe]").forEach(function(b){b.onclick=function(){
+    NEWPE=b.dataset.npe;
+    q("[data-npe]").forEach(function(x){x.classList.toggle("on",x===b);});};});
+  q("[data-npt]").forEach(function(b){b.onclick=function(){
+    NEWPT=b.dataset.npt;
+    q("[data-npt]").forEach(function(x){x.classList.toggle("on",x===b);});};});
+  var npA=document.getElementById("npAdd");
+  if(npA)npA.onclick=function(){
+    var nm=String((document.getElementById("npName")||{}).value||"").trim().slice(0,24);
+    var amt=+((document.getElementById("npAmt")||{}).value)||0;
+    if(!nm){alert("Give the line a name.");return;}
+    addCat(nm,NEWPT,amt,NEWPE);
+    S.newp=false;save();render();toast("Added to your plan");};
+  q("[data-cmv]").forEach(function(b){b.onclick=function(){
+    moveCat(b.dataset.cmv,+b.dataset.dir);save();updatePlanEditorDOM();};});
+  q("[data-cpick]").forEach(function(b){b.onclick=function(){
+    S.pIco=S.pIco===b.dataset.cpick?null:b.dataset.cpick;save();updatePlanEditorDOM();};});
+  q("[data-ce]").forEach(function(b){b.onclick=function(){
+    var c=catFind(b.dataset.ce);if(!c)return;
+    c.ico=b.dataset.sym;S.pIco=null;save();updatePlanEditorDOM();};});
+  /* rename: the name is read live everywhere, so this is the only edit */
+  q("[data-cn]").forEach(function(i){i.onchange=function(){
+    var c=catFind(i.dataset.cn);if(!c)return;
+    var v=String(i.value||"").trim().slice(0,24);
+    c.name=v||c.name;save();updatePlanEditorDOM();};});
+  q("[data-cnote]").forEach(function(i){i.onchange=function(){
+    var c=catFind(i.dataset.cnote);if(!c)return;
+    c.note=String(i.value||"").trim().slice(0,80);save();updatePlanEditorDOM();};});
+  q("[data-ct]").forEach(function(b){b.onclick=function(){
+    var c=catFind(b.dataset.ct);if(!c||catKeep(c))return;
+    c.type=b.dataset.type==="fixed"?"fixed":"variable";save();updatePlanEditorDOM();};});
+  q("[data-cdel]").forEach(function(b){b.onclick=function(){
+    var id=b.dataset.cdel;
+    if(S.delArm===id){S.delArm=null;removeCat(id);}
+    else S.delArm=id;
+    save();updatePlanEditorDOM();};});
 
   q("[data-wg]").forEach(function(b){b.onclick=function(){S.wiGoal=b.dataset.wg;save();updateViewDOM();};});
   q("[data-sheet]").forEach(function(b){b.onclick=function(){S.sheet=b.dataset.sheet==="1";save();render();};});
@@ -4768,6 +5253,8 @@ function bind(){
 function closeSheets(){
   if(S.more){S.more=false;save();render();}
   else if(S.sheet){S.sheet=false;save();render();}
+  else if(S.psheet){S.psheet=false;S.pIco=null;save();render();}
+  else if(S.newp){S.newp=false;save();render();}
 }
 (function(){
   var el=null,y0=0,dragging=false;
@@ -5010,7 +5497,7 @@ document.addEventListener("click",function(e){
     if(S.delArm===id){
       S.notes=(S.notes||[]).filter(function(n){return n.id!==id;});
       S.delArm=null;
-      if(S.noteId===id){S.noteId=null;S.tab="tools";}
+      if(S.noteId===id){S.noteId=null;S.tab="notes";}
     }else S.delArm=id;
     save();updateViewDOM();return;
   }
