@@ -264,7 +264,9 @@ details.more .eqrow{font-size:13px}
 .atop{display:flex;align-items:center;gap:12px}
 .atop .nm{flex:1;min-width:0;font-family:var(--round);font-size:16px;font-weight:700;letter-spacing:-.02em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.aline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;flex-wrap:wrap}
+.aline>*{max-width:100%}
+.aline>*+*{margin-left:auto}
 .aline .lab{flex:none}
 .amove{display:flex;flex-direction:column;gap:3px;flex:none}
 .amove button{width:30px;height:18px;border-radius:7px;background:var(--surface-3);display:grid;place-items:center;
@@ -942,13 +944,18 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .purse-i .sym{width:17px;height:17px}
 .purse-i:active,.purse-i.on{color:var(--pc);background:var(--pc-soft);transform:scale(.9)}
 
-/* Goals summary: compact, distinct, and never larger than the goal jars below. */
-.goals-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;min-height:78px;margin-top:12px;padding:13px 15px 13px 16px;border-radius:22px;background:linear-gradient(135deg,rgba(158,91,255,.13),rgba(212,92,232,.045) 72%),var(--surface);border:1px solid rgba(158,91,255,.20);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -28px rgba(158,91,255,.42)}
-.goals-hero::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--majorelle),var(--teal));box-shadow:0 0 14px rgba(158,91,255,.55)}
+/* ── THE PAGE HERO ──
+   One compact banner at the top of Plan, Log, Goals and Money outside.
+   It carries the single headline figure for that page; the cards under
+   it break that figure down. Being the only element on a page that is
+   not a plain card is what makes it read as the page's own header.
+   Never larger than the cards below it. */
+.phero{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;min-height:78px;margin-top:12px;padding:13px 15px 13px 16px;border-radius:22px;background:linear-gradient(135deg,rgba(158,91,255,.13),rgba(212,92,232,.045) 72%),var(--surface);border:1px solid rgba(158,91,255,.20);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -28px rgba(158,91,255,.42)}
+.phero::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--majorelle),var(--teal));box-shadow:0 0 14px rgba(158,91,255,.55)}
 .goals-mark{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;flex:none;color:var(--teal);background:rgba(212,92,232,.10);border:1px solid rgba(212,92,232,.22);box-shadow:0 0 24px -10px rgba(212,92,232,.75),inset 0 1px 0 rgba(255,255,255,.06)}
 .goals-mark .sym{width:23px;height:23px;stroke-width:1.6}
-.goals-copy{flex:1;min-width:0}.goals-hero .goals-kicker{font-family:var(--mono);font-size:8.5px;letter-spacing:.20em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:3px;text-shadow:0 0 10px rgba(212,92,232,.35)}
-.goals-hero .goals-title{font-family:var(--round);font-size:18.5px;font-weight:800;letter-spacing:-.03em;display:block}.goals-hero .goals-sub{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+.goals-copy{flex:1;min-width:0}.phero .goals-kicker{font-family:var(--mono);font-size:8.5px;letter-spacing:.20em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:3px;text-shadow:0 0 10px rgba(212,92,232,.35)}
+.phero .goals-title{font-family:var(--round);font-size:18.5px;font-weight:800;letter-spacing:-.03em;display:block}.phero .goals-sub{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35}
 /* the right side is one stacked column — number on top, its caption
    directly beneath — so "4 active" sits on the amount's own axis
    instead of floating beside it */
@@ -956,7 +963,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .goals-amount{display:flex;align-items:baseline;gap:3px;white-space:nowrap}.goals-amount .cur{font-size:14px;color:var(--teal);transform:none}
 /* its own class, not .heroamt: the Home hero's glow belongs to Home */
 .goals-amount .goals-num{font-family:var(--round);font-size:26px;font-weight:800;letter-spacing:-.045em;color:var(--text);font-variant-numeric:tabular-nums;line-height:1}
-.goals-hero .goals-count{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);white-space:nowrap;text-align:right}.goals-hero .goals-divider{display:none}
+.phero .goals-count{font-family:var(--mono);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);white-space:nowrap;text-align:right}.phero .goals-divider{display:none}
 
 /* the number is nudged when it changes, so the eye follows it */
 @keyframes bump{from{transform:translateY(2px);opacity:.55}to{transform:none;opacity:1}}
@@ -1214,7 +1221,7 @@ html::after{
   border-color:rgba(158,91,255,.26);
 }
 .heroamt{text-shadow:0 0 30px rgba(158,91,255,.55),0 0 64px rgba(212,92,232,.2)}
-.goals-hero{border-radius:24px}
+.phero{border-radius:24px}
 
 /* ── a row that was written but never styled ──
    "<month> on course to add" and its figure were two bare spans, so
@@ -1370,9 +1377,32 @@ html::after{
 .jread .k,.jread .v{font-size:12px;color:var(--muted)}
 .jread .v{font-variant-numeric:tabular-nums}
 
+/* ── THE LEAD CARD ───────────────────────────────────────────
+   The first card on a page wears the same skin the Goals banner wears:
+   a violet wash across it, a violet edge, and a lit bar down its left
+   side. That is what makes the top card read as the page's own rather
+   than as the first of a stack — and it changes nothing inside the card,
+   so its size, spacing and contents stay exactly as they were.
+   No overflow clip here, unlike the banner: the pills inside the
+   Allocation card carry their own glow, and clipping would cut it. */
+.card.lead{position:relative;
+  background:linear-gradient(135deg,rgba(158,91,255,.13),rgba(212,92,232,.045) 72%),var(--surface);
+  border-color:rgba(158,91,255,.20);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px -28px rgba(158,91,255,.42)}
+.card.lead::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;
+  border-radius:2px;background:linear-gradient(180deg,var(--majorelle),var(--teal));
+  box-shadow:0 0 14px rgba(158,91,255,.55)}
+
 /* ── THE PLAN EDITOR ─────────────────────────────────────────
    Three rules. Everything else in the sheet is markup the Goals editor
    already had a style for. */
+/* the log row is a button now, so the whole line opens what it describes */
+.logopen{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;
+  border-radius:12px;transition:opacity .15s var(--ease)}
+.logopen:active{opacity:.55}
+/* three actions on a record, wrapping rather than running off a narrow phone */
+.oact{flex-wrap:wrap}
+
 .pline{display:flex;align-items:center;justify-content:space-between;gap:10px;
   margin-top:14px;flex-wrap:wrap}
 .pline .lab{flex:none}
@@ -1469,7 +1499,7 @@ var store=(function(){
 var KEY="plan.v4";
 /* Journey moved onto Home; a save that was left on that page opens Home */
 function dropJourneyTab(st){if(st&&st.tab==="journey")st.tab="home";return st;}
-var BUILD="b45 \u00B7 plan lines, notes, home order";
+var BUILD="b47 \u00B7 lead cards, editable records";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
@@ -1527,7 +1557,7 @@ function fresh(){return{salary:10000,goals:JSON.parse(JSON.stringify(BASE_GOALS)
   plan:JSON.parse(JSON.stringify(BASE_CATS)),months:{},
   tab:"home",monthCursor:null,weekIdx:null,pick:"household",lastBackup:null,name:"",wiGoal:null,more:false,returnTab:"home",wiAmt:0,cycleStart:15,clamp:null,card:{limit:0,used:0,payDay:18,lastPaid:null},payMethod:"bank",
   notes:[],noteId:null,noteQ:"",impact:0,calc:null,delArm:null,newg:false,bkAdv:false,allocInfo:false,addGiven:false,addBorrowed:false,
-  jMode:"month",jSel:null,psheet:false,newp:false,pIco:null,focusNote:false,focusItem:null,
+  jMode:"month",jSel:null,psheet:false,newp:false,pIco:null,focusNote:false,focusItem:null,edit:null,
   outside:{given:[],borrowed:[]},outTab:"given",outArm:null};}
 
 var S=(function(){
@@ -2772,11 +2802,11 @@ function pageHTML(tab,noSheets){
   }
   if(tab==="home")h+=viewHome(k,live);
   else if(tab==="plan")h+=viewPlan(k,live,noSheets);
-  else if(tab==="log")h+=viewLog(k);
+  else if(tab==="log")h+=viewLog(k,noSheets);
   else if(tab==="goals")h+=viewGoals(noSheets);
   else if(tab==="backup")h+=viewBackup();
   else if(tab==="export")h+=viewExport();
-  else if(tab==="outside")h+=viewOutside();
+  else if(tab==="outside")h+=viewOutside(noSheets);
   else if(tab==="tools")h+=viewTools();
   else if(tab==="notes")h+=viewNotes();
   else if(tab==="note")h+=viewNote();
@@ -3286,7 +3316,7 @@ function viewPlan(k,live,noSheets){
   var ed=!isSettled(k);   /* the past is read-only, now and later are not */
   var h='<div class="view">';
 
-  h+='<div class="card"><button class="bigt'+(S.allocInfo?" open":"")+'" data-alloc="1">'+
+  h+='<div class="card lead"><button class="bigt'+(S.allocInfo?" open":"")+'" data-alloc="1">'+
        '<span class="bigt-w">Allocation</span><span class="bigt-c"></span></button>'+
      (S.allocInfo
        ? '<p class="hint" style="margin-top:16px">Locked amounts never move. Unlocked ones share what is left, so the total always matches your salary. Tap any pill in the bar to see what it holds. Every change is recorded in your monthly report.</p>'
@@ -3377,14 +3407,27 @@ function purseHTML(k,amt){
   return '<span class="purse-ico" data-ico="'+d.icon+'">'+sym(d.icon)+'</span>'+         '<span class="purse-txt">'+           '<span class="pursebig">'+d.big+'</span>'+           '<span class="pursesub">'+esc(d.line1)+(d.line2?'<em>'+esc(d.line2)+'</em>':'')+'</span>'+         '</span>'+         '<button class="purse-i" type="button" data-purse-iq="'+esc(why)+'" aria-label="Explain this amount">'+sym("info")+'</button>';
 }
 
-function viewLog(k){
+function viewLog(k,noSheets){
   var m=M(k),h='<div class="view">';
   var oo=spentOneoff(k);
   var list=M(k).spend.filter(function(e){return e.cat==="oneoff"||e.cat==="buffer";}).sort(function(x,y){return y.ts-x.ts;});
 
+  /* Money handed to someone leaves through the same door as a purchase,
+     so it has to appear here too, or the total at the top would not add
+     up. It is marked as what it is, and it is edited where it lives. */
+  var handed=[];
+  givenList().forEach(function(g){
+    if(dayKey(g.on)===k)handed.push({on:g.on,amount:g.amount,
+      who:g.person||"someone",what:"given to",note:g.note||""});
+  });
+  borrowedList().forEach(function(b){
+    if(b.repaidOn&&dayKey(b.repaidOn)===k)handed.push({on:b.repaidOn,amount:b.amount,
+      who:b.person||"someone",what:"repaid to",note:""});
+  });
+
   /* add */
   var onCard=S.payMethod==="card"&&cardOn();
-  h+='<div class="card"><div class="card-h"><span class="card-t">Add unplanned spending</span></div>'+
+  h+='<div class="card lead"><div class="card-h"><span class="card-t">Add unplanned spending</span></div>'+
      '<div class="methodrow">'+
      '<button class="chip'+(!onCard?" on":"")+'" data-pm="bank" style="'+(!onCard?"color:"+COLOR.oneoff+";background:"+tint(COLOR.oneoff):"")+'">'+sym("warning")+' One-off</button>'+
      (cardOn()?'<button class="chip'+(onCard?" on":"")+'" data-pm="card" style="'+(onCard?"color:var(--saffron);background:rgba(232,162,60,.14)":"")+'">'+sym("card")+' Credit card</button>':'')+
@@ -3407,26 +3450,16 @@ function viewLog(k){
   h+='<div class="card"><div class="card-h"><span class="card-t">'+
      (handedNow>0?"Unplanned money out":"What you bought")+'</span>'+
      (oo>0?'<span class="lab" style="color:var(--coral)">\u00A5'+fmt(oo)+' from savings</span>':'')+'</div>';
-  /* Money handed to someone leaves through the same door as a purchase,
-     so it has to appear here too, or the total at the top would not add
-     up. It is marked as what it is, and it is edited where it lives. */
-  var handed=[];
-  givenList().forEach(function(g){
-    if(dayKey(g.on)===k)handed.push({on:g.on,amount:g.amount,
-      who:g.person||"someone",what:"given to",note:g.note||""});
-  });
-  borrowedList().forEach(function(b){
-    if(b.repaidOn&&dayKey(b.repaidOn)===k)handed.push({on:b.repaidOn,amount:b.amount,
-      who:b.person||"someone",what:"repaid to",note:""});
-  });
 
   if(!list.length&&!handed.length)h+='<div class="emptyline">'+sym("check")+
      '<span>Nothing unplanned in '+mName(k).split(" ")[0]+' \u2014 that is the goal.</span></div>';
   else list.forEach(function(e){
     var dt=new Date(e.ts),isB=e.cat==="buffer";
-    h+='<div class="log"><span class="ico" style="background:'+tint(isB?COLOR.buffer:COLOR.oneoff)+';color:'+(isB?COLOR.buffer:COLOR.oneoff)+'">'+sym(isB?"buffer":"warning")+'</span>'+
+    /* the row opens what it describes; the cross beside it still removes */
+    h+='<div class="log"><button class="logopen" data-eopen="oneoff:'+e.id+'">'+
+       '<span class="ico" style="background:'+tint(isB?COLOR.buffer:COLOR.oneoff)+';color:'+(isB?COLOR.buffer:COLOR.oneoff)+'">'+sym(isB?"buffer":"warning")+'</span>'+
        '<span class="n">'+(e.note?esc(e.note):"Unnamed")+'<em>'+dt.getDate()+" "+MOS[dt.getMonth()]+' \u00B7 '+(isB?"from buffer":"out of savings")+(e.method==="card"?' \u00B7 '+sym("card")+' card':"")+'</em></span>'+
-       '<span class="a" style="color:'+(isB?"var(--sage)":"var(--coral)")+'">\u00A5'+fmt(e.amount)+'</span>'+
+       '<span class="a" style="color:'+(isB?"var(--sage)":"var(--coral)")+'">\u00A5'+fmt(e.amount)+'</span></button>'+
        '<button class="del" data-d="'+e.id+'" aria-label="Delete">\u00D7</button></div>';});
 
   handed.forEach(function(x){
@@ -3442,6 +3475,7 @@ function viewLog(k){
   }
   h+='</div>';
 
+  if(S.edit&&!noSheets)h+=editEntrySheetPair();
   return h+'</div>';
 }
 
@@ -3525,6 +3559,23 @@ function newGoalSheet(){
   return i<0?pair:pair.slice(i);
 }
 
+/* Every page's banner comes from here, so they cannot drift apart.
+   `amount` may be left out, in which case the right side is dropped. */
+function pageHero(o){
+  var side='';
+  if(o.amount!==null&&o.amount!==undefined)
+    side='<div class="goals-side">'+
+      '<div class="goals-amount"><span class="cur">\u00A5</span>'+
+      '<span class="goals-num">'+fmt(o.amount)+'</span></div>'+
+      (o.count?'<div class="goals-count">'+o.count+'</div>':'')+'</div>';
+  return '<div class="phero">'+
+    '<div class="goals-mark">'+sym(o.ico)+'</div>'+
+    '<div class="goals-copy"><span class="goals-kicker">'+o.kicker+'</span>'+
+    '<span class="goals-title">'+o.title+'</span>'+
+    (o.sub?'<span class="goals-sub">'+o.sub+'</span>':'')+'</div>'+
+    side+'</div>';
+}
+
 function viewGoals(noSheets){
   var k=cur(),plan=savedPlanned(k),tot=pctTotal(),h='<div class="view">';
   /* what to call the figure at the top depends entirely on whether the
@@ -3538,15 +3589,8 @@ function viewGoals(noSheets){
   var next=open.slice().sort(function(a,b){var ra=jarRate(a),rb=jarRate(b);
     return (ra>0?jarLeft(a)/ra:1e9)-(rb>0?jarLeft(b)/rb:1e9);})[0];
 
-  /* Compact summary banner: clearly the section header, not another goal card. */
-  h+='<div class="goals-hero">'+
-     '<div class="goals-mark">'+sym("savings")+'</div>'+
-     '<div class="goals-copy"><span class="goals-kicker">Savings pools</span><span class="goals-title">Your goals</span>'+
-       '<span class="goals-sub">'+heroWord+'</span></div>'+
-     '<div class="goals-side">'+
-       '<div class="goals-amount"><span class="cur">\u00A5</span><span class="goals-num">'+fmt(heroAmt)+'</span></div>'+
-       '<div class="goals-count">'+open.length+' active</div>'+
-     '</div></div>';
+  h+=pageHero({ico:"savings",kicker:"Savings pools",title:"Your goals",
+    sub:heroWord,amount:heroAmt,count:open.length+" active"});
 
   var basis=paceBasis();
 
@@ -3689,14 +3733,67 @@ function outSum(k){
   return bits.join(" \u00B7 ");
 }
 
-function viewOutside(){
+/* ══ EDITING A RECORD ══
+   A one-off, money given and money borrowed are all "something left,
+   here is what it was and how much". So they share one sheet, and each
+   kind offers exactly the fields its own add form offered — no more, so
+   nothing can be set here that could not be set when it was recorded. */
+function findEntry(){
+  var e=S.edit,row=null;
+  if(!e)return null;
+  if(e.kind==="oneoff"){
+    var k=cur();
+    row=M(k).spend.find(function(s){return s.id===e.id;});
+    return row?{kind:"oneoff",row:row,k:k}:null;
+  }
+  row=(e.kind==="given"?givenList():borrowedList()).find(function(s){return s.id===e.id;});
+  return row?{kind:e.kind,row:row}:null;
+}
+function editEntrySheetPair(){
+  var f=findEntry();
+  if(!f)return "";
+  var r=f.row,armed=S.delArm==="ee";
+  var head=f.kind==="oneoff"?"Edit this entry"
+          :f.kind==="given"?"Edit money given":"Edit money borrowed";
+  var h='<div class="shbg" data-eeclose="1"></div><div class="sheet"><div class="grab"></div>'+
+     '<div class="shhead"><span class="card-t">'+head+'</span>'+
+     '<button class="shx" data-eeclose="1" aria-label="Close">'+ICON.x+'</button></div>'+
+     '<div class="ablock" style="margin-top:16px">';
+  if(f.kind==="oneoff"){
+    h+='<input class="notefield" id="eeNote" style="margin-top:0" maxlength="48" '+
+       'placeholder="What was it?" value="'+esc(r.note||"")+'">';
+  }else{
+    h+='<input class="notefield" id="eePerson" style="margin-top:0" maxlength="32" placeholder="'+
+       (f.kind==="given"?"Who did you give it to?":"Who did you borrow from?")+
+       '" value="'+esc(r.person||"")+'">';
+    if(f.kind==="given")
+      h+='<input class="notefield" id="eeNote" maxlength="48" '+
+         'placeholder="What was it for? \u00B7 optional" value="'+esc(r.note||"")+'">';
+  }
+  h+='<div class="ngline"><span class="lab">How much</span>'+
+     '<input class="atgtin" type="number" inputmode="decimal" id="eeAmt" value="'+r.amount+'" aria-label="How much"></div>';
+  if(f.kind!=="oneoff")
+    h+='<div class="ngline"><span class="lab">'+(f.kind==="given"?"Date given":"Date borrowed")+'</span>'+
+       '<input class="duein" type="date" id="eeOn" value="'+(r.on||todayISO())+'" aria-label="Date"></div>';
+  if(f.kind==="borrowed")
+    h+='<div class="ngline"><span class="lab">Due<span style="color:var(--faint)"> \u00B7 optional</span></span>'+
+       '<input class="duein" type="date" id="eeDue" value="'+(r.due||"")+'" aria-label="Due date"></div>';
+  h+='</div><div id="eeWarn"></div>'+
+     '<button class="btn go" id="eeSave" style="margin-top:16px">Save</button>'+
+     '<div class="aline" style="justify-content:flex-end;margin-top:14px">'+
+     '<button class="delg" data-eedel="1">'+(armed?"Tap again to remove":"Remove this")+'</button></div>'+
+     '</div>';
+  return h;
+}
+
+function viewOutside(noSheets){
   var h='<div class="view">'+backLink();
   var given=givenList().slice().sort(function(a,b){return String(b.on)<String(a.on)?-1:1;});
   var owed=borrowedList().slice().sort(function(a,b){return String(b.on)<String(a.on)?-1:1;});
   var gOut=givenOutstanding(),oOut=owedOutstanding(),people=givenPeople();
 
-  /* ── the overview, two lines and no more ── */
-  h+='<div class="card"><div class="card-h"><span class="card-t">Money outside'+
+  /* \u2500\u2500 the overview, two lines and no more \u2500\u2500 */
+  h+='<div class="card lead"><div class="card-h"><span class="card-t">Money outside'+
      iq('Money you gave away already left your plan \u2014 the app treats it as gone and never counts it as money coming back. '+
         'Money you borrowed is an obligation: it is not income, and it changes nothing about what you can spend.')+
      '</span></div>'+
@@ -3735,6 +3832,7 @@ function viewOutside(){
          '<span class="a" style="color:'+(back?"var(--teal)":"var(--sage)")+'">\u00A5'+fmt(g.amount)+'</span>'+
          '</div>'+
          '<div class="oact">'+
+           '<button class="obtn" data-eopen="given:'+g.id+'">Edit</button>'+
            (back?'<button class="obtn" data-gunback="'+g.id+'">Mark as still out</button>'
                :'<button class="obtn" data-gback="'+g.id+'">They paid it back</button>')+
            '<button class="obtn warn" data-gdel2="'+g.id+'">'+(armed?"Tap again to remove":"Remove")+'</button>'+
@@ -3771,6 +3869,7 @@ function viewOutside(){
          '<span class="a" style="color:'+(paid?"var(--teal)":"var(--saffron)")+'">\u00A5'+fmt(b.amount)+'</span>'+
          '</div>'+
          '<div class="oact">'+
+           '<button class="obtn" data-eopen="borrowed:'+b.id+'">Edit</button>'+
            (paid?'<button class="obtn" data-bunpaid="'+b.id+'">Mark as not repaid</button>'
                 :'<button class="obtn" data-bpaid="'+b.id+'">I paid this back</button>')+
            '<button class="obtn warn" data-bdel="'+b.id+'">'+(armed?"Tap again to remove":"Remove")+'</button>'+
@@ -3779,6 +3878,7 @@ function viewOutside(){
     h+='</div>';
   }
 
+  if(S.edit&&!noSheets)h+=editEntrySheetPair();
   return h+'</div>';
 }
 
@@ -5032,6 +5132,73 @@ function bind(){
     nB.selectionStart=nB.selectionEnd=p0+b.dataset.ins.length;
     nB.focus();grow();touchNote();};});
 
+  /* ── editing a recorded entry ── */
+  q("[data-eopen]").forEach(function(b){b.onclick=function(){
+    var p=String(b.dataset.eopen).split(":");
+    S.edit={kind:p[0],id:p[0]==="oneoff"?+p[1]:p[1]};
+    S.delArm=null;save();render();};});
+  q("[data-eeclose]").forEach(function(b){b.onclick=function(){
+    S.edit=null;S.delArm=null;save();render();};});
+
+  var eeSave=document.getElementById("eeSave");
+  if(eeSave)eeSave.onclick=function(){
+    var f=findEntry();
+    if(!f){S.edit=null;render();return;}
+    var r=f.row,warn=document.getElementById("eeWarn");
+    var val=function(id){var el=document.getElementById(id);return el?String(el.value):"";};
+    var say=function(msg){if(warn)warn.innerHTML='<div class="warnbox over" style="margin-top:12px">'+msg+'</div>';};
+    var amt=Math.round((parseFloat(val("eeAmt"))||0)*100)/100;
+    if(amt<=0){say("<b>Enter how much it was.</b> An entry has to have an amount.");return;}
+
+    if(f.kind==="oneoff"){
+      /* raising it has to pass the same two gates adding it passed, or a
+         correction could quietly push the month past what it can cover */
+      var d=amt-r.amount;
+      if(d>0){
+        if(r.method==="card"){
+          var ck=cardCheck(d);
+          if(ck&&!ck.ok){say("<b>Not enough credit.</b> "+ck.msg);return;}
+        }
+        var sc=sourceCheck(f.k,d);
+        if(sc&&!sc.ok){
+          say("<b>Your plan cannot cover that.</b> Raising this by \u00A5"+fmt(d)+
+              " leaves you \u00A5"+fmt(sc.short)+" short. Lower it, or free money up on Plan.");
+          return;
+        }
+      }
+      if(r.method==="card")card().used=Math.max(0,card().used+(amt-r.amount));
+      r.amount=amt;
+      r.note=val("eeNote").trim();
+    }else{
+      r.amount=amt;
+      r.person=val("eePerson").trim();
+      if(f.kind==="given")r.note=val("eeNote").trim();
+      var on=val("eeOn");
+      if(on)r.on=on;
+      if(f.kind==="borrowed")r.due=val("eeDue");
+    }
+    S.edit=null;S.delArm=null;save();render();toast("Saved");};
+
+  q("[data-eedel]").forEach(function(b){b.onclick=function(){
+    /* armed on the first tap, gone on the second — the same two-step every
+       destructive button in this app uses */
+    if(S.delArm!=="ee"){S.delArm="ee";b.textContent="Tap again to remove";return;}
+    var f=findEntry();
+    if(f){
+      if(f.kind==="oneoff"){
+        var id=f.row.id;
+        allMonths().forEach(function(x){
+          S.months[x].spend=S.months[x].spend.filter(function(e){
+            if(e.id===id&&e.method==="card")card().used=Math.max(0,card().used-e.amount);
+            return e.id!==id;});});
+      }else if(f.kind==="given"){
+        OUT().given=givenList().filter(function(g){return g.id!==f.row.id;});
+      }else{
+        OUT().borrowed=borrowedList().filter(function(x){return x.id!==f.row.id;});
+      }
+    }
+    S.edit=null;S.delArm=null;S.outArm=null;save();render();toast("Removed");};});
+
   /* ── the plan editor ── */
   q("[data-psheet]").forEach(function(b){b.onclick=function(){
     S.psheet=b.dataset.psheet==="1";S.delArm=null;S.pIco=null;save();render();};});
@@ -5255,6 +5422,7 @@ function closeSheets(){
   else if(S.sheet){S.sheet=false;save();render();}
   else if(S.psheet){S.psheet=false;S.pIco=null;save();render();}
   else if(S.newp){S.newp=false;save();render();}
+  else if(S.edit){S.edit=null;S.delArm=null;save();render();}
 }
 (function(){
   var el=null,y0=0,dragging=false;
