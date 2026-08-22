@@ -1475,6 +1475,152 @@ button.ico.picky.on{box-shadow:inset 0 0 0 1.5px currentColor}
 .menuadd:active{transform:scale(.88);background:rgba(158,91,255,.26)}
 .menuadd .sym{width:19px;height:19px;stroke-width:2.2}
 
+
+/* ═══ b48 ═══ */
+
+/* ═══ b49 · THE SPEED DIAL ═══ */
+
+/* ── the ground behind it ──
+   Not a black sheet of paper over the page. The page stays there and
+   goes out of focus, the way it does behind everything else in the app,
+   with only enough black to sit the buttons on. It stops BELOW the nav
+   island (z 18, the bar is 20), so the tab you are pressing stays sharp
+   and you can watch it change. */
+.fanbg{
+  z-index:18;animation:none;opacity:0;
+  background:radial-gradient(130% 72% at 84% 100%,rgba(158,91,255,.07),rgba(158,91,255,0) 62%),
+             rgba(0,0,0,.38);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);
+  transition:opacity .3s var(--ease);
+}
+.fanbg.on{opacity:1}
+
+/* ── the fan ──
+   The layer passes every touch through; only the rows take one, so
+   anywhere else you press lands on the ground behind and shuts it.
+
+   A row is one capsule of glass. It is hung by its RIGHT edge, level
+   with the middle of the More tab, and every row is given the same
+   width, so the discs make one straight edge on the right and the names
+   another on the left. Shut, the capsule is exactly its own disc: the
+   name is inside the part that is not there yet. Opening it does not
+   fade a label in beside a circle — the circle UNFURLS into the row,
+   which is why the width is animated and not just the position. */
+.fan{position:fixed;inset:0;z-index:32;pointer-events:none}
+.fanb{
+  position:absolute;pointer-events:auto;padding:0;
+  height:46px;width:46px;border-radius:23px;overflow:hidden;
+  background:rgba(18,18,22,.78);
+  border:1px solid rgba(255,255,255,.10);
+  -webkit-backdrop-filter:saturate(170%) blur(20px);backdrop-filter:saturate(170%) blur(20px);
+  /* The colour is INSIDE the glass, never spilling onto the page. What
+     is left outside is only the black the row needs to sit above the
+     blur — a coloured halo out here reads as neon, and stacks with the
+     purple wash behind it until the whole column looks lit from within
+     something else. */
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.11),
+             0 16px 30px -16px rgba(0,0,0,.92);
+  /* it folds into and out of its own disc, which is the end nearest the
+     tab, not the middle of the row */
+  transform-origin:calc(100% - 23px) 50%;
+  transform:translate(-100%,-50%) scale(.26);opacity:0;
+  transition:transform .26s cubic-bezier(.4,0,1,1),width .26s cubic-bezier(.4,0,1,1),
+             opacity .16s var(--ease);
+}
+/* the name: one left margin for every row, so they all start together.
+   A name longer than the column can hold gives way rather than pushing
+   its row out of line. */
+.fanl{
+  position:absolute;left:18px;top:0;height:46px;right:55px;
+  display:flex;align-items:center;
+  font-family:var(--round);font-size:13.5px;font-weight:700;letter-spacing:-.018em;
+  color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:0;transition:opacity .2s var(--ease);
+}
+/* the ruler: the same face at the same size, off the page, no box */
+.fanmeasure{position:absolute!important;left:-9999px!important;top:0!important;
+  right:auto!important;width:auto!important;height:auto!important;
+  display:inline-block!important;opacity:0!important;overflow:visible!important;
+  pointer-events:none!important}
+/* the disc at the end of the row: the light sits inside the glass so it
+   has a lit face rather than a coloured one, and each keeps the colour
+   its row already had on the old menu */
+.fanc{
+  position:absolute;right:0;top:0;width:46px;height:46px;
+  display:grid;place-items:center;border-radius:50%;
+  /* a wide, gentle haze leaning off one shoulder and gone by the far
+     edge — a tighter hotspot reads as a blob stuck in the corner */
+  background:radial-gradient(130% 130% at 20% 18%,var(--fcs),rgba(255,255,255,0) 70%);
+  transition:transform .2s var(--spring);
+}
+/* line art, thin and white, so the colour is only ever the light */
+.fanc .sym{width:20px;height:20px;stroke-width:1.5;color:#fff}
+/* open: up the column, unfurling, overshooting once and settling */
+.fan.on .fanb{
+  width:var(--w);
+  transform:translate(-100%,-50%) translate(0,var(--dy)) scale(1);opacity:1;
+  transition:transform .44s var(--spring),width .44s var(--spring),
+             opacity .2s var(--ease);
+}
+.fan.on .fanl{opacity:1}
+.fan.on .fanb:active .fanc{transform:scale(.88)}
+
+/* ── the tab it came out of ──
+   Three dots stand up on end and draw in a little while the fan is out,
+   so the button reads as held open rather than merely pressed. */
+.tab svg{transition:transform .38s var(--spring)}
+.tab.fanon svg{transform:rotate(90deg) scale(.82)}
+
+/* ── one language for the three states of money ──
+   BANKED is money that is real, so it is solid. PROJECTED is expected
+   and not yet real, so it is filled with light instead — the same pale
+   fill the cap on a Journey column already carries. PLANNED is only an
+   intention, so it is the outline on its own. No new colour is
+   introduced: the mark takes the colour of whatever it stands beside,
+   which is what lets one mark work everywhere. */
+.mst{display:inline-block;width:12px;height:6px;border-radius:3px;flex:none;
+  margin-right:8px;vertical-align:.12em}
+.mst-b{background:currentColor;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 1px 6px -2px currentColor}
+.mst-p{background:rgba(255,255,255,.09);box-shadow:inset 0 0 0 1px rgba(255,255,255,.30)}
+.mst-n{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+
+/* ── a goal, read in two seconds ──
+   Everything that was on the card is still on it and in the same place.
+   What changed is the order the eye takes it in: the name, then what is
+   saved against the target, then how far along it is, and only then the
+   detail. The allocation share and the month's contribution step back;
+   the target steps forward to stand with the figure it belongs to. */
+.jsub{font-size:8.8px;font-weight:500;letter-spacing:.085em;
+  color:rgba(255,255,255,.30);margin-top:4px}
+.jpc{font-size:19px}
+.jamt{margin-top:12px}
+.jof{margin-top:3px;font-size:12px;color:var(--faint)}
+.jtgt{font-size:13px;font-weight:600;color:rgba(245,245,247,.70);
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.jxtra{font-size:11.5px}
+.jxtra .mst{margin-right:6px}
+.jbar{height:9px;margin-top:16px}
+.jrow{margin-top:12px;font-size:10.5px;color:var(--faint)}
+.jdue{margin-top:6px}
+
+/* ═══ b50 · THE ALLOCATION CARD, TIGHTER ═══
+   Sixty-four pixels of track for a twenty-one pixel symbol was mostly
+   air. The pill is now the height of the symbol plus the room it needs
+   to sit in, and the space above and below has come in with it. The
+   track's corner still equals the pill's corner plus the padding, so
+   the frame reads exactly as it did — same pills, same widths, same
+   colours, same tap target, same reading. Only the air is gone. */
+.atrack{height:46px}
+/* the title had eleven pixels under the word before its underline and
+   twelve more under that before the bar — one gap doing one job */
+.bigt{padding-bottom:8px}
+.bigt-w{padding-bottom:9px}
+.allocv{margin-top:8px}
+/* the legend was set at 1.85, which is a paragraph's leading on a list
+   of seven short things */
+.alegend{margin-top:10px;line-height:1.6}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -1499,7 +1645,7 @@ var store=(function(){
 var KEY="plan.v4";
 /* Journey moved onto Home; a save that was left on that page opens Home */
 function dropJourneyTab(st){if(st&&st.tab==="journey")st.tab="home";return st;}
-var BUILD="b47 \u00B7 lead cards, editable records";
+var BUILD="b53 \u00B7 speed dial, light inside the glass";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
@@ -2034,6 +2180,13 @@ function savedWord(k,cap){
        :"projected";
   return cap?w.charAt(0).toUpperCase()+w.slice(1):w;
 }
+/* ── planned, projected, banked ──
+   The three words above already appear all over the app. This is the
+   one mark that stands beside them, so the state is legible before the
+   sentence is read. It follows savedWord exactly — same order, same
+   test — so the mark and the word can never disagree. */
+function mstOf(k){return isConfirmed(k)?"b":isAhead(k)?"n":"p";}
+function mst(kind){return '<i class="mst mst-'+kind+'"></i>';}
 function savedConfirmed(k){
   if(!M(k))return 0;
   return isConfirmed(k)?savedActual(k):0;
@@ -2816,11 +2969,11 @@ function pageHTML(tab,noSheets){
 }
 /* Anything fixed to the screen must not live inside an animated box */
 function detachSheets(){
-  var old=document.querySelectorAll("body > .sheet, body > .shbg"),i;
+  var old=document.querySelectorAll("body > .sheet, body > .shbg, body > .fan"),i;
   for(i=0;i<old.length;i++)old[i].parentNode.removeChild(old[i]);
 }
 function liftSheets(app){
-  var found=app.querySelectorAll(".shbg, .sheet"),i;
+  var found=app.querySelectorAll(".shbg, .sheet, .fan"),i;
   for(i=0;i<found.length;i++)document.body.appendChild(found[i]);
 }
 
@@ -2981,7 +3134,7 @@ function render(){
   ensureMonth();
   applyCardPayments();
   var h=pageHTML(S.tab);
-  if(S.more)h+=moreSheet();
+  if(S.more)h+=moreFan();
   var app=document.getElementById("app");
   detachSheets();
   app.innerHTML=h;
@@ -2991,6 +3144,7 @@ function render(){
   .forEach(function(t){var on=S.tab===t[0]||(t[0]==="more"&&(S.more||MORE_PAGES.indexOf(S.tab)>-1));
     bar+='<button class="tab'+(on?" on":"")+'" data-t="'+t[0]+'">'+t[2]+'<span>'+t[1]+'</span></button>';});
   document.getElementById("bar").innerHTML=bar;
+  paintFan();
   paintMood();
   bind();
 }
@@ -3067,7 +3221,7 @@ function homeJourney(k){
     '<div class="jrn-h"><span class="card-t">Journey'+iq(jrnWhy(k))+'</span>'+
     '<button class="jmode" type="button" data-jmode="1"><i></i>'+(mode==="total"?"Total":"Monthly")+'</button></div>'+
     '<div class="jrn-fig"><span class="jrn-big">\u00A5'+fmt(total)+'</span>'+
-    '<span class="jrn-sub">'+nC+' month'+(nC===1?"":"s")+' banked</span></div>'+
+    '<span class="jrn-sub">'+mst("b")+nC+' month'+(nC===1?"":"s")+' banked</span></div>'+
     '<div class="jchart"><div class="jcols" id="jcols">'+bars+'</div>'+
     '<div class="jlabs" id="jlabs">'+labs+'</div></div>'+
     '<div class="jread" id="jread">'+jrnRead(sel)+'</div></div>';
@@ -3080,7 +3234,7 @@ function jrnRead(sel){
       own=isConfirmed(sel)?savedConfirmed(sel):Math.max(0,savedActual(sel));
   return '<div class="jrline"><span class="m">'+mName(sel)+'</span>'+
     '<span class="a">\u00A5'+fmt(total?cumulativeTo(sel):own)+'</span></div>'+
-    '<div class="jrline"><span class="k">'+savedWord(sel)+
+    '<div class="jrline"><span class="k">'+mst(mstOf(sel))+savedWord(sel)+
       (total?' that month':'')+'</span><span class="v">'+
       (total?'\u00A5'+fmt(own)
            :(m&&m.salary>0?Math.round(rateOf(sel))+'% of salary kept':'\u2014'))+
@@ -3110,7 +3264,7 @@ function viewHome(k,live){
   var hs=healthScore(k),hc=healthColor(hs);
   h+='<div class="hero" style="--hc:'+hc+';--hc-soft:'+healthRGBA(hs,.13)+';--hc-line:'+healthRGBA(hs,.32)+'">'+
      '<div class="aura"></div><div class="aura two"></div><div class="glass">'+
-     '<span class="lab">'+savedWord(k,true)+(isLive(k)?" this month":" in "+mShort(k))+iq(standsHelp(k))+'</span>'+
+     '<span class="lab">'+mst(mstOf(k))+savedWord(k,true)+(isLive(k)?" this month":" in "+mShort(k))+iq(standsHelp(k))+'</span>'+
      '<div class="salary-line"><span class="cur">\u00A5</span>'+
      '<span class="heroval">'+fmt(Math.max(0,sv))+'</span></div>'+
      '<div class="hstatus"><span class="hpill"><i class="hdot"></i>'+healthLabel(hs)+'</span>'+
@@ -3134,7 +3288,7 @@ function viewHome(k,live){
      (live?'<span class="lab">day '+periodDay(k)+' of '+periodDays(k)+'</span>':'')+'</div><div class="eq">'+
      '<div class="eqrow"><span class="k">Income</span><span class="v">\u00A5'+fmt(m.salary)+'</span></div>'+
      '<div class="eqrow"><span class="k">Spending</span><span class="v" style="color:var(--muted)">\u2212'+fmt(spendTotal)+'</span></div>'+
-     '<div class="eqrow total"><span class="k">'+savedWord(k,true)+(isLive(k)?" this month":"")+'</span>'+
+     '<div class="eqrow total"><span class="k">'+mst(mstOf(k))+savedWord(k,true)+(isLive(k)?" this month":"")+'</span>'+
      '<span class="v" style="color:'+(d>=0?"var(--teal)":"var(--coral)")+'">'+
        '\u00A5'+fmt(Math.max(0,sv))+'</span></div></div>';
   h+='<details class="more"><summary>Breakdown</summary><div class="eq">'+
@@ -3351,7 +3505,7 @@ function viewPlan(k,live,noSheets){
   h+='<div class="card"><div class="card-h"><span class="card-t">Override'+
      iq('If the real figure differs from the equation, put what you actually saved here. Leave it empty and the equation decides.')+
      '</span></div>'+
-     '<div class="tgt" style="margin-top:12px"><span class="lab" style="flex:1">Actually saved</span>'+
+     '<div class="tgt" style="margin-top:12px"><span class="lab" style="flex:1">'+mst(mstOf(k))+'Actually saved</span>'+
      '<input id="ovr" type="number" inputmode="numeric" placeholder="'+fmt(Math.max(0,sv))+'" value="'+(m.override!=null?m.override:"")+'"></div>';
   if(m.override!==null&&m.override!==undefined)
     h+='<div class="note" style="color:var(--saffron);margin-top:10px">Manually set. <button id="clearov" style="color:var(--majorelle);font-weight:600">Use the equation instead</button></div>';
@@ -3590,7 +3744,7 @@ function viewGoals(noSheets){
     return (ra>0?jarLeft(a)/ra:1e9)-(rb>0?jarLeft(b)/rb:1e9);})[0];
 
   h+=pageHero({ico:"savings",kicker:"Savings pools",title:"Your goals",
-    sub:heroWord,amount:heroAmt,count:open.length+" active"});
+    sub:mst(mstOf(k))+heroWord,amount:heroAmt,count:open.length+" active"});
 
   var basis=paceBasis();
 
@@ -3604,10 +3758,10 @@ function viewGoals(noSheets){
        '<div class="jsub">'+(done?"complete":jarPct(g)+"% of what you save")+'</div></span>'+
        '<span class="jpc" style="color:'+(done?"var(--teal)":g.col)+'">'+Math.round(pc)+'%</span></div>'+
        '<div class="jamt" style="color:'+(done?"var(--teal)":"var(--text)")+'">\u00A5'+fmt(bal)+'</div>'+
-       '<div class="jof">of \u00A5'+fmt(g.target)+
-         (banked>0?' <span style="color:'+g.col+'">\u00B7 +\u00A5'+fmt(banked)+' banked this month</span>':'')+
+       '<div class="jof"><span class="jtgt">of \u00A5'+fmt(g.target)+'</span>'+
+         (banked>0?' <span class="jxtra" style="color:'+g.col+'">'+mst("b")+'+\u00A5'+fmt(banked)+' banked this month</span>':'')+
          (planned>0&&!(banked>0&&isLive(k))
-           ? ' <span class="jplan">\u00B7 +\u00A5'+fmt(planned)+' planned'+(isLive(k)?" this month":" in "+mShort(k))+'</span>'
+           ? ' <span class="jxtra jplan">'+mst("n")+'+\u00A5'+fmt(planned)+' planned'+(isLive(k)?" this month":" in "+mShort(k))+'</span>'
            : '')+'</div>'+
        '<div class="jbar"><i style="width:'+pc+'%;background:'+(done?"var(--teal)":g.col)+'"></i></div>'+
        '<div class="jrow"><span>'+(done?"target reached":"\u00A5"+fmt(jarLeft(g))+" remaining")+'</span>'+
@@ -3655,24 +3809,111 @@ var MENU=[
   {id:"outside",e:"person",    t:"Money outside",s:"",                       col:"#8A8A98",live:true},
   {id:"settings",e:"gear",     t:"Settings",s:"Your month, your card, your data",col:"#C9A6FF",live:true}
 ];
-function moreSheet(){
-  var h='<div class="shbg" data-more="close"></div><div class="sheet more"><div class="grab"></div>'+
-        '<div class="shhead"><span class="card-t">More</span>'+
-        '<button class="shx" data-more="close" aria-label="Close">'+ICON.x+'</button></div>';
-  MENU.forEach(function(x){
-    var sub=x.id==="outside"?outSum(cur()):x.id==="notes"?noteSum():x.s;
-    var body='<span class="menuico" style="background:'+tint(x.col)+';color:'+x.col+'">'+sym(x.e)+'</span>'+
-             '<span class="menutxt"><span class="menut">'+x.t+'</span><span class="menus">'+sub+'</span></span>';
-    if(x.quick){
-      h+='<div class="menucard menupair">'+
-         '<button class="menuhit" data-more="'+x.id+'">'+body+'</button>'+
-         '<button class="menuadd" data-quicknote="1" aria-label="New note">'+sym("plus")+'</button></div>';
-    }else{
-      h+='<button class="menucard'+(x.live?"":" soon")+'" data-more="'+x.id+'"'+(x.live?"":" disabled")+'>'+body+
-         (x.live?'<span class="menuchev"></span>':'<span class="menusoon">soon</span>')+'</button>';
-    }
+/* ══ THE SPEED DIAL ══
+   More used to slide a full sheet over the page to offer four rows. The
+   fan says the same four things without covering anything: the buttons
+   come out of the More tab itself, along an arc that leans up and to
+   the left because More is the rightmost tab and there is nothing to
+   its right.
+
+   The geometry is worked out at paint time from the tab's own box
+   (paintFan), not written into the stylesheet, because the tab moves
+   with the screen width and the home-indicator inset. The stylesheet
+   only knows how a button looks and how it travels. */
+/* ── the column ──
+   Names are not all the same length, so anything that hangs them off a
+   scatter of positions reads as ragged however carefully the positions
+   are chosen. One column fixes it by construction: every row is the
+   same width, so the names start on one line, the discs finish on
+   another, and the eye has two straight edges to read down.
+
+   The discs sit at the right, stacked straight up from the middle of
+   the More tab, so the column plainly belongs to the button it came
+   out of. Measured from that centre. */
+var FAN_DY=[68,128,188,248];         /* up from the tab, first row lowest */
+var FAN_DOT=46;                      /* the disc, and the row's height */
+var FAN_PADL=18;                     /* the name's own left margin */
+var FAN_GAP=9;                       /* between a name and its disc */
+var FAN_STEP=46,FAN_BACK=40,FANX=null;
+function moreFan(){
+  var h='<div class="shbg fanbg" data-more="close"></div><div class="fan" id="fan">';
+  MENU.forEach(function(x,i){
+    h+='<button class="fanb" type="button" data-more="'+x.id+'"'+
+       ' style="--fc:'+x.col+';--fcs:'+x.col+'45" aria-label="'+esc(x.t)+'">'+
+       '<span class="fanl">'+esc(x.t)+'</span>'+
+       '<span class="fanc">'+sym(x.e)+'</span></button>';
   });
-  return h+'<div style="height:8px"></div></div>';
+  return h+'</div>';
+}
+/* Where each button lands, and in what order. The one nearest the bar
+   leaves first and arrives first; the topmost is last out and first
+   back, so the fan opens and shuts along the same sweep. */
+function paintFan(){
+  var tab=document.querySelector('#bar .tab[data-t="more"]');
+  if(tab)tab.classList.toggle("fanon",!!S.more);
+  var fan=document.getElementById("fan"),bg=document.querySelector(".fanbg");
+  if(!fan||!tab)return;
+  var r=tab.getBoundingClientRect(),ax=r.left+r.width/2,ay=r.top+r.height/2;
+  var W=document.documentElement.clientWidth,b=fan.children,i,lab,half=FAN_DOT/2;
+  /* ONE width for the whole column, taken from the longest name. This is
+     the whole reason the column reads straight: a short name and a long
+     one are given the same room, so nothing is hung off its own length.
+
+     The name has to be measured OUTSIDE its row: inside one, its box is
+     the very thing we are working out, so asking it how wide it is only
+     ever returns the answer we already gave it. One throwaway node, in
+     the same face at the same size, measures the words themselves. */
+  var m=document.createElement("span");
+  m.className="fanl fanmeasure";
+  document.body.appendChild(m);
+  var wide=0;
+  for(i=0;i<b.length;i++){
+    lab=b[i].querySelector(".fanl");
+    if(!lab)continue;
+    m.textContent=lab.textContent;
+    wide=Math.max(wide,m.offsetWidth);
+  }
+  document.body.removeChild(m);
+  wide=FAN_PADL+Math.ceil(wide)+2+FAN_GAP+FAN_DOT;   /* +2: sub-pixel slack */
+  /* the discs stand straight up from the middle of the tab; if the
+     longest name cannot fit beside them, the column narrows rather than
+     running off the glass, and the name inside it ellipsises */
+  wide=Math.min(wide,ax+half-10);
+  for(i=0;i<b.length;i++){
+    b[i].style.left=(ax+half)+"px";b[i].style.top=ay+"px";
+    b[i].style.setProperty("--w",wide.toFixed(1)+"px");
+    b[i].style.setProperty("--dy",(-(FAN_DY[i]||FAN_DY[FAN_DY.length-1])).toFixed(1)+"px");
+    b[i].style.transitionDelay=(i*FAN_STEP)+"ms";
+    lab=b[i].querySelector(".fanl");
+    /* the name reads in just behind the row it belongs to */
+    if(lab)lab.style.transitionDelay=(i*FAN_STEP+120)+"ms";
+  }
+  requestAnimationFrame(function(){
+    if(bg)bg.classList.add("on");
+    fan.classList.add("on");
+  });
+}
+/* Shutting is not a re-render. The buttons have to travel back into the
+   tab before the page is allowed to rebuild, so the work happens here
+   and `done` runs when the last one has landed. */
+function closeFan(done){
+  var fan=document.getElementById("fan"),bg=document.querySelector(".fanbg"),
+      tab=document.querySelector('#bar .tab[data-t="more"]');
+  if(tab)tab.classList.remove("fanon");
+  clearTimeout(FANX);
+  var still=false;
+  try{still=window.matchMedia("(prefers-reduced-motion:reduce)").matches;}catch(e){}
+  if(!fan||still){done();return;}
+  var b=fan.children,n=b.length,i,lab;
+  for(i=0;i<n;i++){
+    b[i].style.transitionDelay=((n-1-i)*FAN_BACK)+"ms";
+    /* a name never lingers after its disc has gone */
+    lab=b[i].querySelector(".fanl");
+    if(lab)lab.style.transitionDelay="0ms";
+  }
+  fan.classList.remove("on");
+  if(bg)bg.classList.remove("on");
+  FANX=setTimeout(done,FAN_BACK*(n-1)+230);
 }
 
 function viewBackup(){
@@ -4844,7 +5085,10 @@ function bind(){
 
   q("[data-t]").forEach(function(b){b.onclick=function(){
     S.delArm=null;
-    if(b.dataset.t==="more"){S.more=!S.more;save();render();return;}
+    if(b.dataset.t==="more"){
+      if(S.more){closeFan(function(){S.more=false;save();render();});return;}
+      S.more=true;save();render();return;
+    }
     S.more=false;S.tab=b.dataset.t;save();render();appScrollTo(0,true);};});
   q("[data-now]").forEach(function(b){b.onclick=function(){
     S.monthCursor=thisMonth();save();render();appScrollTo(0,true);};});
@@ -4929,7 +5173,7 @@ function bind(){
     var g=S.goals.find(function(x){return x.id===i.dataset.jt;});
     if(g){g.target=Math.max(0,+i.value||0);save();updateGoalEditorDOM();}};});
   q("[data-more]").forEach(function(b){b.onclick=function(){
-    if(b.dataset.more==="close"){S.more=false;save();render();return;}
+    if(b.dataset.more==="close"){closeFan(function(){S.more=false;save();render();});return;}
     var x=MENU.find(function(y){return y.id===b.dataset.more;});
     if(x&&x.live){
       if(MORE_PAGES.indexOf(S.tab)<0)S.returnTab=S.tab;   /* remember where you were */
@@ -5418,7 +5662,7 @@ function bind(){
 /* Any sheet can be flicked down to dismiss. Only starts when the sheet is
    scrolled to the top and you are not dragging inside a field. */
 function closeSheets(){
-  if(S.more){S.more=false;save();render();}
+  if(S.more){closeFan(function(){S.more=false;save();render();});}
   else if(S.sheet){S.sheet=false;save();render();}
   else if(S.psheet){S.psheet=false;S.pIco=null;save();render();}
   else if(S.newp){S.newp=false;save();render();}
@@ -5463,6 +5707,7 @@ var SWALLOW=false;
 function noSwipeZone(t){
   while(t&&t!==document.body){
     if(t.classList&&(t.classList.contains("sheet")||t.classList.contains("shbg")||
+       t.classList.contains("fan")||t.classList.contains("fanb")||
        t.classList.contains("goalpick")||t.classList.contains("chiprow")))return true;
     t=t.parentNode;
   }
