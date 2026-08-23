@@ -831,7 +831,7 @@ textarea.dump{width:100%;height:84px;background:var(--surface-2);border-radius:1
 .why>summary{
   padding:9px 12px;border-radius:12px;
   background:rgba(255,255,255,.022);
-  border:1px solid rgba(255,255,255,.05);
+  border:1px solid var(--line-ctl);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
   transition:background .18s var(--ease),border-color .18s var(--ease),
              color .18s var(--ease),transform .14s var(--spring);
@@ -1073,7 +1073,7 @@ body::after{
    black a big drop shadow is invisible anyway. */
 .card{
   border-radius:24px;padding:19px;
-  border:1px solid rgba(255,255,255,.075);
+  border:1px solid var(--line-surface);
   background:var(--sheen),var(--surface);
   box-shadow:var(--edge),0 1px 2px rgba(0,0,0,.5),0 18px 36px -30px rgba(0,0,0,1);
 }
@@ -1099,7 +1099,7 @@ body::after{
    this app already had were one rule away from being it. */
 .chiprow,.methodrow,.fmtbar,.goalpick{
   background:rgba(255,255,255,.045);
-  border:1px solid rgba(255,255,255,.06);
+  border:1px solid var(--line-ctl);
   border-radius:99px;padding:4px;gap:4px;
   box-shadow:inset 0 1px 2px rgba(0,0,0,.4);
 }
@@ -1174,7 +1174,7 @@ html::after{
    Inset, hairlined, and lit only when the caret is in them. */
 .amtfield,.notefield,.searchbox,.nmin,.duein,.atgtin,.tgt input,textarea.dump{
   background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.07);
+  border:1px solid var(--line-ctl);
   box-shadow:inset 0 1px 2px rgba(0,0,0,.35);
   transition:border-color .2s var(--ease),background .2s var(--ease);
 }
@@ -1198,7 +1198,7 @@ html::after{
 /* ── press states, on graphite ── */
 .step:active,.key:active{background:rgba(158,91,255,.22);color:var(--text)}
 .step,.key,.mnav,.shx,.emrow button{background:rgba(255,255,255,.055);
-  border:1px solid rgba(255,255,255,.06)}
+  border:1px solid var(--line-ctl)}
 .key.op{background:rgba(158,91,255,.16);color:var(--majorelle);border-color:rgba(158,91,255,.24)}
 .key.eq{background:var(--majorelle);color:#fff;border-color:transparent;
   box-shadow:0 8px 22px -12px rgba(158,91,255,1)}
@@ -1264,7 +1264,7 @@ html::after{
 .atrack{
   display:flex;gap:5px;padding:5px;height:64px;border-radius:22px;
   background:linear-gradient(180deg,#26262D,#15151A);
-  border:1px solid rgba(255,255,255,.075);
+  border:1px solid var(--line-surface);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(0,0,0,.6),
              0 18px 38px -26px var(--ag,rgba(0,0,0,.9)),
              0 6px 16px -12px rgba(0,0,0,.85);
@@ -1366,7 +1366,7 @@ html::after{
 /* the reading itself — the one place a figure for a single month sits */
 .jread{margin-top:17px;border-radius:17px;padding:14px 16px;
   background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.022));
-  border:1px solid rgba(255,255,255,.085);
+  border:1px solid var(--line-surface);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 10px 22px -16px rgba(0,0,0,.95);
   -webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
 .jrline{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
@@ -1478,6 +1478,62 @@ button.ico.picky.on{box-shadow:inset 0 0 0 1.5px currentColor}
 
 /* ═══ b48 ═══ */
 
+/* ═══ b54 · ONE SURFACE FAMILY ═══
+   The bottom bar was the only thing in the app that had been fully
+   worked out as a surface: a dark pane held a little off the page,
+   one hairline of border, one hairline of light along its top, a tight
+   shadow that gives it an edge and a wide one that gives it air. Every
+   other floating thing had drifted a shade off it — a different black,
+   a different blur, a different border alpha, a shadow missing its
+   tight layer — which is enough to read as a different product.
+
+   So the bar's own values are lifted out here, and the bar is rebuilt
+   from them. Nothing about the bar changes; it simply stops being the
+   only thing that knows these numbers.
+
+   The ladder is scale, not style. A pane at 64 gets a 26 corner; the
+   same pane at 48 gets 20; a control inside one gets 18. The ratio is
+   held so that a small member of the family still reads as family. */
+:root{
+  --pane:rgba(16,16,19,.76);                    /* the surface itself */
+  /* ONE HAIRLINE, THREE WEIGHTS. The app had drawn this same edge at
+     .05, .06, .07, .075, .085, .09, .10 and .12 — eight values for one
+     job, none of which reads as wrong on its own and all of which
+     together read as several hands. Three steps is a decision:
+       pane    — a thing floating above the page (bar, More row)
+       surface — a card, or a track that behaves like one
+       ctl     — a control: a button, an input, a segmented track
+     The hero card keeps a brighter edge and the overlays keep the
+     brightest; those are hierarchy, not drift. */
+  --pane-line:rgba(255,255,255,.09);
+  --line-surface:rgba(255,255,255,.075);
+  --line-ctl:rgba(255,255,255,.07);
+  --pane-glass:saturate(180%) blur(26px);       /* what it does to the page behind */
+  --pane-lift:inset 0 1px 0 rgba(255,255,255,.07),
+              0 1px 2px rgba(0,0,0,.6),
+              0 22px 44px -22px rgba(0,0,0,1);  /* edge, then air */
+  --pane-lift-m:inset 0 1px 0 rgba(255,255,255,.07),
+                0 1px 2px rgba(0,0,0,.55),
+                0 16px 34px -20px rgba(0,0,0,1);
+  --r-pane:26px;                                /* large  — the bar */
+  --r-pane-m:20px;                              /* medium — a More row */
+  --r-ctl:18px;                                 /* small  — a control inside one */
+  /* "you are here", stated once */
+  --on-fill:linear-gradient(180deg,rgba(158,91,255,.24),rgba(158,91,255,.11));
+  --on-line:rgba(158,91,255,.30);
+  --on-lit:inset 0 1px 0 rgba(255,255,255,.10),0 6px 16px -10px rgba(158,91,255,.9);
+}
+/* the bar, rebuilt from the values it used to be the only owner of */
+.bar{
+  border-radius:var(--r-pane);
+  border:1px solid var(--pane-line);
+  background:var(--pane);
+  -webkit-backdrop-filter:var(--pane-glass);backdrop-filter:var(--pane-glass);
+  box-shadow:var(--pane-lift);
+}
+.tab{border-radius:var(--r-ctl)}
+.tab.on{background:var(--on-fill);border-color:var(--on-line);box-shadow:var(--on-lit)}
+
 /* ═══ b49 · THE SPEED DIAL ═══ */
 
 /* ── the ground behind it ──
@@ -1507,60 +1563,65 @@ button.ico.picky.on{box-shadow:inset 0 0 0 1.5px currentColor}
    fade a label in beside a circle — the circle UNFURLS into the row,
    which is why the width is animated and not just the position. */
 .fan{position:fixed;inset:0;z-index:32;pointer-events:none}
+/* A row is a MEDIUM pane: the bar's surface, the bar's hairline, the
+   bar's two shadows, at the next size down the ladder. It was a pill
+   before, and a stadium is a different geometry from anything else in
+   the app — the corner now follows the same ratio the bar keeps, so a
+   row reads as a smaller relative of the island it comes out of.
+
+   The four private colours went with it. They were the last thing left
+   of the old sheet and they lived nowhere else in the app; here the
+   purple means what it means everywhere else — this is the one you
+   are on — and a row you are not on is quiet, exactly like a tab you
+   are not on. */
 .fanb{
   position:absolute;pointer-events:auto;padding:0;
-  height:46px;width:46px;border-radius:23px;overflow:hidden;
-  background:rgba(18,18,22,.78);
-  border:1px solid rgba(255,255,255,.10);
-  -webkit-backdrop-filter:saturate(170%) blur(20px);backdrop-filter:saturate(170%) blur(20px);
-  /* The colour is INSIDE the glass, never spilling onto the page. What
-     is left outside is only the black the row needs to sit above the
-     blur — a coloured halo out here reads as neon, and stacks with the
-     purple wash behind it until the whole column looks lit from within
-     something else. */
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.11),
-             0 16px 30px -16px rgba(0,0,0,.92);
-  /* it folds into and out of its own disc, which is the end nearest the
-     tab, not the middle of the row */
-  transform-origin:calc(100% - 23px) 50%;
+  height:48px;width:48px;border-radius:var(--r-pane-m);overflow:hidden;
+  background:var(--pane);
+  border:1px solid var(--pane-line);
+  -webkit-backdrop-filter:var(--pane-glass);backdrop-filter:var(--pane-glass);
+  box-shadow:var(--pane-lift-m);
+  /* it folds into and out of its own end, the one nearest the tab */
+  transform-origin:calc(100% - 24px) 50%;
   transform:translate(-100%,-50%) scale(.26);opacity:0;
   transition:transform .26s cubic-bezier(.4,0,1,1),width .26s cubic-bezier(.4,0,1,1),
-             opacity .16s var(--ease);
+             opacity .16s var(--ease),background .22s var(--ease),
+             border-color .22s var(--ease);
 }
 /* the name: one left margin for every row, so they all start together.
    A name longer than the column can hold gives way rather than pushing
    its row out of line. */
 .fanl{
-  position:absolute;left:18px;top:0;height:46px;right:55px;
+  position:absolute;left:18px;top:0;height:48px;right:56px;
   display:flex;align-items:center;
   font-family:var(--round);font-size:13.5px;font-weight:700;letter-spacing:-.018em;
   color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  opacity:0;transition:opacity .2s var(--ease);
+  opacity:0;transition:opacity .2s var(--ease),color .22s var(--ease);
 }
 /* the ruler: the same face at the same size, off the page, no box */
 .fanmeasure{position:absolute!important;left:-9999px!important;top:0!important;
   right:auto!important;width:auto!important;height:auto!important;
   display:inline-block!important;opacity:0!important;overflow:visible!important;
   pointer-events:none!important}
-/* the disc at the end of the row: the light sits inside the glass so it
-   has a lit face rather than a coloured one, and each keeps the colour
-   its row already had on the old menu */
+/* the symbol sits on the surface, uncontained, the way it does on a tab
+   — same size, same stroke, same habit of taking its row's colour */
 .fanc{
-  position:absolute;right:0;top:0;width:46px;height:46px;
-  display:grid;place-items:center;border-radius:50%;
-  /* a wide, gentle haze leaning off one shoulder and gone by the far
-     edge — a tighter hotspot reads as a blob stuck in the corner */
-  background:radial-gradient(130% 130% at 20% 18%,var(--fcs),rgba(255,255,255,0) 70%);
-  transition:transform .2s var(--spring);
+  position:absolute;right:0;top:0;width:48px;height:48px;
+  display:grid;place-items:center;color:var(--muted);
+  transition:transform .2s var(--spring),color .22s var(--ease);
 }
-/* line art, thin and white, so the colour is only ever the light */
-.fanc .sym{width:20px;height:20px;stroke-width:1.5;color:#fff}
+.fanc .sym{width:21px;height:21px;stroke-width:1.7}
+/* you are here */
+.fanb.on{background:var(--on-fill);border-color:var(--on-line);box-shadow:var(--on-lit)}
+.fanb.on .fanl{color:var(--text)}
+.fanb.on .fanc{color:var(--majorelle)}
 /* open: up the column, unfurling, overshooting once and settling */
 .fan.on .fanb{
   width:var(--w);
   transform:translate(-100%,-50%) translate(0,var(--dy)) scale(1);opacity:1;
   transition:transform .44s var(--spring),width .44s var(--spring),
-             opacity .2s var(--ease);
+             opacity .2s var(--ease),background .22s var(--ease),
+             border-color .22s var(--ease);
 }
 .fan.on .fanl{opacity:1}
 .fan.on .fanb:active .fanc{transform:scale(.88)}
@@ -1645,7 +1706,7 @@ var store=(function(){
 var KEY="plan.v4";
 /* Journey moved onto Home; a save that was left on that page opens Home */
 function dropJourneyTab(st){if(st&&st.tab==="journey")st.tab="home";return st;}
-var BUILD="b53 \u00B7 speed dial, light inside the glass";
+var BUILD="b55 \u00B7 one lit thing at a time";
 
 /* ═══ 2. DEFINITIONS ═══ */
 var COLOR={savings:"#E4CCFF",rent:"#B98CFF",utilities:"#8A5CF0",household:"#D45CE8",
@@ -3140,9 +3201,20 @@ function render(){
   app.innerHTML=h;
   liftSheets(app);
   var bar="";
+  /* EXACTLY ONE tab is lit, always. This used to be two independent
+     conditions — "this is the page you are on" OR "this is More and
+     More is open" — and both were true at once whenever the fan was
+     opened from Home, Plan, Log or Goals, so two tabs lit together.
+     Deciding WHICH ONE first, then drawing, makes a second lit tab
+     unrepresentable rather than merely unlikely.
+
+     Opening More takes the light; the fan then shows which of its own
+     rows, if any, is the page underneath. */
+  var lit=(S.more||MORE_PAGES.indexOf(S.tab)>-1)?"more":S.tab;
   [["home","Home",ICON.home],["plan","Plan",ICON.plan],["log","Log",ICON.log],["goals","Goals",ICON.goals],["more","More",ICON.more]]
-  .forEach(function(t){var on=S.tab===t[0]||(t[0]==="more"&&(S.more||MORE_PAGES.indexOf(S.tab)>-1));
-    bar+='<button class="tab'+(on?" on":"")+'" data-t="'+t[0]+'">'+t[2]+'<span>'+t[1]+'</span></button>';});
+  .forEach(function(t){
+    bar+='<button class="tab'+(lit===t[0]?" on":"")+'" data-t="'+t[0]+'"'+
+         (lit===t[0]?' aria-current="page"':'')+'>'+t[2]+'<span>'+t[1]+'</span></button>';});
   document.getElementById("bar").innerHTML=bar;
   paintFan();
   paintMood();
@@ -3831,15 +3903,19 @@ var MENU=[
    the More tab, so the column plainly belongs to the button it came
    out of. Measured from that centre. */
 var FAN_DY=[68,128,188,248];         /* up from the tab, first row lowest */
-var FAN_DOT=46;                      /* the disc, and the row's height */
+var FAN_DOT=48;                      /* the symbol's end, and the row's height */
 var FAN_PADL=18;                     /* the name's own left margin */
 var FAN_GAP=9;                       /* between a name and its disc */
 var FAN_STEP=46,FAN_BACK=40,FANX=null;
 function moreFan(){
   var h='<div class="shbg fanbg" data-more="close"></div><div class="fan" id="fan">';
+  /* The row you are already on lights the same way the tab you are
+     already on lights: same fill, same border, same purple. Nothing
+     else in the app marks "here" any other way. */
+  var here=S.tab==="note"?"notes":S.tab;
   MENU.forEach(function(x,i){
-    h+='<button class="fanb" type="button" data-more="'+x.id+'"'+
-       ' style="--fc:'+x.col+';--fcs:'+x.col+'45" aria-label="'+esc(x.t)+'">'+
+    h+='<button class="fanb'+(here===x.id?" on":"")+'" type="button" data-more="'+x.id+'"'+
+       ' aria-label="'+esc(x.t)+'"'+(here===x.id?' aria-current="page"':'')+'>'+
        '<span class="fanl">'+esc(x.t)+'</span>'+
        '<span class="fanc">'+sym(x.e)+'</span></button>';
   });
