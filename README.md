@@ -88,3 +88,5 @@ Reviewed backup restores keep the previous state in a recovery checkpoint and ar
 The overview provides weekly evidence checks for stale or unverified account balances, unresolved differences, potential duplicate entries, uncategorized spending, overdue bills and the current period budget. Matching entries are review candidates and are never deleted automatically. Unknown debt balances display as incomplete rather than zero.
 
 Ordinary unsplit spending, income and refunds can use a reviewed replacement: the original, its reversal and the replacement save in one operation. Changes to a historical entry already included in a later balance check do not create cash. Linked goal purchases, scheduled payments, outside money and split entries retain their own reversal/re-entry workflows.
+
+More → Backup also downloads locally held sync history for manual review. This separate audit file preserves archived queues and the restore hold; it is not an importable workspace or an instruction to replay edits.

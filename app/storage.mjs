@@ -56,4 +56,12 @@ export async function loadDrafts(db) {
 export async function removeDraft(db,id) {
   const tx=db.transaction('current','readwrite'),done=complete(tx);tx.objectStore('current').delete(`draft:${id}`);await done;
 }
+/** Local audit download only. These held operations must never be automatically replayed. */
+export async function syncRecovery(db) {
+  const store=db.transaction('current','readonly').objectStore('current');
+  const keys=await request(store.getAllKeys());
+  const archives=await Promise.all(keys.filter(k=>String(k).startsWith('outbox-recovery:')).map(k=>request(store.get(k))));
+  const hold=await request(store.get('sync-hold'));
+  return {app:'plan-sync-recovery',schema:1,reviewOnly:true,automaticReplay:false,hold:hold||null,archives};
+}
 export async function storageHealth(){if(navigator.storage?.estimate){const {usage,quota}=await navigator.storage.estimate();return {usage,quota,persisted:await navigator.storage.persisted()};}return null;}
