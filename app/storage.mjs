@@ -14,11 +14,12 @@ export async function loadStore(db) {
   validateState(row.state);return row;
 }
 /** State, recovery checkpoint, and idempotent outbox enter one IndexedDB transaction. */
-export async function saveStore(db,state,expectedRevision) {
+export async function saveStore(db,state,expectedRevision,draftId=null) {
   validateState(state);
   const tx=db.transaction(['current','snapshots','outbox'],'readwrite'),finished=complete(tx);
   const current=tx.objectStore('current'),row=await request(current.get('state'));
   if((row?.revision||0)!==expectedRevision){tx.abort();await finished.catch(()=>{});throw new Error('Another tab saved newer records. Reload before editing; your existing records are safe.');}
+  if(draftId){const draft=await request(current.get(`draft:${draftId}`));if(!draft){tx.abort();await finished.catch(()=>{});throw new Error('This draft was already applied or discarded. No new changes were saved.');}current.delete(`draft:${draftId}`);}
   const revision=expectedRevision+1;
   if(row)tx.objectStore('snapshots').put({id:`${Date.now()}-${revision}`,at:new Date().toISOString(),revision:row.revision,state:row.state});
   current.put({state:clone(state),revision,savedAt:new Date().toISOString()},'state');
@@ -29,5 +30,18 @@ export async function saveStore(db,state,expectedRevision) {
 }
 export async function snapshots(db) {
   return (await request(db.transaction('snapshots','readonly').objectStore('snapshots').getAll())).reverse();
+}
+// Drafts are separate from confirmed records and never enter the sync outbox.
+export async function saveDraft(db,draft) {
+  const tx=db.transaction('current','readwrite'),done=complete(tx);
+  tx.objectStore('current').put(clone(draft),`draft:${draft.id}`);await done;
+}
+export async function loadDrafts(db) {
+  const store=db.transaction('current','readonly').objectStore('current');
+  const keys=await request(store.getAllKeys());
+  return Promise.all(keys.filter(k=>String(k).startsWith('draft:')).map(k=>request(db.transaction('current','readonly').objectStore('current').get(k))));
+}
+export async function removeDraft(db,id) {
+  const tx=db.transaction('current','readwrite'),done=complete(tx);tx.objectStore('current').delete(`draft:${id}`);await done;
 }
 export async function storageHealth(){if(navigator.storage?.estimate){const {usage,quota}=await navigator.storage.estimate();return {usage,quota,persisted:await navigator.storage.persisted()};}return null;}

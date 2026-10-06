@@ -1,5 +1,5 @@
-const CACHE='plan-v2-shell-1';
-const SHELL=['./','./index.html','./style.css','./ui.mjs','./core.mjs','./storage.mjs','./manifest.json','./icon.svg'];
+const CACHE='plan-v2-shell-2';
+const SHELL=['./','./index.html','./style.css','./ui.mjs','./core.mjs','./storage.mjs','./sync.mjs','./manifest.json','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL))));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('plan-v2-shell-')&&k!==CACHE).map(k=>caches.delete(k))))));
 self.addEventListener('fetch',event=>{

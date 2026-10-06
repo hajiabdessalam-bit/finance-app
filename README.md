@@ -35,10 +35,20 @@ New records use IndexedDB. Each save atomically updates the workspace, a recover
 
 ## Current limitations
 
-This is an incremental rebuild. Split expenses/refunds, linked partial returns and manual debt payoff scenarios are implemented. Cloud authentication/synchronization, full recurring obligations, advanced payoff comparisons, scheduled cycle activation, receipt parsing, live price quotes and AI are still in development. The planner returns period-end funding dates and the cash calendar uses explicitly entered events. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
+This is an incremental rebuild. Split expenses/refunds, linked partial returns and manual debt payoff scenarios are implemented. Cloud authentication/synchronization, advanced recurring-budget integration, advanced payoff comparisons, scheduled cycle activation, receipt parsing, live price quotes and AI are still in development. The planner returns period-end funding dates. The cash calendar expands weekly/monthly schedules, keeps expected receipts separate from real money and flags overdue bills or account shortages. Failed entries are retained as separate review-only drafts. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
 
 AI provider keys must remain server-side. OpenCode Go documents coding-agent usage, so a subscription should not be assumed to permit finance-chat traffic. The core planner works without AI.
 
 ## Deployment and privacy
 
 Deploy only `app/` as the preview's static output. Never publish personal backup files, recovery snapshots, environment files or local-only regression fixtures. The service worker caches only public shell assets, never API responses or finance exports.
+
+
+Optional isolated database checks require a local-only runtime:
+
+```sh
+npm install --prefix private/pg-tests --ignore-scripts --save-exact @electric-sql/pglite@0.5.8
+node --test --test-isolation=none tests/database.test.mjs
+```
+
+These tests use synthetic users and an in-memory PostgreSQL engine. They do not connect to Supabase or import personal records; without the optional runtime the SQL suite is skipped. They supplement, rather than replace, live project access-control verification.

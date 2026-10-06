@@ -40,12 +40,25 @@ grant select,insert,update on plan_private.workspaces,plan_private.records to au
 grant select,insert on plan_private.operations to authenticated;
 create policy own_workspace_read on plan_private.workspaces for select to authenticated using ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
 create policy own_workspace_insert on plan_private.workspaces for insert to authenticated with check ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
-create policy own_workspace_update on plan_private.workspaces for update to authenticated using ((select auth.uid())=owner_id) with check ((select auth.uid())=owner_id);
-create policy own_record_read on plan_private.records for select to authenticated using ((select auth.uid())=owner_id);
-create policy own_record_insert on plan_private.records for insert to authenticated with check ((select auth.uid())=owner_id);
-create policy own_record_update on plan_private.records for update to authenticated using ((select auth.uid())=owner_id) with check ((select auth.uid())=owner_id);
-create policy own_operation_read on plan_private.operations for select to authenticated using ((select auth.uid())=owner_id);
-create policy own_operation_insert on plan_private.operations for insert to authenticated with check ((select auth.uid())=owner_id);
+create policy own_workspace_update on plan_private.workspaces for update to authenticated using ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false)) with check ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
+create policy own_record_read on plan_private.records for select to authenticated using ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
+create policy own_record_insert on plan_private.records for insert to authenticated with check ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
+create policy own_record_update on plan_private.records for update to authenticated using ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false)) with check ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
+create policy own_operation_read on plan_private.operations for select to authenticated using ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
+create policy own_operation_insert on plan_private.operations for insert to authenticated with check ((select auth.uid())=owner_id and not coalesce((select auth.jwt()->>'is_anonymous')::boolean,false));
+
+-- Ledger originals cannot be rewritten, even through an owner's direct SQL access.
+create function plan_private.preserve_transaction() returns trigger
+language plpgsql security invoker set search_path='' as $$
+begin
+  if old.collection='transactions' and new.data is distinct from old.data then
+    raise exception 'Transactions are immutable; append a correction' using errcode='23514';
+  end if;
+  return new;
+end $$;
+revoke all on function plan_private.preserve_transaction() from public,anon;
+create trigger preserve_transaction before update on plan_private.records
+for each row execute function plan_private.preserve_transaction();
 
 -- Security invoker is deliberate: all work remains subject to the caller's RLS.
 create or replace function public.plan_apply_operation(
@@ -55,17 +68,22 @@ declare
   actor uuid := auth.uid();
   current_version bigint;
   patch jsonb;
+  previous_operation plan_private.operations%rowtype;
 begin
   if actor is null or coalesce((auth.jwt()->>'is_anonymous')::boolean,false) then raise exception 'Sign in with a permanent account' using errcode='42501'; end if;
-  if length(p_workspace)>200 or length(p_kind)>100 or jsonb_typeof(p_patches)<>'array' or jsonb_array_length(p_patches)>1000 or octet_length(p_patches::text)>5000000 then raise exception 'Invalid operation'; end if;
+  if p_workspace is null or length(p_workspace)<1 or length(p_workspace)>200 or p_kind is null or length(p_kind)<1 or length(p_kind)>100 or p_operation is null or p_expected_version is null or p_expected_version<0 or p_patches is null or jsonb_typeof(p_patches)<>'array' or jsonb_array_length(p_patches)>1000 or octet_length(p_patches::text)>5000000 then raise exception 'Invalid operation'; end if;
   insert into plan_private.workspaces(owner_id,id) values(actor,p_workspace) on conflict do nothing;
   select version into current_version from plan_private.workspaces where owner_id=actor and id=p_workspace for update;
-  if exists(select 1 from plan_private.operations where owner_id=actor and workspace_id=p_workspace and id=p_operation) then
+  select * into previous_operation from plan_private.operations where owner_id=actor and workspace_id=p_workspace and id=p_operation;
+  if found then
+    if previous_operation.kind is distinct from p_kind or previous_operation.patches is distinct from p_patches then
+      raise exception 'An operation ID cannot be reused for different content' using errcode='23514';
+    end if;
     return jsonb_build_object('status','duplicate','version',current_version);
   end if;
   if current_version<>p_expected_version then return jsonb_build_object('status','conflict','version',current_version); end if;
   for patch in select value from jsonb_array_elements(p_patches) loop
-    if patch->>'action'<>'put' or length(patch->>'key')>300 or jsonb_typeof(patch->'value')<>'object' then raise exception 'Invalid patch'; end if;
+    if patch->>'action' is distinct from 'put' or patch->>'key' is null or length(patch->>'key')<1 or length(patch->>'key')>300 or jsonb_typeof(patch->'value')<>'object' then raise exception 'Invalid patch'; end if;
     insert into plan_private.records(owner_id,workspace_id,collection,record_key,data,version)
       values(actor,p_workspace,patch->>'collection',patch->>'key',patch->'value',current_version+1)
       on conflict (owner_id,workspace_id,collection,record_key) do update set data=excluded.data,version=excluded.version;
@@ -76,6 +94,23 @@ begin
 end $$;
 revoke all on function public.plan_apply_operation(text,uuid,bigint,text,jsonb) from public,anon;
 grant execute on function public.plan_apply_operation(text,uuid,bigint,text,jsonb) to authenticated;
+
+-- All fields in this response are read in one MVCC statement snapshot.
+create or replace function public.plan_read_workspace(p_workspace text)
+returns jsonb language plpgsql stable security invoker set search_path='' as $$
+declare result jsonb;
+begin
+  if auth.uid() is null or coalesce((auth.jwt()->>'is_anonymous')::boolean,false) then
+    raise exception 'Sign in with a permanent account' using errcode='42501';
+  end if;
+  select jsonb_build_object('workspace',w.id,'version',w.version,'records',
+    coalesce((select jsonb_agg(jsonb_build_object('collection',r.collection,'key',r.record_key,'value',r.data,'version',r.version) order by r.collection,r.record_key)
+      from plan_private.records r where r.owner_id=w.owner_id and r.workspace_id=w.id),'[]'::jsonb))
+    into result from plan_private.workspaces w where w.owner_id=auth.uid() and w.id=p_workspace;
+  return result;
+end $$;
+revoke all on function public.plan_read_workspace(text) from public,anon;
+grant execute on function public.plan_read_workspace(text) to authenticated;
 
 -- Still required before enabling: authenticated/anonymous/other-user RLS tests,
 -- a read RPC returning an atomic version + records snapshot, immutable record rules,

@@ -161,6 +161,7 @@ export function validateState(s) {
   for(const key of ['accounts','transactions','reconciliations','categories','budgets','goals','obligations','outside','notes','holdings','operations','imports','cycleHistory'])if(!Array.isArray(s[key]))fail(`Missing ${key}.`);
   if(!object(s.reservations)||!object(s.settings))fail('Settings or reservations are missing.');
   for(const key of ['accounts','transactions','categories','budgets','goals','outside','notes','holdings','operations'])unique(s[key],key);
+  unique(s.obligations,'obligations');
   const accounts=new Set(s.accounts.map(a=>a.id)),categories=new Set(s.categories.map(c=>c.id)),goals=new Set(s.goals.map(g=>g.id));
   for(const a of s.accounts) {string(a.name,'Account name',300);if(!['asset','liability'].includes(a.kind)||a.currency!==s.currency)fail('Account type/currency is invalid.');if(a.opening!==null)validMoney(a.opening,'Opening balance',true);dateKey(a.baselineDate);if(!Number.isSafeInteger(a.baselineSeq)||a.baselineSeq<0||a.baselineSeq>s.seq)fail('Account baseline is invalid.');}
   const transactionIds=new Set(s.transactions.map(t=>t.id));
@@ -188,7 +189,7 @@ export function validateState(s) {
   for(const [id,n]of Object.entries(s.reservations)){if(!goals.has(id))fail('Missing reservation goal.');validMoney(n,'Goal reservation');}
   for(const r of s.reconciliations) {if(!accounts.has(r.account))fail('Missing reconciliation account.');dateKey(r.date);validMoney(r.balance,'Balance',true);if(r.difference!==null)validMoney(r.difference,'Difference',true);}
   for(const o of s.outside){validMoney(o.amount,'Outside amount');dateKey(o.date);if(o.returned!=null)validMoney(o.returned,'Returned amount');if((o.returned||0)>o.amount)fail('Returned amount exceeds the original record.');if(!['unclassified','gift','loan','investment','borrowed'].includes(o.kind))fail('Invalid outside classification.');}
-  for(const o of s.obligations){string(o.name,'Event name',300);dateKey(o.date);validMoney(o.amount,'Scheduled amount',true);if(!['bill','income'].includes(o.kind)||!accounts.has(o.account)||(o.debtAccount&&!accounts.has(o.debtAccount)))fail('Invalid scheduled event.');if(o.kind==='income'&&o.amount>=0||o.kind==='bill'&&o.amount<=0)fail('Scheduled event sign does not match its type.');}
+  for(const o of s.obligations){string(o.name,'Event name',300);dateKey(o.date);validMoney(o.amount,'Scheduled amount',true);if(!['bill','income'].includes(o.kind)||!accounts.has(o.account)||(o.debtAccount&&!accounts.has(o.debtAccount)))fail('Invalid scheduled event.');if(o.kind==='income'&&o.amount>=0||o.kind==='bill'&&o.amount<=0)fail('Scheduled event sign does not match its type.');if(o.recurrence){if(!['monthly','weekly'].includes(o.recurrence.unit)||!Number.isInteger(o.recurrence.interval)||o.recurrence.interval<1||o.recurrence.interval>12)fail('Invalid repeat schedule.');if(o.recurrence.until){dateKey(o.recurrence.until);if(o.recurrence.until<o.date)fail('Repeat end precedes its start.');}}if(o.transaction&&!transactionIds.has(o.transaction))fail('Scheduled payment refers to a missing transaction.');}
   for(const h of s.holdings){validMoney(h.cost,'Holding cost');dateKey(h.date);if(h.quantity!=null&&(!Number.isFinite(h.quantity)||h.quantity<=0))fail('Invalid holding quantity.');}
   for(const c of s.categories){string(c.name,'Category name',300);if(!['fixed','variable','savings','buffer'].includes(c.type))fail('Invalid category type.');}
   for(const n of s.notes){string(n.title||'','Note title');string(n.body||'','Note body',50000);if(n.items&&!Array.isArray(n.items))fail('Invalid checklist.');}
@@ -200,7 +201,12 @@ export function accountBalance(s,id,asOf=today(s.timezone)) {
   const a=s.accounts.find(a=>a.id===id);if(!a)fail('Account does not exist.');
   if(a.opening===null||asOf<a.baselineDate)return null;
   let result=a.opening;
-  for(const t of s.transactions)if(t.seq>a.baselineSeq&&t.date<=asOf)for(const p of t.postings)if(p.account===id)result+=p.amount;
+  for(const t of s.transactions)if(t.seq>a.baselineSeq&&t.date<=asOf){
+    // A later statement check already incorporates the original cash movement.
+    // Correcting that old entry changes history, not a freshly verified bank balance.
+    if(t.kind==='reversal'&&s.transactions.find(x=>x.id===t.reverses)?.seq<=a.baselineSeq)continue;
+    for(const p of t.postings)if(p.account===id)result+=p.amount;
+  }
   validMoney(result,'Calculated balance',true);return result;
 }
 export function summary(s,asOf=today(s.timezone)) {
@@ -229,7 +235,8 @@ export function periodForecast(s,key,{mode='budget',extraExpense=0,incomeChange=
   if(mode==='history'&&histories.some(n=>n>0))spending=Math.max(spending,Math.round(histories.reduce((a,b)=>a+b,0)/histories.filter(n=>n>0).length));
   if(mode==='conservative')spending=Math.ceil(spending*1.15);
   const income=b.salary+incomeChange;
-  return {income,spending,buffer,capacity:income-spending-buffer-extraExpense,confidence:'Budget assumption',budget:b,
+  const committed=s.goals.filter(g=>g.completed&&g.recurringCost&&!g.recurringIncludedInBudget&&!g.purchase?.reversedBy).reduce((n,g)=>n+g.recurringCost,0);
+  return {income,spending,buffer,committed,capacity:income-spending-buffer-extraExpense-committed,confidence:'Budget assumption',budget:b,
     assumptions:[`Salary and budget from ${b.key}.`,'Regular spending is reserved even when not individually logged.','Borrowing and expected repayments are not recurring income.',mode==='conservative'?'Spending increased by 15% for this scenario.':'Future income is not confirmed cash.']};
 }
 /** Joint allocation: one pool, priority order, no reuse of funds; never spend protected savings. */
@@ -241,34 +248,68 @@ export function planGoals(s,{asOf=today(s.timezone),periods=12,mode='budget',ext
   const rows=[],warnings=[];
   if(now.missing)warnings.push('Account balances need a weekly check. Existing cash is excluded until verified.');
   let pool=Math.max(0,now.available??0);
+  let existingShortfall=Math.max(0,-(now.available??0));
   let ongoingCost=0;
   const distribute=(date,key)=>{for(const g of results){const take=Math.min(pool,g.remaining);g.funded+=take;g.remaining-=take;pool-=take;if(take)g.allocations.push({key,amount:take,date});if(!g.remaining&&!g.ready){g.ready=date;ongoingCost+=s.goals.find(x=>x.id===g.id)?.recurringCost||0;}}};
   distribute(asOf,'existing');
   for(let i=1;i<=Math.min(60,Math.max(1,periods));i++) {
     const key=addMonths(start,i),forecast=periodForecast(s,key,{mode,extraExpense,incomeChange}),dates=periodDates(key,s.cycleStart);
-    const delta=forecast.capacity-protection-ongoingCost;
+    const delta=forecast.capacity-protection-ongoingCost-existingShortfall;
+    const carriedShortfall=existingShortfall;existingShortfall=0;
     // A deficit consumes the unallocated purchase pool. If insufficient, the scenario is infeasible.
     if(delta<0) {
       const shortage=Math.max(0,-delta-pool);pool=Math.max(0,pool+delta);
       if(shortage){warnings.push(`${key}: shortfall of ${shortage} minor units after reserve contribution. No later purchase dates are reliable.`);rows.push({key,date:dates.to,capacity:forecast.capacity,protected:protection,contribution:delta,pool,shortage});break;}
     } else pool+=delta;
     const before=results.map(g=>g.funded);distribute(dates.to,key);
-    rows.push({key,date:dates.to,capacity:forecast.capacity,protected:protection,contribution:delta,pool,allocated:results.reduce((n,g,j)=>n+g.funded-before[j],0),shortage:0,ongoingCost});
+    rows.push({key,date:dates.to,capacity:forecast.capacity,protected:protection,contribution:delta,pool,allocated:results.reduce((n,g,j)=>n+g.funded-before[j],0),shortage:0,ongoingCost,carriedShortfall});
   }
   for(const g of results)g.late=!!g.deadline&&(!g.ready||g.ready>g.deadline);
-  if(now.available!==null&&now.available<0)warnings.push('Existing reservations exceed liquid cash. Release reservations or reconcile balances.');
+  if(now.available!==null&&now.available<0)warnings.push('Cash is below existing reservations and reserve. The shortfall is deducted before funding purchases. Review balances and allocations.');
   if(results.some(g=>g.late))warnings.push('At least one desired date cannot be met under these assumptions. Try changing priority, price, spending or income.');
   return {results,rows,warnings,pool,mode,asOf,assumptions:['Dates are end-of-period funding estimates; check bill timing before buying.','Current period future surplus is excluded to avoid spending money twice.','Protected goals and reserve remain untouched.',...periodForecast(s,addMonths(start,1),{mode}).assumptions]};
 }
 export function cashCalendar(s,{asOf=today(s.timezone),days=60,events=[]}={}) {
+  dateKey(asOf);if(!Number.isInteger(days)||days<1||days>730)fail('Calendar range must be 1–730 days.');
   const sum=summary(s,asOf);if(sum.cash===null)return {known:false,rows:[],minimum:null,warnings:['Verify every cash account before checking daily liquidity.']};
   const end=new Date(`${asOf}T12:00:00Z`);end.setUTCDate(end.getUTCDate()+days);const to=end.toISOString().slice(0,10);
   const dated=events.map(e=>{dateKey(e.date);validMoney(e.amount,'Cash event',true);return {...e};});
-  for(const o of s.obligations)if(!o.paid&&o.date>=asOf&&o.date<=to)dated.push({date:o.date,amount:-o.amount,name:o.name,estimated:true});
+  for(const o of scheduledEvents(s,{from:asOf,to,includeOverdue:true}))if(!o.paid)dated.push({date:o.date<asOf?asOf:o.date,due:o.date,overdue:o.date<asOf,amount:-o.amount,name:o.name,account:o.account,estimated:true});
   dated.sort((a,b)=>a.date.localeCompare(b.date)||a.amount-b.amount);
-  let running=sum.cash,minimum=running;const rows=[];
-  for(const e of dated)if(e.date>=asOf&&e.date<=to){running+=e.amount;minimum=Math.min(minimum,running);rows.push({...e,balance:running});}
-  return {known:true,rows,minimum,warnings:minimum<sum.protected?['Cash falls below the protected reserve before a scheduled income arrives.']:[]};
+  let running=sum.cash,minimum=running;const rows=[],accountBalances=Object.fromEntries(s.accounts.filter(a=>a.kind==='asset').map(a=>[a.id,accountBalance(s,a.id,asOf)])),warnings=[];
+  for(const e of dated)if(e.date>=asOf&&e.date<=to){running+=e.amount;minimum=Math.min(minimum,running);if(e.account&&own(accountBalances,e.account)){accountBalances[e.account]+=e.amount;if(accountBalances[e.account]<0)warnings.push(`${e.name}: the selected account is short on ${e.date}. Transfer money before paying.`);}rows.push({...e,balance:running,accountBalance:e.account?accountBalances[e.account]:null});}
+  if(minimum<sum.protected)warnings.push('Cash falls below the protected reserve before a scheduled income arrives.');
+  if(dated.some(e=>e.overdue))warnings.push('Unpaid overdue events are included today. Record payment or revise their schedule.');
+  return {known:true,rows,minimum,accountBalances,warnings:[...new Set(warnings)]};
+}
+/** Expand templates without marking any future occurrence paid or creating income. */
+export function scheduledEvents(s,{from=today(s.timezone),to=from,includeOverdue=false}={}) {
+  dateKey(from);dateKey(to);if(to<from)fail('Schedule end precedes its start.');
+  const rows=[],stored=new Map(s.obligations.map(o=>[o.id,o]));
+  for(const o of s.obligations.filter(o=>!o.templateId&&!o.archived)){
+    let date=o.date,index=0;
+    while(date<=to){
+      const id=index?`${o.id}@${date}`:o.id,existing=stored.get(id),occurrence=existing||{...clone(o),id,date,templateId:o.id,paid:false};
+      if(date>=from||includeOverdue&&!occurrence.paid)rows.push(occurrence);
+      if(!o.recurrence)break;
+      index++;if(index>20000)fail('Repeat schedule is too long.');
+      if(o.recurrence.unit==='monthly'){const key=addMonths(o.date.slice(0,7),index*o.recurrence.interval),[y,m]=key.split('-').map(Number);date=dayAt(y,m-1,Number(o.date.slice(8)));}
+      else{const next=new Date(`${o.date}T12:00:00Z`);next.setUTCDate(next.getUTCDate()+index*7*o.recurrence.interval);date=next.toISOString().slice(0,10);}
+      if(o.recurrence.until&&date>o.recurrence.until)break;
+    }
+  }
+  return rows.sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+}
+export function recordScheduled(s,id,date=today(s.timezone)) {
+  dateKey(date);if(date>today(s.timezone))fail('Expected income or bills cannot be recorded as paid in advance.');
+  const o=scheduledEvents(s,{from:'1900-01-01',to:date}).find(o=>o.id===id);
+  if(!o||o.paid)fail('Choose an unpaid occurrence due by the payment date.');
+  const kind=o.kind==='income'?'income':o.debtAccount?'repayment':'expense';
+  let next=addTransaction(s,{kind,amount:Math.abs(o.amount),date,account:o.account,toAccount:o.debtAccount||'',category:'oneoff',note:o.name,source:'scheduled'});
+  return mutate(next,'obligation-paid',{id,date},n=>{
+    let record=n.obligations.find(x=>x.id===id);if(!record){record=clone(o);delete record.recurrence;n.obligations.push(record);}
+    record.paid=true;record.paidDate=date;record.transaction=n.transactions.at(-1).id;
+  });
 }
 export function mutate(state,type,input,apply,operationId=uid()) {
   if(state.operations.some(o=>o.id===operationId))return state;
@@ -281,7 +322,7 @@ export function mutate(state,type,input,apply,operationId=uid()) {
     if(state[collection].some(r=>!next[collection].some(x=>String(x.id)===String(r.id))))fail('Financial records cannot be deleted. Archive or correct them.');
   }
   for(const [key,amount]of Object.entries(next.reservations))if(state.reservations[key]!==amount)patches.push({collection:'reservations',key,value:{amount},action:'put'});
-  const profile=s=>({schema:s.schema,id:s.id,currency:s.currency,timezone:s.timezone,cycleStart:s.cycleStart,name:s.name,settings:s.settings,legacy:s.legacy});
+  const profile=s=>({schema:s.schema,id:s.id,seq:s.seq,currency:s.currency,timezone:s.timezone,cycleStart:s.cycleStart,name:s.name,settings:s.settings,legacy:s.legacy});
   if(JSON.stringify(profile(state))!==JSON.stringify(profile(next)))patches.push({collection:'preferences',key:'profile',value:clone(profile(next)),action:'put'});
   next.operations.push({id:operationId,type,input:clone(input),patches,baseVersion:state.version,version:next.version,seq:next.seq,at:new Date().toISOString(),sync:'pending'});
   validateState(next);return next;
@@ -309,6 +350,30 @@ export function reverseTransaction(s,id,reason='Correction') {
     const reversalId=uid();
     n.transactions.push({id:reversalId,seq:n.seq,kind:'reversal',date:t.date,amount:t.amount,category:t.category,note:reason,postings:t.postings.map(p=>({account:p.account,amount:-p.amount})),reverses:id,historical:false,source:'correction'});
     for(const record of n.outside)for(const returned of record.returns||[])if(returned.transaction===id&&!returned.reversedBy){record.returned-=returned.amount;returned.reversedBy=reversalId;}
+    for(const g of n.goals)if(g.purchase?.transaction===id&&!g.purchase.reversedBy){
+      g.completed=false;g.archived=false;g.purchase.reversedBy=reversalId;
+      // Restoring a reservation automatically could spend cash already assigned elsewhere.
+      // Keep it released and ask the user to review their allocation.
+      for(const h of n.holdings)if(h.transaction===id)h.reversedBy=reversalId;
+      for(const o of n.obligations)if(o.purchaseTransaction===id)o.archived=true;
+    }
+    for(const o of n.obligations)if(o.transaction===id){o.paid=false;o.reversedBy=reversalId;o.transaction='';}
+  });
+}
+/** A planned purchase is one operation: cash, goal completion and holdings agree. */
+export function purchaseGoal(s,{id,amount,account,date}) {
+  const g=s.goals.find(g=>g.id===id);dateKey(date);validMoney(amount,'Purchase amount');
+  if(!g||g.archived||g.protected)fail('Choose an active purchase goal.');
+  if(amount<=0||date>today(s.timezone))fail('Record a positive purchase that has already happened.');
+  const a=s.accounts.find(a=>a.id===account),balance=accountBalance(s,account,date),sum=summary(s,date);
+  if(a.kind!=='asset'||balance===null||balance<amount)fail('Verify sufficient cash in this account before buying.');
+  if(sum.available===null||amount>sum.available+(s.reservations[id]||0))fail('This purchase would use protected cash or money reserved for another goal.');
+  const transaction=uid();
+  return mutate(s,'goal-purchase',{id,amount,account,date},n=>{
+    n.transactions.push({id:transaction,seq:n.seq,kind:'expense',amount,date,account,toAccount:'',category:'oneoff',note:`Goal purchase: ${g.name}`,postings:[{account,amount:-amount}],historical:false,source:'goal',goal:id});
+    const goal=n.goals.find(x=>x.id===id);goal.purchase={transaction,amount,date,releasedReservation:n.reservations[id]||0};goal.completed=true;goal.archived=true;n.reservations[id]=0;
+    if(goal.kind==='gold')n.holdings.push({id:uid(),name:goal.name,quantity:goal.quantity,cost:amount,date,goal:id,transaction});
+    if(goal.recurringCost){const key=addMonths(date.slice(0,7),1),[y,m]=key.split('-').map(Number);n.obligations.push({id:uid(),name:`${goal.name}: ongoing cost`,kind:'bill',amount:goal.recurringCost,date:dayAt(y,m-1,Number(date.slice(8))),account,paid:false,recurrence:{unit:'monthly',interval:1,until:''},goal:id,purchaseTransaction:transaction});}
   });
 }
 export function reconcile(s,{account,date,balance,note=''}) {
