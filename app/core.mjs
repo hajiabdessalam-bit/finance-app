@@ -448,7 +448,8 @@ export function mutate(state,type,input,apply,operationId=uid()) {
   }
   for(const [key,amount]of Object.entries(next.reservations))if(state.reservations[key]!==amount)patches.push({collection:'reservations',key,value:{amount},action:'put'});
   const profile=s=>({schema:s.schema,id:s.id,seq:s.seq,currency:s.currency,timezone:s.timezone,cycleStart:s.cycleStart,name:s.name,settings:s.settings,legacy:s.legacy});
-  if(JSON.stringify(profile(state))!==JSON.stringify(profile(next)))patches.push({collection:'preferences',key:'profile',value:clone(profile(next)),action:'put'});
+  const beforeProfile=profile(state),afterProfile=profile(next),changedProfile=Object.fromEntries(Object.entries(afterProfile).filter(([key,value])=>JSON.stringify(value)!==JSON.stringify(beforeProfile[key])));
+  if(Object.keys(changedProfile).length)patches.push({collection:'preferences',key:'profile',value:clone(changedProfile),action:'put'});
   next.operations.push({id:operationId,type,input:clone(input),patches,baseVersion:state.version,version:next.version,seq:next.seq,at:new Date().toISOString(),sync:'pending'});
   validateState(next);return next;
 }

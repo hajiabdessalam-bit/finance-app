@@ -1,9 +1,19 @@
 /** Preparation for private sync. No HTTP route or database write is enabled here. */
 import {validateState,clone,today,dateKey} from '../app/core.mjs';
 import {applyPatches,sameJson} from '../app/sync.mjs';
+import {validateTransitions} from './transitions.mjs';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const allowed=new Set(['workspace','operationId','expectedVersion','patches','type']);
+export function validateEnvelope(request){
+  if(!request||typeof request!=='object'||Array.isArray(request)||Object.keys(request).some(k=>!allowed.has(k)))throw new Error('Invalid operation envelope.');
+  if(typeof request.workspace!=='string'||!request.workspace||request.workspace.length>200)throw new Error('Invalid workspace.');
+  if(!UUID.test(request.operationId||''))throw new Error('Invalid operation ID.');
+  if(!Number.isSafeInteger(request.expectedVersion)||request.expectedVersion<0)throw new Error('Invalid workspace version.');
+  if(typeof request.type!=='string'||!request.type||request.type.length>100)throw new Error('Invalid operation type.');
+  if(!Array.isArray(request.patches)||!request.patches.length||request.patches.length>1000)throw new Error('Invalid operation size.');
+  if(new TextEncoder().encode(JSON.stringify(request)).byteLength>2_000_000)throw new Error('Operation is too large.');
+}
 /** Validate the entire resulting state against a trusted, atomic server snapshot.
  * Authentication, permanent-user ownership, replay lookup and CAS must precede/guard
  * this check in the future server transport. This function alone is not authorization.
@@ -11,14 +21,9 @@ const allowed=new Set(['workspace','operationId','expectedVersion','patches','ty
 export function validateOperation(current,request,{asOf=today(current.timezone)}={}) {
   validateState(current);
   dateKey(asOf); // Trusted server time, never a field supplied in the operation.
-  if(!request||typeof request!=='object'||Array.isArray(request)||Object.keys(request).some(k=>!allowed.has(k)))throw new Error('Invalid operation envelope.');
+  validateEnvelope(request);
   if(request.workspace!==current.id)throw new Error('Wrong workspace.');
-  if(!UUID.test(request.operationId||''))throw new Error('Invalid operation ID.');
   if(!Number.isSafeInteger(request.expectedVersion)||request.expectedVersion<0||request.expectedVersion!==current.version)throw new Error('Workspace version conflict.');
-  if(typeof request.type!=='string'||!request.type||request.type.length>100)throw new Error('Invalid operation type.');
-  if(!Array.isArray(request.patches)||!request.patches.length||request.patches.length>1000)throw new Error('Invalid operation size.');
-  // Below the platform's request ceiling, measured in UTF-8 bytes rather than characters.
-  if(new TextEncoder().encode(JSON.stringify(request)).byteLength>2_000_000)throw new Error('Operation is too large.');
   const next=applyPatches(current,request.patches);
   if(next.id!==current.id||next.schema!==current.schema||next.currency!==current.currency)throw new Error('Workspace identity or currency cannot be replaced by sync.');
   if(next.cycleStart!==current.cycleStart)throw new Error('The original cycle start cannot be rewritten. Schedule a future change.');
@@ -39,5 +44,6 @@ export function validateOperation(current,request,{asOf=today(current.timezone)}
   }
   next.version=current.version+1;
   validateState(next);
+  validateTransitions(current,next,request,asOf);
   return clone(next);
 }

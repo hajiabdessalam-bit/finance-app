@@ -23,7 +23,10 @@ export function diffEntities(before,after) {
   const old=new Map(entities(before).map(e=>[identity(e),e])),patches=[];
   for(const next of entities(after)) {
     const previous=old.get(identity(next));old.delete(identity(next));
-    if(!previous||!sameJson(previous.value,next.value))patches.push({...next,action:'put'});
+    if(!previous||!sameJson(previous.value,next.value)){
+      const value=next.collection==='preferences'&&previous?Object.fromEntries(Object.entries(next.value).filter(([key,value])=>!sameJson(value,previous.value[key]))):next.value;
+      patches.push({...next,value,action:'put'});
+    }
   }
   // Deletion is never propagated silently. Archive/reverse records instead.
   if(old.size)throw new Error('Sync cannot delete financial history. Archive or reverse the record.');
@@ -63,6 +66,17 @@ export function hydrateSnapshot(snapshot) {
   // Older previews did not transmit seq. Derive a safe lower bound for recovery.
   next.seq=Math.max(next.seq,...next.transactions.map(t=>t.seq),...next.accounts.map(a=>a.baselineSeq),...next.reconciliations.map(r=>r.seq||0));
   next.operations=[];
+  if(snapshot.operations!==undefined){
+    if(!Array.isArray(snapshot.operations))throw new Error('Invalid cloud operation audit.');
+    const operationIds=new Set(),versions=new Set();
+    if(snapshot.operations.some(o=>!o||typeof o!=='object'||!Array.isArray(o.patches)))throw new Error('Invalid cloud operation audit.');
+    for(const operation of snapshot.operations.slice().sort((a,b)=>a.version-b.version)){
+      const seq=operation.patches?.find(p=>p.collection==='preferences'&&p.key==='profile')?.value?.seq;
+      if(typeof operation.id!=='string'||!operation.id||operationIds.has(operation.id)||!Number.isSafeInteger(operation.version)||operation.version<1||operation.version>snapshot.version||versions.has(operation.version)||typeof operation.type!=='string'||!operation.type||operation.type.length>100||!Array.isArray(operation.patches)||!Number.isSafeInteger(seq)||seq<1||seq>next.seq||typeof operation.at!=='string'||!Number.isFinite(Date.parse(operation.at)))throw new Error('Inconsistent cloud operation audit.');
+      operationIds.add(operation.id);versions.add(operation.version);
+      next.operations.push({id:operation.id,type:operation.type,input:{},patches:clone(operation.patches),baseVersion:operation.version-1,version:operation.version,seq,at:operation.at,sync:'synced',provenance:'cloud'});
+    }
+  }
   validateState(next);return next;
 }
 export function conflictReview(local,remote) {

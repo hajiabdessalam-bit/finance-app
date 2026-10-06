@@ -41,7 +41,7 @@ This is an incremental rebuild. Split expenses/refunds, linked partial returns, 
 
 Money outside can record a new gift, loan or investment and its cash movement together. Partial returns are linked to that record. Reverse linked returns before correcting an original outgoing payment; original entries stay in the ledger.
 
-`server/validation.mjs` validates a complete proposed sync state against a trusted snapshot. It is not a deployed route or an authorization layer. Before cloud writes are enabled, the server must verify permanent-user ownership, handle immutable replay IDs and version conflicts, and prevent direct database calls from bypassing domain validation.
+`server/validation.mjs` validates a complete proposed sync state and financial transitions against a trusted snapshot. Checked baselines require matching reconciliation evidence, original differences cannot be rewritten, reservations require available cash, and unrelated operations cannot edit other collections. `server/sync-service.mjs` prepares permanent-user verification, replay matching and version conflicts. The draft SQL denies authenticated client writes and exposes a private write RPC only to the trusted server role. `server/supabase-adapter.mjs` separates user identity checks from privileged RPC credentials. These modules are tested preparation; no deployed route, credentials, database or cloud upload is enabled. Reviewed bootstrap, complete operation-specific checks and live access-control verification remain prerequisites.
 
 AI provider keys must remain server-side. OpenCode Go documents coding-agent usage, so a subscription should not be assumed to permit finance-chat traffic. The core planner works without AI.
 
