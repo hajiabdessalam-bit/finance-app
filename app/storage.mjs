@@ -14,7 +14,7 @@ export async function loadStore(db) {
   validateState(row.state);return row;
 }
 /** State, recovery checkpoint, and idempotent outbox enter one IndexedDB transaction. */
-export async function saveStore(db,state,expectedRevision,draftId=null) {
+export async function saveStore(db,state,expectedRevision,draftId=null,{restore=false}={}) {
   validateState(state);
   const tx=db.transaction(['current','snapshots','outbox'],'readwrite'),finished=complete(tx);
   const current=tx.objectStore('current'),row=await request(current.get('state'));
@@ -23,7 +23,19 @@ export async function saveStore(db,state,expectedRevision,draftId=null) {
   const revision=expectedRevision+1;
   if(row)tx.objectStore('snapshots').put({id:`${Date.now()}-${revision}`,at:new Date().toISOString(),revision:row.revision,state:row.state});
   current.put({state:clone(state),revision,savedAt:new Date().toISOString()},'state');
-  for(const operation of state.operations)if(operation.sync==='pending')tx.objectStore('outbox').put({...clone(operation),stateId:state.id});
+  const outbox=tx.objectStore('outbox'),queued=await request(outbox.getAll());
+  let syncHold=await request(current.get('sync-hold'));
+  if(restore){
+    // Preserve the old queue for review, but never replay it over restored records.
+    // A future cloud bootstrap must explicitly resolve this hold before sending edits.
+    if(queued.length)current.put({at:new Date().toISOString(),workspace:row?.state.id,operations:clone(queued)},`outbox-recovery:${crypto.randomUUID()}`);
+    syncHold={workspace:state.id,reason:'Reviewed restore requires a new cloud baseline',at:new Date().toISOString()};
+    current.put(syncHold,'sync-hold');
+  }
+  const pending=syncHold?[]:state.operations.filter(operation=>operation.sync==='pending');
+  const pendingIds=new Set(pending.map(operation=>operation.id));
+  for(const operation of queued)if(operation.stateId!==state.id||!pendingIds.has(operation.id))outbox.delete(operation.id);
+  for(const operation of pending)outbox.put({...clone(operation),stateId:state.id});
   const keys=await request(tx.objectStore('snapshots').getAllKeys());
   for(const key of keys.slice(0,Math.max(0,keys.length-30)))tx.objectStore('snapshots').delete(key);
   await finished;return revision;

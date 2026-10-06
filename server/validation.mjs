@@ -1,6 +1,6 @@
 /** Preparation for private sync. No HTTP route or database write is enabled here. */
-import {validateState,clone} from '../app/core.mjs';
-import {applyPatches} from '../app/sync.mjs';
+import {validateState,clone,today,dateKey} from '../app/core.mjs';
+import {applyPatches,sameJson} from '../app/sync.mjs';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const allowed=new Set(['workspace','operationId','expectedVersion','patches','type']);
@@ -8,8 +8,9 @@ const allowed=new Set(['workspace','operationId','expectedVersion','patches','ty
  * Authentication, permanent-user ownership, replay lookup and CAS must precede/guard
  * this check in the future server transport. This function alone is not authorization.
  */
-export function validateOperation(current,request) {
+export function validateOperation(current,request,{asOf=today(current.timezone)}={}) {
   validateState(current);
+  dateKey(asOf); // Trusted server time, never a field supplied in the operation.
   if(!request||typeof request!=='object'||Array.isArray(request)||Object.keys(request).some(k=>!allowed.has(k)))throw new Error('Invalid operation envelope.');
   if(request.workspace!==current.id)throw new Error('Wrong workspace.');
   if(!UUID.test(request.operationId||''))throw new Error('Invalid operation ID.');
@@ -20,6 +21,17 @@ export function validateOperation(current,request) {
   if(new TextEncoder().encode(JSON.stringify(request)).byteLength>2_000_000)throw new Error('Operation is too large.');
   const next=applyPatches(current,request.patches);
   if(next.id!==current.id||next.schema!==current.schema||next.currency!==current.currency)throw new Error('Workspace identity or currency cannot be replaced by sync.');
+  if(next.cycleStart!==current.cycleStart)throw new Error('The original cycle start cannot be rewritten. Schedule a future change.');
+  if(!sameJson(next.legacy,current.legacy))throw new Error('Original imported records cannot be rewritten by sync.');
+  for(const old of current.cycleHistory){
+    const replacement=next.cycleHistory.find(c=>c.id===old.id);
+    if(!replacement)throw new Error('Cycle history cannot be removed.');
+    if(sameJson(old,replacement))continue;
+    const cancellation={...old,status:'cancelled'};
+    if(request.type!=='cycle-cancel'||old.status==='cancelled'||old.effective<=asOf||!sameJson(cancellation,replacement)||current.cycleHistory.some(c=>c.status!=='cancelled'&&c.effective>old.effective))throw new Error('Only the last future cycle change can be cancelled; earlier cycle history is immutable.');
+  }
+  const additions=next.cycleHistory.filter(c=>!current.cycleHistory.some(old=>old.id===c.id));
+  if(additions.length&&(request.type!=='cycle-scheduled'||additions.length!==1||additions[0].status!=='scheduled'||additions[0].effective<=asOf||current.cycleHistory.some(c=>c.status!=='cancelled'&&c.effective>=additions[0].effective)))throw new Error('New cycle changes must be future, chronological schedules.');
   if(next.seq!==current.seq+1)throw new Error('Operation sequence must advance exactly once.');
   const existing=new Set(current.transactions.map(t=>t.id));
   for(const t of next.transactions)if(!existing.has(t.id)){

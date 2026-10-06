@@ -273,11 +273,12 @@ export function accountBalance(s,id,asOf=today(s.timezone)) {
 export function summary(s,asOf=today(s.timezone)) {
   const asset=s.accounts.filter(a=>a.kind==='asset'),missing=asset.some(a=>accountBalance(s,a.id,asOf)===null);
   const cash=asset.reduce((n,a)=>n+(accountBalance(s,a.id,asOf)??0),0);
-  const debt=s.accounts.filter(a=>a.kind==='liability').reduce((n,a)=>n+Math.max(0,-(accountBalance(s,a.id,asOf)??0)),0);
+  const liabilities=s.accounts.filter(a=>a.kind==='liability'),debtMissing=liabilities.some(a=>accountBalance(s,a.id,asOf)===null),debtVerified=liabilities.every(a=>a.verified===true);
+  const debt=liabilities.reduce((n,a)=>n+Math.max(0,-(accountBalance(s,a.id,asOf)??0)),0);
   const reserved=Object.values(s.reservations).reduce((a,b)=>a+b,0);
   const protectedAmount=Math.max(s.settings.reserve,s.goals.filter(g=>g.protected&&!g.archived).reduce((n,g)=>n+(s.reservations[g.id]||0),0));
   const extraReserve=Math.max(0,s.settings.reserve-s.goals.filter(g=>g.protected&&!g.archived).reduce((n,g)=>n+(s.reservations[g.id]||0),0));
-  return {cash:missing?null:cash,knownCash:cash,debt,reserved,protected:protectedAmount,available:missing?null:cash-reserved-extraReserve,missing};
+  return {cash:missing?null:cash,knownCash:cash,debt:debtMissing?null:debt,knownDebt:debt,debtMissing,debtVerified,reserved,protected:protectedAmount,available:missing?null:cash-reserved-extraReserve,missing};
 }
 export function periodForecast(s,key,{mode='budget',extraExpense=0,incomeChange=0}={}) {
   const budgets=s.budgets.slice().sort((a,b)=>a.key.localeCompare(b.key));
@@ -680,4 +681,35 @@ export function csvExport(s) {
   // Prefix spreadsheet formula characters; retain actual values in the JSON backup.
   const safe=v=>typeof v==='string'&&/^[=+@\-\t\r]/.test(v)?"'"+v:v;
   return [['id','date','kind','amount','currency','account','category','note','source','historical'],...s.transactions.map(t=>[t.id,t.date,t.kind,(t.amount/100).toFixed(2),s.currency,t.account,t.category,t.note,t.source,t.historical])].map(r=>r.map(v=>escape(safe(v))).join(',')).join('\r\n');
+}
+
+/** Evidence-based review prompts; matching entries are candidates, never auto-deleted. */
+export function weeklyReview(s,{asOf=today(s.timezone)}={}) {
+  validateState(s);dateKey(asOf);const items=[],day=date=>Date.parse(date+'T12:00:00Z')/86400000;
+  const due=s.accounts.filter(a=>a.verified!==true||a.opening===null||day(asOf)-day(a.baselineDate)>=7);
+  if(due.length)items.push({kind:'balances',title:'Check account balances',detail:due.length+' account(s) are unverified or due for a weekly check.',count:due.length,evidence:due.map(a=>a.id),target:'accounts'});
+  const unresolved=s.reconciliations.filter(r=>r.status==='unresolved');
+  if(unresolved.length)items.push({kind:'differences',title:'Explain balance differences',detail:'Keep the original difference and link the entries that explain it.',count:unresolved.length,evidence:unresolved.map(r=>r.id),target:'accounts'});
+  const reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses)),active=s.transactions.filter(t=>!t.historical&&t.kind!=='reversal'&&!reversed.has(t.id)&&t.date<=asOf),key=workspacePeriod(s,asOf);
+  const unclassified=active.filter(t=>transactionPeriod(s,t)===key&&['expense','refund'].includes(t.kind)&&!t.splits&&(!t.category||t.category==='oneoff'));
+  if(unclassified.length)items.push({kind:'categories',title:'Review uncategorized spending',detail:'A useful category improves your spending baseline.',count:unclassified.length,evidence:unclassified.map(t=>t.id),target:'log'});
+  const groups=new Map();for(const t of active){const fingerprint=JSON.stringify([t.kind,t.date,t.amount,t.account,t.toAccount||'',t.category||'',t.splits||[],t.note||'']);const group=groups.get(fingerprint)||[];group.push(t.id);groups.set(fingerprint,group);}
+  const possible=[...groups.values()].filter(group=>group.length>1);
+  if(possible.length)items.push({kind:'duplicates',title:'Review possible duplicate entries',detail:'Same date, amount, accounts, categories and description. Repeated purchases may be legitimate; nothing is removed.',count:possible.length,evidence:possible.flat(),target:'log'});
+  const overdue=scheduledEvents(s,{from:asOf,to:asOf,includeOverdue:true}).filter(o=>!o.paid&&o.date<asOf&&o.kind==='bill'&&o.amount>0);
+  if(overdue.length)items.push({kind:'overdue',title:'Review overdue bills',detail:'Record an actual payment or correct the schedule; expected money stays separate.',count:overdue.length,evidence:overdue.map(o=>o.id),target:'calendar'});
+  const exact=s.budgets.find(b=>b.key===key);if(!exact)items.push({kind:'budget',title:'Review this period’s budget',detail:'No budget has been saved for '+key+'. A carried-forward assumption is not a reviewed plan.',count:1,evidence:[],target:'budget'});
+  return {asOf,items,balanced:due.length===0,recordsChanged:false,coverage:'Balance checks do not prove all spending has been recorded.'};
+}
+
+export function canCorrectTransaction(s,id){const t=s.transactions.find(t=>t.id===id);return !!t&&!t.historical&&['expense','income','refund'].includes(t.kind)&&['manual','csv','correction'].includes(t.source)&&!s.transactions.some(x=>x.reverses===id)&&!t.goal&&!t.outside&&!s.goals.some(g=>[...(g.purchases||[]),g.purchase].filter(Boolean).some(p=>p.transaction===id))&&!s.outside.some(o=>o.transaction===id||(o.returns||[]).some(r=>r.transaction===id))&&!s.obligations.some(o=>o.transaction===id);}
+/** One reviewed correction, one queued operation. Originals remain immutable. */
+export function correctTransaction(s,{id,replacement,reason}) {
+  if(!canCorrectTransaction(s,id))fail('Use the linked workflow to correct this entry, or reverse it separately.');
+  string(reason,'Correction explanation',10000);if(!reason.trim())fail('Explain the correction.');
+  if(!replacement||!['expense','income','refund'].includes(replacement.kind))fail('Choose spending, income or refund for an ordinary correction.');
+  const input={kind:replacement.kind,date:replacement.date,amount:replacement.amount,account:replacement.account,category:replacement.category||'',note:replacement.note||'',source:'correction',...(replacement.splits?{splits:clone(replacement.splits)}:{})};
+  if(input.date>today(s.timezone))fail('An actual correction cannot be dated in the future.');
+  const staged=addTransaction(reverseTransaction(s,id,reason),input),appended=staged.transactions.slice(s.transactions.length);
+  return mutate(s,'transaction-correct',{id,replacement:input,reason},n=>{for(const t of appended){const record=clone(t);record.seq=n.seq;if(record.kind!=='reversal')record.corrects=id;n.transactions.push(record);}});
 }
