@@ -250,7 +250,7 @@ export function validateState(s) {
     if(o.transaction){const t=s.transactions.find(t=>t.id===o.transaction);if(!t||t.historical||t.amount!==o.amount||t.date!==o.date||t.account!==o.account||t.kind!==(o.kind==='gift'?'expense':'loan-out'))fail('Outside payment does not match its cash entry.');if(o.reversedBy&&!s.transactions.some(t=>t.id===o.reversedBy&&t.reverses===o.transaction))fail('Invalid outside payment correction.');}
     if(o.returns){if(!Array.isArray(o.returns))fail('Invalid return history.');unique(o.returns,'returns');let total=0;for(const r of o.returns){const t=s.transactions.find(t=>t.id===r.transaction);if(!t||t.kind!=='loan-return'||t.amount!==r.amount||t.date!==r.date)fail('Outside return does not match its cash entry.');if(r.reversedBy){if(!s.transactions.some(t=>t.id===r.reversedBy&&t.reverses===r.transaction))fail('Invalid outside return correction.');}else total+=r.amount;}if(o.transaction&&total!==(o.returned||0))fail('Outstanding outside balance does not match its returns.');}
   }
-  for(const o of s.obligations){string(o.name,'Event name',300);dateKey(o.date);validMoney(o.amount,'Scheduled amount',true);if(!['bill','income'].includes(o.kind)||!accounts.has(o.account)||(o.debtAccount&&!accounts.has(o.debtAccount)))fail('Invalid scheduled event.');if(o.kind==='income'&&o.amount>=0||o.kind==='bill'&&o.amount<=0)fail('Scheduled event sign does not match its type.');if(o.recurrence){if(!['monthly','weekly'].includes(o.recurrence.unit)||!Number.isInteger(o.recurrence.interval)||o.recurrence.interval<1||o.recurrence.interval>12)fail('Invalid repeat schedule.');if(o.recurrence.until){dateKey(o.recurrence.until);if(o.recurrence.until<o.date)fail('Repeat end precedes its start.');}}if(o.transaction&&!transactionIds.has(o.transaction))fail('Scheduled payment refers to a missing transaction.');}
+  for(const o of s.obligations){string(o.name,'Event name',300);dateKey(o.date);validMoney(o.amount,'Scheduled amount',true);if(!['bill','income'].includes(o.kind)||!accounts.has(o.account)||(o.debtAccount&&!accounts.has(o.debtAccount)))fail('Invalid scheduled event.');if(o.kind==='income'&&o.amount>=0||o.kind==='bill'&&o.amount<=0)fail('Scheduled event sign does not match its type.');if(o.budgetCategory&&(o.kind!=='bill'||o.debtAccount||!s.categories.some(c=>c.id===o.budgetCategory&&c.id!=='oneoff'&&!['savings','buffer'].includes(c.type))))fail('Choose a spending budget category only for an ordinary bill.');if(o.recurrence){if(!['monthly','weekly'].includes(o.recurrence.unit)||!Number.isInteger(o.recurrence.interval)||o.recurrence.interval<1||o.recurrence.interval>12)fail('Invalid repeat schedule.');if(o.recurrence.until){dateKey(o.recurrence.until);if(o.recurrence.until<o.date)fail('Repeat end precedes its start.');}}if(o.transaction&&!transactionIds.has(o.transaction))fail('Scheduled payment refers to a missing transaction.');}
   for(const h of s.holdings){validMoney(h.cost,'Holding cost');dateKey(h.date);if(h.quantity!=null&&(!Number.isFinite(h.quantity)||h.quantity<=0))fail('Invalid holding quantity.');}
   for(const c of s.categories){string(c.name,'Category name',300);if(!['fixed','variable','savings','buffer'].includes(c.type))fail('Invalid category type.');}
   for(const n of s.notes){string(n.title||'','Note title');string(n.body||'','Note body',50000);if(n.items&&!Array.isArray(n.items))fail('Invalid checklist.');}
@@ -293,14 +293,17 @@ export function periodForecast(s,key,{mode='budget',extraExpense=0,incomeChange=
   const oneoff=Math.max(0,actualFor('oneoff'))+outside;
   spending+=Math.max(0,oneoff-(b.locks.buffer?0:buffer));
   const ranges=[1,2,3].map(n=>addMonths(key,-n));
-  const histories=ranges.map(k=>s.transactions.filter(t=>!t.historical&&t.kind==='expense'&&transactionPeriod(s,t)===k).reduce((n,t)=>n+t.amount,0));
+  const histories=ranges.map(k=>s.transactions.filter(t=>!t.historical&&!reversed.has(t.id)&&t.kind==='expense'&&transactionPeriod(s,t)===k).reduce((n,t)=>n+t.amount,0));
   if(mode==='history'&&histories.some(n=>n>0))spending=Math.max(spending,Math.round(histories.reduce((a,b)=>a+b,0)/histories.filter(n=>n>0).length));
   if(mode==='conservative')spending=Math.ceil(spending*1.15);
   const income=b.salary+incomeChange;
-  const committed=s.goals.filter(g=>g.completed&&g.recurringCost&&!g.recurringIncludedInBudget&&!g.purchase?.reversedBy).reduce((n,g)=>n+g.recurringCost,0);
   const dates=workspacePeriodDates(s,key),requiresReview=dates.transition&&b.key!==key;
+  const bills=scheduledEvents(s,{from:dates.from,to:dates.to}).filter(o=>o.kind==='bill'&&!o.paid&&!o.cancelled&&!o.goal),mapped=new Map();
+  for(const bill of bills)if(bill.budgetCategory)mapped.set(bill.budgetCategory,(mapped.get(bill.budgetCategory)||0)+bill.amount);
+  const scheduledAdditional=bills.filter(o=>!o.budgetCategory).reduce((n,o)=>n+o.amount,0)+[...mapped].reduce((n,[id,amount])=>n+Math.max(0,amount+actualFor(id)-Math.max(b.alloc[id]||0,actualFor(id))),0);
+  const committed=s.goals.filter(g=>g.completed&&g.recurringCost&&!g.recurringIncludedInBudget&&!g.purchase?.reversedBy).reduce((n,g)=>n+g.recurringCost,0)+scheduledAdditional;
   return {income,spending,buffer,committed,requiresReview,capacity:income-spending-buffer-extraExpense-committed,confidence:'Budget assumption',budget:b,
-    assumptions:[`Salary and budget from ${b.key}.`,'Regular spending is reserved even when not individually logged.','Borrowing and expected repayments are not recurring income.',mode==='conservative'?'Spending increased by 15% for this scenario.':'Future income is not confirmed cash.']};
+    assumptions:[`Salary and budget from ${b.key}.`,'Regular spending is reserved even when not individually logged.','Unpaid scheduled bills add commitments; explicitly linked bill categories use their budget allowance first.','Borrowing and expected repayments are not recurring income.',mode==='conservative'?'Spending increased by 15% for this scenario.':'Future income is not confirmed cash.']};
 }
 export function goalPurchases(g) {return (g.purchases||[g.purchase].filter(Boolean)).filter(p=>!p.reversedBy);}
 export function goalRemaining(g) {return Math.max(0,g.target-goalPurchases(g).reduce((n,p)=>n+p.amount,0));}
@@ -372,13 +375,15 @@ export function cashCalendar(s,{asOf=today(s.timezone),days=60,events=[]}={}) {
   return {known:true,rows,minimum,accountBalances,warnings:[...new Set(warnings)]};
 }
 /** Conservative purchase preview. Expected income is conditional; this records nothing. */
-export function purchaseSafety(s,{amount,account,date,asOf=today(s.timezone),days=60,budgetAccount=account}={}) {
+export function purchaseSafety(s,{amount,account,date,asOf=today(s.timezone),days=60,budgetAccount=account,goalId=''}={}) {
   validMoney(amount,'Purchase amount');dateKey(date);dateKey(asOf);
   if(amount<=0||date<asOf)fail('Choose a positive purchase on or after today.');
   if(!Number.isInteger(days)||days<1||days>365)fail('Purchase preview range must be 1–365 days.');
   if(s.accounts.find(a=>a.id===account)?.kind!=='asset'||s.accounts.find(a=>a.id===budgetAccount)?.kind!=='asset')fail('Choose cash accounts for the purchase and normal spending.');
   const end=new Date(`${asOf}T12:00:00Z`);end.setUTCDate(end.getUTCDate()+days);const to=end.toISOString().slice(0,10);
   if(date>to)fail('Purchase date is outside this preview range.');
+  const goal=goalId?s.goals.find(g=>g.id===goalId&&!g.archived&&!g.protected&&g.kind!=='saving'):null;
+  if(goalId&&!goal)fail('Choose an active, unprotected purchase goal.');
   const events=[{date,amount:-amount,name:'Proposed purchase',account,proposed:true}],assumptions=[],reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
   let key=workspacePeriod(s,asOf),missingBudget=false;
   while(workspacePeriodDates(s,key).from<=to){
@@ -386,10 +391,12 @@ export function purchaseSafety(s,{amount,account,date,asOf=today(s.timezone),day
     if(!b||range.transition&&b.key!==key)missingBudget=true;
     else{
       const tx=s.transactions.filter(t=>!reversed.has(t.id)&&transactionPeriod(s,t)===key&&t.date<=asOf);
+      const pendingBills=scheduledEvents(s,{from:range.from,to:range.to}).filter(o=>o.kind==='bill'&&!o.paid);
       let remaining=0;
       for(const c of s.categories.filter(c=>!['savings','buffer'].includes(c.type)&&c.id!=='oneoff')){
         const spent=tx.reduce((n,t)=>{const a=t.splits?t.splits.filter(p=>p.category===c.id).reduce((n,p)=>n+p.amount,0):t.category===c.id?t.amount:0;return n+(t.kind==='expense'?a:t.kind==='refund'?-a:0);},0);
-        remaining+=Math.max(0,(b.alloc[c.id]||0)-Math.max(0,spent));
+        const covered=pendingBills.filter(o=>o.budgetCategory===c.id).reduce((n,o)=>n+o.amount,0);
+        remaining+=Math.max(0,(b.alloc[c.id]||0)-Math.max(0,spent)-covered);
       }
       remaining+=b.alloc.buffer||0;
       if(remaining)events.push({date:range.from<asOf?asOf:range.from,amount:-remaining,name:`${key}: remaining normal spending + buffer`,account:budgetAccount,estimated:true,budget:true});
@@ -398,14 +405,28 @@ export function purchaseSafety(s,{amount,account,date,asOf=today(s.timezone),day
     key=addMonths(key,1);
   }
   const calendar=cashCalendar(s,{asOf,days,events}),sum=summary(s,asOf);
-  // Every reservation belongs to a goal. This generic preview may not consume any of them.
-  const floor=sum.reserved+Math.max(0,sum.protected-s.goals.filter(g=>g.protected&&!g.archived).reduce((n,g)=>n+(s.reservations[g.id]||0),0));
+  const initialFloor=sum.reserved+Math.max(0,sum.protected-s.goals.filter(g=>g.protected&&!g.archived).reduce((n,g)=>n+(s.reservations[g.id]||0),0));
+  const reservationUsed=goal?Math.min(amount,s.reservations[goal.id]||0):0,floor=initialFloor-reservationUsed;
   const accountShort=calendar.rows.filter(r=>r.accountBalance!==null&&r.accountBalance<0);
-  const breaches=calendar.rows.filter(r=>r.balance<floor);
+  let purchased=false;
+  const breaches=calendar.rows.filter(r=>{if(r.proposed)purchased=true;return r.balance<(purchased?floor:initialFloor);});
   const conditional=calendar.rows.some(r=>r.amount>0&&r.estimated);
-  const safe=calendar.known&&!missingBudget&&!accountShort.length&&!breaches.length&&calendar.minimum>=floor;
-  return {...calendar,safe,conditional,missingBudget,floor,breaches,accountShort,through:to,
-    assumptions:[...assumptions,'Normal spending is charged to the account you selected. Adjust it if you use another account.','Scheduled bills are additional to the remaining allowances. If they are already included in your budget, this preview is deliberately conservative.','Expected income is included only when dated on the calendar; budget salary alone is not a cash receipt.','Existing goal reservations and protected cash stay untouched. This preview does not record a purchase.']};
+  const safe=calendar.known&&!missingBudget&&!accountShort.length&&!breaches.length&&sum.cash>=initialFloor&&calendar.minimum>=floor;
+  return {...calendar,safe,conditional,missingBudget,floor,initialFloor,reservationUsed,goalId,breaches,accountShort,through:to,
+    assumptions:[...assumptions,'Normal spending is charged to the account you selected. Adjust it if you use another account.','Bills explicitly linked to a spending category use that allowance first. Unlinked bills are additional, so the preview remains conservative if you have not classified them.','Expected income is included only when dated on the calendar; budget salary alone is not a cash receipt.',goal?'Only this purchase goal’s existing reservation may be consumed, when the proposed payment occurs. Other reservations and protected cash stay untouched.':'Existing goal reservations and protected cash stay untouched.','This preview does not record a purchase.']};
+}
+/** Earliest conditional date under the same conservative daily cash rules.
+ * Only actual cash now or a dated receipt can improve purchase affordability.
+ * Same-day outflows precede income; receipts therefore unlock the following day. */
+export function purchaseWindow(s,{amount,account,budgetAccount=account,asOf=today(s.timezone),days=60,goalId=''}={}){
+  const options={amount,account,budgetAccount,asOf,days,goalId},first=purchaseSafety(s,{...options,date:asOf});
+  const result=(date,preview)=>({earliest:date,through:first.through,preview,recordsChanged:false,assumptions:[...preview.assumptions,'Same-day outflows are checked before income. An expected receipt can support a purchase from the following day.','The date is conditional on entered schedules and spending allowances through the entire checked horizon.']});
+  if(first.safe)return result(asOf,first);
+  if(!first.known||first.missingBudget)return result(null,first);
+  const candidates=new Set();
+  for(const event of scheduledEvents(s,{from:asOf,to:first.through,includeOverdue:true}))if(event.kind==='income'&&!event.paid){const date=new Date(`${event.date<asOf?asOf:event.date}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+1);const candidate=date.toISOString().slice(0,10);if(candidate<=first.through)candidates.add(candidate);}
+  for(const date of [...candidates].sort()){const preview=purchaseSafety(s,{...options,date});if(preview.safe)return result(date,preview);}
+  return result(null,first);
 }
 /** Expand templates without marking any future occurrence paid or creating income. */
 export function scheduledEvents(s,{from=today(s.timezone),to=from,includeOverdue=false}={}) {
@@ -430,7 +451,7 @@ export function recordScheduled(s,id,date=today(s.timezone)) {
   const o=scheduledEvents(s,{from:'1900-01-01',to:date}).find(o=>o.id===id);
   if(!o||o.paid)fail('Choose an unpaid occurrence due by the payment date.');
   const kind=o.kind==='income'?'income':o.debtAccount?'repayment':'expense';
-  let next=addTransaction(s,{kind,amount:Math.abs(o.amount),date,account:o.account,toAccount:o.debtAccount||'',category:'oneoff',note:o.name,source:'scheduled'});
+  let next=addTransaction(s,{kind,amount:Math.abs(o.amount),date,account:o.account,toAccount:o.debtAccount||'',category:o.budgetCategory||'oneoff',note:o.name,source:'scheduled'});
   return mutate(next,'obligation-paid',{id,date},n=>{
     let record=n.obligations.find(x=>x.id===id);if(!record){record=clone(o);delete record.recurrence;n.obligations.push(record);}
     record.paid=true;record.paidDate=date;record.transaction=n.transactions.at(-1).id;
@@ -456,6 +477,7 @@ export function mutate(state,type,input,apply,operationId=uid()) {
 export function addTransaction(s,input,operationId) {
   const {kind,date,amount,account,toAccount,category='',note=''}=input;
   dateKey(date);validMoney(amount,'Transaction amount');if(amount<=0)fail('Amount must be above zero.');string(note,'Note');
+  if(date>today(s.timezone))fail('Future payments belong on the calendar, not in actual transactions.');
   const a=s.accounts.find(a=>a.id===account),to=s.accounts.find(a=>a.id===toAccount);
   if(!a)fail('Choose an account.');if(category&&!s.categories.some(c=>c.id===category))fail('Choose a category.');
   let postings;
