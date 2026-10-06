@@ -1,0 +1,4 @@
+import type {Workspace} from '../types';
+export function Notes({state}:{state:Workspace}){
+  return <><h1>Keep your ideas beside your goals.</h1><p>Notes and checklists are shown here without changing them.</p><div className="grid">{state.notes.filter(n=>!n.archived).map(note=><section className="card" key={note.id}><h2>{note.title||'Untitled note'}</h2><p className="note-body">{note.body}</p><ul className="list">{(note.items||[]).map((item,index)=><li key={item.id||`${note.id}-${index}`}><span role="img" aria-label={item.done?'Completed':'Incomplete'}>{item.done?'✓':'○'}</span> {item.text||item.t||item.body||''}</li>)}</ul>{note.goal&&<small>Linked goal: {state.goals.find(g=>g.id===note.goal)?.name||note.goal}</small>}</section>)}</div>{!state.notes.some(n=>!n.archived)&&<p>No active notes.</p>}</>;
+}

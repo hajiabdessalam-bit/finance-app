@@ -5,6 +5,18 @@
   "type": "module",
   "scripts": {
     "test": "node --test --test-isolation=none tests/*.test.mjs",
-    "start": "node scripts/serve.mjs"
+    "start": "node scripts/serve.mjs",
+    "typecheck": "tsc --noEmit",
+    "build:frontend": "node scripts/build-frontend.mjs"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "esbuild": "0.28.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
   }
 }

@@ -1,0 +1,10 @@
+import {build} from 'esbuild';
+import {fileURLToPath} from 'node:url';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+const root=fileURLToPath(new URL('../',import.meta.url));
+await mkdir(new URL('../app/react/',import.meta.url),{recursive:true});
+await build({absWorkingDir:root,entryPoints:['frontend/main.tsx'],outfile:'app/react/main.js',bundle:true,format:'esm',platform:'browser',target:['es2022'],minify:true,sourcemap:false,jsx:'automatic',define:{'process.env.NODE_ENV':'"production"'}});
+const licenses=await Promise.all(['react','react-dom'].map(async name=>`${name}\n${await readFile(new URL(`../node_modules/${name}/LICENSE`,import.meta.url),'utf8')}`));
+await writeFile(new URL('../app/react/LICENSES.txt',import.meta.url),licenses.join('\n\n'));
+await writeFile(new URL('../app/react.html',import.meta.url),'<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PLAN · React development preview</title><link rel="stylesheet" href="./style.css"></head><body><a class="skip" href="#content">Skip to content</a><div id="app"></div><script type="module" src="./react/main.js"></script></body></html>\n');
+console.log('Built the separate React development preview; the main app entry remains unchanged.');

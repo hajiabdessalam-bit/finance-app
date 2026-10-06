@@ -58,3 +58,17 @@ node --test --test-isolation=none tests/database.test.mjs
 These tests use synthetic users and an in-memory PostgreSQL engine. They do not connect to Supabase or import personal records; without the optional runtime the SQL suite is skipped. They supplement, rather than replace, live project access-control verification.
 
 Cycle changes take effect at an existing period boundary. A transition period bridges to the new day in the following month, retaining one budget key per month. Earlier assignments and imported historical month keys remain unchanged. Future changes can be cancelled in reverse order; active periods cannot be remapped. Forecasts pause at a transition that lacks its own reviewed budget.
+
+## Frontend development
+
+The separate `app/react.html` page starts the React/TypeScript migration with overview, scenario comparison and read-only notes. It reads the same origin's validated IndexedDB workspace, makes no API calls and has no financial write controls. The main app continues to provide all editing workflows until frontend parity is verified.
+
+```sh
+npm ci --ignore-scripts
+npm run typecheck
+npm run build:frontend
+```
+
+The checked-in browser bundle is built from public source only, with runtime dependency licenses alongside it. It uses no external script CDN. Rebuild after frontend or engine changes. Starting the existing static app does not require rebuilding the frontend.
+
+Weekly balance checks retain their original differences. A review can add an explanation without inventing spending. Forgotten transactions dated before the latest checked balance update spending history without changing that balance; for same-day forgotten entries, confirm the balance again if it already included them. Activity supports account/category/date/correction filters and pages of 100 records, with split categories and amounts displayed explicitly.

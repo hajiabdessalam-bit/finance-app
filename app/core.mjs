@@ -243,7 +243,8 @@ export function validateState(s) {
     for(const p of purchases){const t=s.transactions.find(t=>t.id===p.transaction);validMoney(p.amount,'Purchase cost');dateKey(p.date);if(!t||t.kind!=='expense'||t.amount!==p.amount||t.date!==p.date||seen.has(p.transaction))fail('Purchase history does not match the ledger.');seen.add(p.transaction);if(p.complete!=null&&typeof p.complete!=='boolean')fail('Invalid purchase completion flag.');if(p.reversedBy&&!s.transactions.some(t=>t.id===p.reversedBy&&t.reverses===p.transaction))fail('Invalid purchase correction.');}
   }
   for(const [id,n]of Object.entries(s.reservations)){if(!goals.has(id))fail('Missing reservation goal.');validMoney(n,'Goal reservation');}
-  for(const r of s.reconciliations) {if(!accounts.has(r.account))fail('Missing reconciliation account.');dateKey(r.date);validMoney(r.balance,'Balance',true);if(r.difference!==null)validMoney(r.difference,'Difference',true);}
+  unique(s.reconciliations,'reconciliations');
+  for(const r of s.reconciliations) {if(!accounts.has(r.account))fail('Missing reconciliation account.');dateKey(r.date);validMoney(r.balance,'Balance',true);if(r.difference!==null)validMoney(r.difference,'Difference',true);if(!['matched','unresolved','reviewed'].includes(r.status))fail('Invalid balance-check status.');if(r.status==='reviewed'){string(r.review?.note,'Balance review explanation');if(!r.review.note.trim()||!Array.isArray(r.review.transactions)||r.review.transactions.some(id=>!transactionIds.has(id)))fail('Invalid balance review evidence.');}}
   for(const o of s.outside){validMoney(o.amount,'Outside amount');dateKey(o.date);if(o.returned!=null)validMoney(o.returned,'Returned amount');if((o.returned||0)>o.amount)fail('Returned amount exceeds the original record.');if(!['unclassified','gift','loan','investment','borrowed'].includes(o.kind))fail('Invalid outside classification.');}
   for(const o of s.outside){
     if(o.transaction){const t=s.transactions.find(t=>t.id===o.transaction);if(!t||t.historical||t.amount!==o.amount||t.date!==o.date||t.account!==o.account||t.kind!==(o.kind==='gift'?'expense':'loan-out'))fail('Outside payment does not match its cash entry.');if(o.reversedBy&&!s.transactions.some(t=>t.id===o.reversedBy&&t.reverses===o.transaction))fail('Invalid outside payment correction.');}
@@ -261,7 +262,7 @@ export function accountBalance(s,id,asOf=today(s.timezone)) {
   const a=s.accounts.find(a=>a.id===id);if(!a)fail('Account does not exist.');
   if(a.opening===null||asOf<a.baselineDate)return null;
   let result=a.opening;
-  for(const t of s.transactions)if(t.seq>a.baselineSeq&&t.date<=asOf){
+  for(const t of s.transactions)if(t.seq>a.baselineSeq&&t.date>=a.baselineDate&&t.date<=asOf){
     // A later statement check already incorporates the original cash movement.
     // Correcting that old entry changes history, not a freshly verified bank balance.
     if(t.kind==='reversal'&&s.transactions.find(x=>x.id===t.reverses)?.seq<=a.baselineSeq)continue;
@@ -488,12 +489,19 @@ export function purchaseGoal(s,{id,amount,account,date,complete=true,quantity=nu
 }
 export function reconcile(s,{account,date,balance,note=''}) {
   dateKey(date);validMoney(balance,'Balance',true);
+  if(date>today(s.timezone))fail('Confirm a balance already observed, not a future estimate.');
   const a=s.accounts.find(a=>a.id===account);if(!a)fail('Choose an account.');if(date<a.baselineDate)fail('A balance check cannot precede the latest baseline.');
   const expected=accountBalance(s,account,date);
   return mutate(s,'reconcile',{account,date,balance,note},n=>{
     n.reconciliations.push({id:uid(),account,date,balance,expected,difference:expected===null?null:balance-expected,note,status:expected===null||balance===expected?'matched':'unresolved',seq:n.seq});
     const next=n.accounts.find(a=>a.id===account);next.opening=balance;next.baselineDate=date;next.baselineSeq=n.seq;next.verified=true;
   });
+}
+export function reviewReconciliation(s,{id,note,transactions=[]}) {
+  const r=s.reconciliations.find(r=>r.id===id);string(note,'Balance review explanation');
+  if(!r||r.status!=='unresolved'||!note.trim())fail('Explain an unresolved balance difference before marking it reviewed.');
+  if(!Array.isArray(transactions)||new Set(transactions).size!==transactions.length||transactions.some(id=>!s.transactions.some(t=>t.id===id)))fail('Choose existing supporting transactions.');
+  return mutate(s,'balance-review',{id,note,transactions},n=>{const record=n.reconciliations.find(r=>r.id===id);record.status='reviewed';record.review={note:note.trim(),transactions:clone(transactions),at:new Date().toISOString()};});
 }
 export function reserveGoal(s,id,amount) {
   validMoney(amount,'Reservation');const g=s.goals.find(g=>g.id===id);if(!g||g.archived)fail('Choose an active goal.');

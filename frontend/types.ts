@@ -1,0 +1,16 @@
+export interface Account {id:string;name:string;kind:'asset'|'liability';currency:string;opening:number|null;baselineDate:string;baselineSeq:number;verified?:boolean;limit?:number}
+export interface NoteItem {id?:string;text?:string;t?:string;body?:string;done?:boolean}
+export interface Note {id:string;title?:string;body?:string;items?:NoteItem[];archived?:boolean;goal?:string}
+export interface Goal {id:string;name:string;target:number;priority:number;archived?:boolean;protected?:boolean;desired?:string;recurringCost?:number;kind?:string;[key:string]:unknown}
+export interface Reconciliation {id:string;account:string;date:string;balance:number;difference:number|null;status:'matched'|'unresolved'|'reviewed';note?:string}
+export interface Workspace {
+  schema:2;id:string;version:number;seq:number;currency:string;timezone:string;cycleStart:number;name:string;
+  accounts:Account[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];
+  reservations:Record<string,number>;settings:{reserve:number;monthlyProtection:number;forecastPeriods:number};
+  [key:string]:unknown;
+}
+export interface StoredWorkspace {state:Workspace|null;revision:number}
+export interface Scenario {mode:'budget'|'history'|'conservative';extraExpense:number;incomeChange:number;protection:number}
+export interface GoalForecast {id:string;name:string;target:number;funded:number;remaining:number;ready:string|null;deadline:string;late:boolean}
+export interface FundingRow {key:string;date:string;capacity:number;protected:number;pool:number;allocated?:number;shortage?:number}
+export interface JointForecast {results:GoalForecast[];rows:FundingRow[];warnings:string[];assumptions:string[]}
