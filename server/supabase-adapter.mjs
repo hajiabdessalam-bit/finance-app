@@ -21,6 +21,10 @@ export function supabaseAdapter({url,publishableKey,secretKey,fetchImpl=globalTh
     store:{
       read:(owner,workspace)=>request('/rest/v1/rpc/plan_read_validated_workspace',{body:{p_owner:actor(owner),p_workspace:workspace}}),
       apply:(owner,command)=>{validateEnvelope(command);return request('/rest/v1/rpc/plan_apply_validated_operation',{body:{p_owner:actor(owner),p_workspace:command.workspace,p_operation:command.operationId,p_expected_version:command.expectedVersion,p_kind:command.type,p_patches:command.patches}});}
+    },
+    ledger:{
+      reserve:({owner,requestId,reservedMicroUsd,configurationHash,workspaceDigest,summaryDigest,promptDigest})=>request('/rest/v1/rpc/plan_ai_reserve',{body:{p_owner:actor(owner),p_id:requestId,p_amount:reservedMicroUsd,p_configuration_hash:configurationHash,p_workspace_digest:workspaceDigest,p_summary_digest:summaryDigest,p_prompt_digest:promptDigest}}),
+      settle:({owner,requestId,status,chargedMicroUsd})=>request('/rest/v1/rpc/plan_ai_settle',{body:{p_owner:actor(owner),p_id:requestId,p_status:status,p_charged:chargedMicroUsd}})
     }
   };
 }
