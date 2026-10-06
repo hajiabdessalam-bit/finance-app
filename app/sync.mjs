@@ -11,20 +11,32 @@ export function entities(state) {
   return rows;
 }
 const identity=p=>`${p.collection}/${p.key}`;
+/** JSONB may reorder object keys. Arrays remain ordered; object key order is immaterial. */
+export function sameJson(a,b) {
+  if(a===b)return true;
+  if(a===null||b===null||typeof a!=='object'||typeof b!=='object')return false;
+  if(Array.isArray(a)!==Array.isArray(b))return false;
+  const ak=Object.keys(a).sort(),bk=Object.keys(b).sort();
+  return ak.length===bk.length&&ak.every((key,i)=>key===bk[i]&&sameJson(a[key],b[key]));
+}
 export function diffEntities(before,after) {
   const old=new Map(entities(before).map(e=>[identity(e),e])),patches=[];
   for(const next of entities(after)) {
     const previous=old.get(identity(next));old.delete(identity(next));
-    if(!previous||JSON.stringify(previous.value)!==JSON.stringify(next.value))patches.push({...next,action:'put'});
+    if(!previous||!sameJson(previous.value,next.value))patches.push({...next,action:'put'});
   }
   // Deletion is never propagated silently. Archive/reverse records instead.
   if(old.size)throw new Error('Sync cannot delete financial history. Archive or reverse the record.');
   return patches;
 }
 export function applyPatches(state,patches) {
+  if(!Array.isArray(patches))throw new Error('Invalid sync patches.');
   const next=clone(state);
+  const seen=new Set();
   for(const patch of patches) {
-    if(patch.action!=='put'||typeof patch.key!=='string')throw new Error('Invalid sync patch.');
+    if(!patch||patch.action!=='put'||typeof patch.key!=='string'||!patch.key||!patch.value||typeof patch.value!=='object'||Array.isArray(patch.value))throw new Error('Invalid sync patch.');
+    if(seen.has(identity(patch)))throw new Error('Duplicate sync record.');seen.add(identity(patch));
+    if(['__proto__','constructor','prototype'].includes(patch.key))throw new Error('Unsafe sync key.');
     if(patch.collection==='preferences'){
       if(patch.key!=='profile'||!patch.value||Object.keys(patch.value).some(k=>!PROFILE_KEYS.has(k)))throw new Error('Invalid workspace preferences.');
       Object.assign(next,clone(patch.value));
@@ -33,7 +45,7 @@ export function applyPatches(state,patches) {
     else {
       if(!COLLECTIONS.includes(patch.collection)||String(patch.value.id)!==patch.key)throw new Error('Unknown collection or inconsistent record ID.');
       const collection=next[patch.collection],index=collection.findIndex(r=>String(r.id)===patch.key);
-      if(patch.collection==='transactions'&&index>=0&&JSON.stringify(collection[index])!==JSON.stringify(patch.value))throw new Error('Transactions are immutable. Add a linked correction.');
+      if(patch.collection==='transactions'&&index>=0&&!sameJson(collection[index],patch.value))throw new Error('Transactions are immutable. Add a linked correction.');
       if(index<0)collection.push(clone(patch.value));else collection[index]=clone(patch.value);
     }
   }
@@ -56,7 +68,7 @@ export function hydrateSnapshot(snapshot) {
 export function conflictReview(local,remote) {
   validateState(local);validateState(remote);if(local.id!==remote.id)throw new Error('Cannot compare different workspaces.');
   const ours=new Map(entities(local).map(e=>[identity(e),e])),changes=[];
-  for(const theirs of entities(remote)){const key=identity(theirs),mine=ours.get(key);ours.delete(key);if(!mine||JSON.stringify(mine.value)!==JSON.stringify(theirs.value))changes.push({collection:theirs.collection,key:theirs.key,local:mine?.value||null,remote:theirs.value});}
+  for(const theirs of entities(remote)){const key=identity(theirs),mine=ours.get(key);ours.delete(key);if(!mine||!sameJson(mine.value,theirs.value))changes.push({collection:theirs.collection,key:theirs.key,local:mine?.value||null,remote:theirs.value});}
   for(const mine of ours.values())changes.push({collection:mine.collection,key:mine.key,local:mine.value,remote:null});
   return {changes,pending:local.operations.filter(o=>o.sync==='pending').map(clone),requiresReview:true};
 }

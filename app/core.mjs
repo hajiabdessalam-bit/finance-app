@@ -154,7 +154,7 @@ export async function migrateLegacy(raw,asOf='2026-10-06') {
 }
 export function validateState(s) {
   cleanJson(s);
-  if(!object(s)||s.schema!==SCHEMA||typeof s.id!=='string'||!Number.isSafeInteger(s.version)||!Number.isSafeInteger(s.seq))fail('Unsupported state version.');
+  if(!object(s)||s.schema!==SCHEMA||typeof s.id!=='string'||!s.id||!Number.isSafeInteger(s.version)||s.version<0||!Number.isSafeInteger(s.seq)||s.seq<0)fail('Unsupported state version.');
   if(!['CNY','USD','EUR','MAD','GBP'].includes(s.currency))fail('Unsupported currency.');
   try{new Intl.DateTimeFormat('en',{timeZone:s.timezone});}catch{fail('Invalid timezone.');}
   if(!Number.isInteger(s.cycleStart)||s.cycleStart<1||s.cycleStart>31)fail('Invalid financial start day.');
@@ -177,11 +177,14 @@ export function validateState(s) {
     else if(t.kind==='reversal'){
       if(!transactionIds.has(t.reverses))fail('Correction refers to a missing transaction.');
       const original=s.transactions.find(x=>x.id===t.reverses);
-      if(original.historical||original.kind==='reversal'||t.postings.length!==original.postings.length||t.amount!==original.amount||t.postings.some((p,i)=>p.account!==original.postings[i].account||p.amount!==-original.postings[i].amount))fail('Correction postings are invalid.');
+      if(original.historical||original.kind==='reversal'||t.seq<=original.seq||t.postings.length!==original.postings.length||t.amount!==original.amount||t.postings.some((p,i)=>p.account!==original.postings[i].account||p.amount!==-original.postings[i].amount))fail('Correction postings are invalid.');
     } else {
+      if(t.amount<=0||t.seq===0)fail('Actual transactions require a positive amount and sequence.');
       const paired=['transfer','repayment','borrow'].includes(t.kind),positive=['income','refund','loan-return'].includes(t.kind);
       if(t.postings.length!==(paired?2:1)||t.postings[0].account!==t.account||t.postings[0].amount!==(positive?t.amount:-t.amount))fail('Transaction postings do not match its amount.');
       if(paired&&(t.account===t.toAccount||t.postings[1].account!==t.toAccount||t.postings[1].amount!==t.amount))fail('Transfer postings are invalid.');
+      const a=s.accounts.find(a=>a.id===t.account),to=s.accounts.find(a=>a.id===t.toAccount);
+      if(t.kind==='income'&&a?.kind!=='asset'||t.kind==='transfer'&&(a?.kind!=='asset'||to?.kind!=='asset')||t.kind==='repayment'&&(a?.kind!=='asset'||to?.kind!=='liability')||t.kind==='borrow'&&(a?.kind!=='liability'||to?.kind!=='asset'))fail('Transaction account types do not match its purpose.');
     }
   }
   const reversals=s.transactions.filter(t=>t.reverses).map(t=>t.reverses);if(new Set(reversals).size!==reversals.length)fail('A transaction has been reversed more than once.');
@@ -200,6 +203,10 @@ export function validateState(s) {
   for(const [id,n]of Object.entries(s.reservations)){if(!goals.has(id))fail('Missing reservation goal.');validMoney(n,'Goal reservation');}
   for(const r of s.reconciliations) {if(!accounts.has(r.account))fail('Missing reconciliation account.');dateKey(r.date);validMoney(r.balance,'Balance',true);if(r.difference!==null)validMoney(r.difference,'Difference',true);}
   for(const o of s.outside){validMoney(o.amount,'Outside amount');dateKey(o.date);if(o.returned!=null)validMoney(o.returned,'Returned amount');if((o.returned||0)>o.amount)fail('Returned amount exceeds the original record.');if(!['unclassified','gift','loan','investment','borrowed'].includes(o.kind))fail('Invalid outside classification.');}
+  for(const o of s.outside){
+    if(o.transaction){const t=s.transactions.find(t=>t.id===o.transaction);if(!t||t.historical||t.amount!==o.amount||t.date!==o.date||t.account!==o.account||t.kind!==(o.kind==='gift'?'expense':'loan-out'))fail('Outside payment does not match its cash entry.');if(o.reversedBy&&!s.transactions.some(t=>t.id===o.reversedBy&&t.reverses===o.transaction))fail('Invalid outside payment correction.');}
+    if(o.returns){if(!Array.isArray(o.returns))fail('Invalid return history.');unique(o.returns,'returns');let total=0;for(const r of o.returns){const t=s.transactions.find(t=>t.id===r.transaction);if(!t||t.kind!=='loan-return'||t.amount!==r.amount||t.date!==r.date)fail('Outside return does not match its cash entry.');if(r.reversedBy){if(!s.transactions.some(t=>t.id===r.reversedBy&&t.reverses===r.transaction))fail('Invalid outside return correction.');}else total+=r.amount;}if(o.transaction&&total!==(o.returned||0))fail('Outstanding outside balance does not match its returns.');}
+  }
   for(const o of s.obligations){string(o.name,'Event name',300);dateKey(o.date);validMoney(o.amount,'Scheduled amount',true);if(!['bill','income'].includes(o.kind)||!accounts.has(o.account)||(o.debtAccount&&!accounts.has(o.debtAccount)))fail('Invalid scheduled event.');if(o.kind==='income'&&o.amount>=0||o.kind==='bill'&&o.amount<=0)fail('Scheduled event sign does not match its type.');if(o.recurrence){if(!['monthly','weekly'].includes(o.recurrence.unit)||!Number.isInteger(o.recurrence.interval)||o.recurrence.interval<1||o.recurrence.interval>12)fail('Invalid repeat schedule.');if(o.recurrence.until){dateKey(o.recurrence.until);if(o.recurrence.until<o.date)fail('Repeat end precedes its start.');}}if(o.transaction&&!transactionIds.has(o.transaction))fail('Scheduled payment refers to a missing transaction.');}
   for(const h of s.holdings){validMoney(h.cost,'Holding cost');dateKey(h.date);if(h.quantity!=null&&(!Number.isFinite(h.quantity)||h.quantity<=0))fail('Invalid holding quantity.');}
   for(const c of s.categories){string(c.name,'Category name',300);if(!['fixed','variable','savings','buffer'].includes(c.type))fail('Invalid category type.');}
@@ -238,7 +245,7 @@ export function periodForecast(s,key,{mode='budget',extraExpense=0,incomeChange=
   const recorded=s.transactions.filter(t=>!reversed.has(t.id)&&periodKey(t.date,s.cycleStart)===key);
   const actualFor=id=>recorded.reduce((n,t)=>{const amount=t.splits?t.splits.filter(p=>p.category===id).reduce((a,b)=>a+b.amount,0):t.category===id?t.amount:0;return n+(t.kind==='expense'?amount:t.kind==='refund'?-amount:0);},0);
   let spending=spendCats.filter(c=>c.id!=='oneoff').reduce((n,c)=>n+Math.max(b.alloc[c.id]||0,actualFor(c.id)),0),buffer=b.alloc.buffer||0;
-  const outside=s.outside.filter(o=>o.kind!=='borrowed'&&periodKey(o.date,s.cycleStart)===key).reduce((n,o)=>n+o.amount,0);
+  const outside=s.outside.filter(o=>o.kind!=='borrowed'&&!o.reversedBy&&periodKey(o.date,s.cycleStart)===key&&!recorded.some(t=>t.id===o.transaction&&t.kind==='expense')).reduce((n,o)=>n+o.amount,0);
   const oneoff=Math.max(0,actualFor('oneoff'))+outside;
   spending+=Math.max(0,oneoff-(b.locks.buffer?0:buffer));
   const ranges=[1,2,3].map(n=>addMonths(key,-n));
@@ -362,10 +369,12 @@ export function addTransaction(s,input,operationId) {
 }
 export function reverseTransaction(s,id,reason='Correction') {
   const t=s.transactions.find(t=>t.id===id);if(!t||t.historical||t.kind==='reversal'||s.transactions.some(x=>x.reverses===id))fail('This transaction cannot be reversed.');
+  if(s.outside.some(o=>o.transaction===id&&(o.returned||0)>0))fail('Reverse the linked returns before correcting the original outgoing money.');
   return mutate(s,'reverse',{id,reason},n=>{
     const reversalId=uid();
     n.transactions.push({id:reversalId,seq:n.seq,kind:'reversal',date:t.date,amount:t.amount,account:t.account||'',toAccount:t.toAccount||'',category:t.category,note:reason,postings:t.postings.map(p=>({account:p.account,amount:-p.amount})),reverses:id,historical:false,source:'correction'});
     for(const record of n.outside)for(const returned of record.returns||[])if(returned.transaction===id&&!returned.reversedBy){record.returned-=returned.amount;returned.reversedBy=reversalId;}
+    for(const record of n.outside)if(record.transaction===id)record.reversedBy=reversalId;
     for(const g of n.goals)if([...(g.purchases||[]),g.purchase].filter(Boolean).some(p=>p.transaction===id&&!p.reversedBy)){
       for(const p of [...(g.purchases||[]),g.purchase].filter(Boolean))if(p.transaction===id)p.reversedBy=reversalId;
       g.completed=goalPurchases(g).some(p=>p.complete!==false);if(g.archiveReason!=='manual')g.archived=g.completed;
@@ -420,12 +429,29 @@ export function archiveGoal(s,id) {
   if(!s.goals.some(g=>g.id===id))fail('Goal not found.');
   return mutate(s,'archive-goal',{id},n=>{const goal=n.goals.find(g=>g.id===id);goal.archived=true;goal.archiveReason='manual';n.reservations[id]=0;});
 }
+/** Record one outgoing cash movement and its recoverable outside-money record together. */
+export function giveOutside(s,{name,kind,amount,account,date,note='',due=''}) {
+  string(name,'Person / purpose',300);string(note,'Note');dateKey(date);if(due)dateKey(due);
+  validMoney(amount,'Outside amount');if(!name.trim()||amount<=0||!['gift','loan','investment'].includes(kind))fail('Enter a purpose, positive amount and outside classification.');
+  const a=s.accounts.find(a=>a.id===account);if(a?.kind!=='asset')fail('Choose the cash account this money left.');
+  if(date>today(s.timezone))fail('Record money already sent; use the calendar for a future payment.');
+  const id=uid(),transaction=uid();
+  return mutate(s,'outside-given',{name,kind,amount,account,date,note,due},n=>{
+    n.transactions.push({id:transaction,seq:n.seq,kind:kind==='gift'?'expense':'loan-out',amount,account,toAccount:'',date,category:'oneoff',note:note||`${kind}: ${name}`,postings:[{account,amount:-amount}],historical:false,source:'outside',outside:id});
+    n.outside.push({id,name:name.trim(),kind,amount,account,date,note,due,returned:0,returns:[],transaction,source:'manual'});
+  });
+}
 export function returnOutside(s,{id,amount,account,date,note=''}) {
   const record=s.outside.find(o=>o.id===id);validMoney(amount,'Return amount');dateKey(date);
-  if(!record||record.kind==='borrowed')fail('Choose a money-outside record.');
+  if(!record||record.reversedBy||!['loan','investment'].includes(record.kind))fail('Choose an active loan or investment record.');
   if(amount<=0||amount>record.amount-(record.returned||0))fail('Return must not exceed the outstanding amount.');
-  let next=addTransaction(s,{kind:'loan-return',amount,account,date,note:note||`Return: ${record.name}`});
-  return mutate(next,'outside-return',{id,amount,date},n=>{const r=n.outside.find(o=>o.id===id);r.returned=(r.returned||0)+amount;r.returns=[...(r.returns||[]),{id:uid(),amount,date,transaction:n.transactions.at(-1).id}];});
+  if(s.accounts.find(a=>a.id===account)?.kind!=='asset')fail('Return must arrive in a cash account.');
+  if(date<record.date||date>today(s.timezone))fail('Record a return received on or after the original payment, through today.');
+  string(note,'Note');const transaction=uid();
+  return mutate(s,'outside-return',{id,amount,date,account,note},n=>{
+    n.transactions.push({id:transaction,seq:n.seq,kind:'loan-return',amount,account,toAccount:'',date,category:'',note:note||`Return: ${record.name}`,postings:[{account,amount}],historical:false,source:'outside',outside:id});
+    const r=n.outside.find(o=>o.id===id);r.returned=(r.returned||0)+amount;r.returns=[...(r.returns||[]),{id:uid(),amount,date,transaction}];
+  });
 }
 export function debtPayoff({balance,annualRate=0,payment,periods=600}) {
   validMoney(balance,'Debt');validMoney(payment,'Payment');

@@ -37,6 +37,10 @@ New records use IndexedDB. Each save atomically updates the workspace, a recover
 
 This is an incremental rebuild. Split expenses/refunds, linked partial returns, installment purchases, hard/flexible funding deadlines, persistent CSV batch undo and manual debt payoff scenarios are implemented. Cloud authentication/synchronization, advanced recurring-budget integration, advanced payoff comparisons, scheduled cycle activation, receipt parsing, live price quotes and AI are still in development. The planner returns period-end funding dates. The cash calendar expands weekly/monthly schedules, keeps expected receipts separate from real money and flags overdue bills or account shortages. Failed entries are retained as separate review-only drafts. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
 
+Money outside can record a new gift, loan or investment and its cash movement together. Partial returns are linked to that record. Reverse linked returns before correcting an original outgoing payment; original entries stay in the ledger.
+
+`server/validation.mjs` validates a complete proposed sync state against a trusted snapshot. It is not a deployed route or an authorization layer. Before cloud writes are enabled, the server must verify permanent-user ownership, handle immutable replay IDs and version conflicts, and prevent direct database calls from bypassing domain validation.
+
 AI provider keys must remain server-side. OpenCode Go documents coding-agent usage, so a subscription should not be assumed to permit finance-chat traffic. The core planner works without AI.
 
 ## Deployment and privacy
