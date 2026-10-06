@@ -42,6 +42,39 @@ export function periodDates(key,start=15) {
   const end=new Date(`${next}T12:00:00Z`); end.setUTCDate(end.getUTCDate()-1);
   return {from,to:end.toISOString().slice(0,10),next};
 }
+/** Dated cycle segments keep prior periods intact. The first period bridges to
+ * the new day in the following month, retaining one budget key per month. */
+export function workspacePeriod(s,date) {
+  dateKey(date);const change=s.cycleHistory.filter(c=>c.status!=='cancelled'&&c.effective<=date).sort((a,b)=>a.effective.localeCompare(b.effective)).at(-1);
+  if(!change)return periodKey(date,s.cycleStart);
+  const key=periodKey(date,change.start);return key<change.effective.slice(0,7)?change.effective.slice(0,7):key;
+}
+export function workspacePeriodDates(s,key) {
+  dateKey(key+'-01');const changes=s.cycleHistory.filter(c=>c.status!=='cancelled').slice().sort((a,b)=>a.effective.localeCompare(b.effective));
+  const current=changes.filter(c=>c.effective.slice(0,7)<=key).at(-1);
+  const dates=periodDates(key,current?.start??s.cycleStart);
+  if(current?.effective.slice(0,7)===key)dates.from=current.effective;
+  const following=changes.find(c=>c.effective.slice(0,7)>key);
+  if(following&&following.effective<dates.next)dates.next=following.effective;
+  const end=new Date(`${dates.next}T12:00:00Z`);end.setUTCDate(end.getUTCDate()-1);dates.to=end.toISOString().slice(0,10);
+  dates.transition=!!current&&current.effective.slice(0,7)===key;
+  return dates;
+}
+export function transactionPeriod(s,t){return t.historical&&t.legacyPeriod?t.legacyPeriod:workspacePeriod(s,t.date);}
+export function scheduleCycle(s,{start,effective},asOf=today(s.timezone)) {
+  dateKey(effective);dateKey(asOf);
+  if(!Number.isInteger(start)||start<1||start>31||effective<=asOf)fail('Choose a future date and day 1–31.');
+  if(s.cycleHistory.some(c=>c.status!=='cancelled'&&c.effective>=effective))fail('Schedule cycle changes in chronological order without replacing existing changes.');
+  const prior=new Date(`${effective}T12:00:00Z`);prior.setUTCDate(prior.getUTCDate()-1);const date=prior.toISOString().slice(0,10);
+  if(workspacePeriodDates(s,workspacePeriod(s,date)).next!==effective)fail('A cycle change must begin at the next existing period boundary.');
+  return mutate(s,'cycle-scheduled',{start,effective},n=>n.cycleHistory.push({id:uid(),start,effective,status:'scheduled'}));
+}
+export function cancelCycle(s,id,asOf=today(s.timezone)) {
+  dateKey(asOf);const change=s.cycleHistory.find(c=>c.id===id);
+  if(!change||change.status==='cancelled'||change.effective<=asOf)fail('Only a future cycle change can be cancelled.');
+  if(s.cycleHistory.some(c=>c.status!=='cancelled'&&c.effective>change.effective))fail('Cancel later dependent cycle changes first.');
+  return mutate(s,'cycle-cancel',{id},n=>{n.cycleHistory.find(c=>c.id===id).status='cancelled';});
+}
 export function today(timezone='Asia/Shanghai') {
   const parts=new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
   const pick=t=>parts.find(p=>p.type===t).value;
@@ -163,6 +196,15 @@ export function validateState(s) {
   for(const key of ['accounts','transactions','categories','budgets','goals','outside','notes','holdings','operations'])unique(s[key],key);
   unique(s.obligations,'obligations');
   unique(s.imports,'imports');
+  unique(s.cycleHistory,'cycle history');
+  const cyclePrefix={...s,cycleHistory:[]};
+  for(const c of s.cycleHistory.slice().sort((a,b)=>String(a.effective).localeCompare(String(b.effective)))){
+    dateKey(c.effective);if(!Number.isInteger(c.start)||c.start<1||c.start>31||!['scheduled','active','cancelled'].includes(c.status))fail('Invalid cycle change.');
+    if(c.status==='cancelled')continue;
+    const prior=new Date(`${c.effective}T12:00:00Z`);prior.setUTCDate(prior.getUTCDate()-1);const date=prior.toISOString().slice(0,10);
+    if(cyclePrefix.cycleHistory.some(p=>p.effective.slice(0,7)===c.effective.slice(0,7))||workspacePeriodDates(cyclePrefix,workspacePeriod(cyclePrefix,date)).next!==c.effective)fail('Cycle change must preserve existing period boundaries.');
+    cyclePrefix.cycleHistory.push(c);
+  }
   const accounts=new Set(s.accounts.map(a=>a.id)),categories=new Set(s.categories.map(c=>c.id)),goals=new Set(s.goals.map(g=>g.id));
   for(const a of s.accounts) {string(a.name,'Account name',300);if(!['asset','liability'].includes(a.kind)||a.currency!==s.currency)fail('Account type/currency is invalid.');if(a.opening!==null)validMoney(a.opening,'Opening balance',true);dateKey(a.baselineDate);if(!Number.isSafeInteger(a.baselineSeq)||a.baselineSeq<0||a.baselineSeq>s.seq)fail('Account baseline is invalid.');}
   const transactionIds=new Set(s.transactions.map(t=>t.id));
@@ -242,19 +284,20 @@ export function periodForecast(s,key,{mode='budget',extraExpense=0,incomeChange=
   if(!b)return {income:0,spending:0,buffer:0,capacity:0,confidence:'No budget',assumptions:['Set a salary and spending budget.'],budget:null};
   const spendCats=s.categories.filter(c=>!['savings','buffer'].includes(c.type));
   const reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
-  const recorded=s.transactions.filter(t=>!reversed.has(t.id)&&periodKey(t.date,s.cycleStart)===key);
+  const recorded=s.transactions.filter(t=>!reversed.has(t.id)&&transactionPeriod(s,t)===key);
   const actualFor=id=>recorded.reduce((n,t)=>{const amount=t.splits?t.splits.filter(p=>p.category===id).reduce((a,b)=>a+b.amount,0):t.category===id?t.amount:0;return n+(t.kind==='expense'?amount:t.kind==='refund'?-amount:0);},0);
   let spending=spendCats.filter(c=>c.id!=='oneoff').reduce((n,c)=>n+Math.max(b.alloc[c.id]||0,actualFor(c.id)),0),buffer=b.alloc.buffer||0;
-  const outside=s.outside.filter(o=>o.kind!=='borrowed'&&!o.reversedBy&&periodKey(o.date,s.cycleStart)===key&&!recorded.some(t=>t.id===o.transaction&&t.kind==='expense')).reduce((n,o)=>n+o.amount,0);
+  const outside=s.outside.filter(o=>o.kind!=='borrowed'&&!o.reversedBy&&workspacePeriod(s,o.date)===key&&!recorded.some(t=>t.id===o.transaction&&t.kind==='expense')).reduce((n,o)=>n+o.amount,0);
   const oneoff=Math.max(0,actualFor('oneoff'))+outside;
   spending+=Math.max(0,oneoff-(b.locks.buffer?0:buffer));
   const ranges=[1,2,3].map(n=>addMonths(key,-n));
-  const histories=ranges.map(k=>s.transactions.filter(t=>!t.historical&&t.kind==='expense'&&periodKey(t.date,s.cycleStart)===k).reduce((n,t)=>n+t.amount,0));
+  const histories=ranges.map(k=>s.transactions.filter(t=>!t.historical&&t.kind==='expense'&&transactionPeriod(s,t)===k).reduce((n,t)=>n+t.amount,0));
   if(mode==='history'&&histories.some(n=>n>0))spending=Math.max(spending,Math.round(histories.reduce((a,b)=>a+b,0)/histories.filter(n=>n>0).length));
   if(mode==='conservative')spending=Math.ceil(spending*1.15);
   const income=b.salary+incomeChange;
   const committed=s.goals.filter(g=>g.completed&&g.recurringCost&&!g.recurringIncludedInBudget&&!g.purchase?.reversedBy).reduce((n,g)=>n+g.recurringCost,0);
-  return {income,spending,buffer,committed,capacity:income-spending-buffer-extraExpense-committed,confidence:'Budget assumption',budget:b,
+  const dates=workspacePeriodDates(s,key),requiresReview=dates.transition&&b.key!==key;
+  return {income,spending,buffer,committed,requiresReview,capacity:income-spending-buffer-extraExpense-committed,confidence:'Budget assumption',budget:b,
     assumptions:[`Salary and budget from ${b.key}.`,'Regular spending is reserved even when not individually logged.','Borrowing and expected repayments are not recurring income.',mode==='conservative'?'Spending increased by 15% for this scenario.':'Future income is not confirmed cash.']};
 }
 export function goalPurchases(g) {return (g.purchases||[g.purchase].filter(Boolean)).filter(p=>!p.reversedBy);}
@@ -262,7 +305,7 @@ export function goalRemaining(g) {return Math.max(0,g.target-goalPurchases(g).re
 /** Joint allocation: one pool, priority order, no reuse of funds; never spend protected savings. */
 export function planGoals(s,{asOf=today(s.timezone),periods=12,mode='budget',extraExpense=0,incomeChange=0,protection=s.settings.monthlyProtection}={}) {
   dateKey(asOf);validMoney(extraExpense,'Extra expense');validMoney(incomeChange,'Income change',true);validMoney(protection,'Monthly protection');
-  const now=summary(s,asOf),start=periodKey(asOf,s.cycleStart);
+  const now=summary(s,asOf),start=workspacePeriod(s,asOf);
   const goals=s.goals.filter(g=>!g.archived&&!g.protected).slice().sort((a,b)=>{
     const ah=a.flexible===false&&!!a.desired,bh=b.flexible===false&&!!b.desired;
     return ah&&bh?a.desired.localeCompare(b.desired)||a.priority-b.priority||a.id.localeCompare(b.id):Number(bh)-Number(ah)||a.priority-b.priority||a.id.localeCompare(b.id);
@@ -276,7 +319,8 @@ export function planGoals(s,{asOf=today(s.timezone),periods=12,mode='budget',ext
   const distribute=(date,key)=>{for(const g of results){const take=Math.min(pool,g.remaining);g.funded+=take;g.remaining-=take;pool-=take;if(take)g.allocations.push({key,amount:take,date});if(!g.remaining&&!g.ready){g.ready=date;ongoingCost+=s.goals.find(x=>x.id===g.id)?.recurringCost||0;}}};
   if(!now.missing&&existingShortfall===0)distribute(asOf,'existing');
   for(let i=1;i<=Math.min(60,Math.max(1,periods));i++) {
-    const key=addMonths(start,i),forecast=periodForecast(s,key,{mode,extraExpense,incomeChange}),dates=periodDates(key,s.cycleStart);
+    const key=addMonths(start,i),forecast=periodForecast(s,key,{mode,extraExpense,incomeChange}),dates=workspacePeriodDates(s,key);
+    if(forecast.requiresReview){warnings.push(`${key}: review a budget for the transition period ${dates.from} to ${dates.to} before forecasting later purchases.`);break;}
     const delta=forecast.capacity-protection-ongoingCost-existingShortfall;
     const carriedShortfall=existingShortfall;existingShortfall=0;
     // A deficit consumes the unallocated purchase pool. If insufficient, the scenario is infeasible.
@@ -304,6 +348,42 @@ export function cashCalendar(s,{asOf=today(s.timezone),days=60,events=[]}={}) {
   if(minimum<sum.protected)warnings.push('Cash falls below the protected reserve before a scheduled income arrives.');
   if(dated.some(e=>e.overdue))warnings.push('Unpaid overdue events are included today. Record payment or revise their schedule.');
   return {known:true,rows,minimum,accountBalances,warnings:[...new Set(warnings)]};
+}
+/** Conservative purchase preview. Expected income is conditional; this records nothing. */
+export function purchaseSafety(s,{amount,account,date,asOf=today(s.timezone),days=60,budgetAccount=account}={}) {
+  validMoney(amount,'Purchase amount');dateKey(date);dateKey(asOf);
+  if(amount<=0||date<asOf)fail('Choose a positive purchase on or after today.');
+  if(!Number.isInteger(days)||days<1||days>365)fail('Purchase preview range must be 1–365 days.');
+  if(s.accounts.find(a=>a.id===account)?.kind!=='asset'||s.accounts.find(a=>a.id===budgetAccount)?.kind!=='asset')fail('Choose cash accounts for the purchase and normal spending.');
+  const end=new Date(`${asOf}T12:00:00Z`);end.setUTCDate(end.getUTCDate()+days);const to=end.toISOString().slice(0,10);
+  if(date>to)fail('Purchase date is outside this preview range.');
+  const events=[{date,amount:-amount,name:'Proposed purchase',account,proposed:true}],assumptions=[],reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
+  let key=workspacePeriod(s,asOf),missingBudget=false;
+  while(workspacePeriodDates(s,key).from<=to){
+    const range=workspacePeriodDates(s,key),b=periodForecast(s,key).budget;
+    if(!b||range.transition&&b.key!==key)missingBudget=true;
+    else{
+      const tx=s.transactions.filter(t=>!reversed.has(t.id)&&transactionPeriod(s,t)===key&&t.date<=asOf);
+      let remaining=0;
+      for(const c of s.categories.filter(c=>!['savings','buffer'].includes(c.type)&&c.id!=='oneoff')){
+        const spent=tx.reduce((n,t)=>{const a=t.splits?t.splits.filter(p=>p.category===c.id).reduce((n,p)=>n+p.amount,0):t.category===c.id?t.amount:0;return n+(t.kind==='expense'?a:t.kind==='refund'?-a:0);},0);
+        remaining+=Math.max(0,(b.alloc[c.id]||0)-Math.max(0,spent));
+      }
+      remaining+=b.alloc.buffer||0;
+      if(remaining)events.push({date:range.from<asOf?asOf:range.from,amount:-remaining,name:`${key}: remaining normal spending + buffer`,account:budgetAccount,estimated:true,budget:true});
+      assumptions.push(`${key} uses budget ${b.key}; unspent allowances are reserved at the start of the preview period.`);
+    }
+    key=addMonths(key,1);
+  }
+  const calendar=cashCalendar(s,{asOf,days,events}),sum=summary(s,asOf);
+  // Every reservation belongs to a goal. This generic preview may not consume any of them.
+  const floor=sum.reserved+Math.max(0,sum.protected-s.goals.filter(g=>g.protected&&!g.archived).reduce((n,g)=>n+(s.reservations[g.id]||0),0));
+  const accountShort=calendar.rows.filter(r=>r.accountBalance!==null&&r.accountBalance<0);
+  const breaches=calendar.rows.filter(r=>r.balance<floor);
+  const conditional=calendar.rows.some(r=>r.amount>0&&r.estimated);
+  const safe=calendar.known&&!missingBudget&&!accountShort.length&&!breaches.length&&calendar.minimum>=floor;
+  return {...calendar,safe,conditional,missingBudget,floor,breaches,accountShort,through:to,
+    assumptions:[...assumptions,'Normal spending is charged to the account you selected. Adjust it if you use another account.','Scheduled bills are additional to the remaining allowances. If they are already included in your budget, this preview is deliberately conservative.','Expected income is included only when dated on the calendar; budget salary alone is not a cash receipt.','Existing goal reservations and protected cash stay untouched. This preview does not record a purchase.']};
 }
 /** Expand templates without marking any future occurrence paid or creating income. */
 export function scheduledEvents(s,{from=today(s.timezone),to=from,includeOverdue=false}={}) {
@@ -516,11 +596,11 @@ export function undoCsv(s,id) {
 }
 export function expenseTotal(s,key) {
   const reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
-  return s.transactions.filter(t=>!reversed.has(t.id)&&periodKey(t.date,s.cycleStart)===key).reduce((n,t)=>n+(t.kind==='expense'?t.amount:t.kind==='refund'?-t.amount:0),0);
+  return s.transactions.filter(t=>!reversed.has(t.id)&&transactionPeriod(s,t)===key).reduce((n,t)=>n+(t.kind==='expense'?t.amount:t.kind==='refund'?-t.amount:0),0);
 }
-export function spendingInsights(s,key=periodKey(today(s.timezone),s.cycleStart)) {
+export function spendingInsights(s,key=workspacePeriod(s,today(s.timezone))) {
   const b=s.budgets.find(b=>b.key===key),reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
-  const tx=s.transactions.filter(t=>!reversed.has(t.id)&&['expense','refund'].includes(t.kind)&&periodKey(t.date,s.cycleStart)===key),out=[];
+  const tx=s.transactions.filter(t=>!reversed.has(t.id)&&['expense','refund'].includes(t.kind)&&transactionPeriod(s,t)===key),out=[];
   for(const category of s.categories.filter(c=>!['savings','buffer'].includes(c.type))) {
     const contributing=tx.filter(t=>t.splits?t.splits.some(p=>p.category===category.id):t.category===category.id);
     const actual=contributing.reduce((n,t)=>{const value=t.splits?t.splits.filter(p=>p.category===category.id).reduce((a,b)=>a+b.amount,0):t.amount;return n+(t.kind==='refund'?-value:value);},0),budget=b?.alloc[category.id]||0;

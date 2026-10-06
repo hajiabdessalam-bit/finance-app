@@ -35,7 +35,7 @@ New records use IndexedDB. Each save atomically updates the workspace, a recover
 
 ## Current limitations
 
-This is an incremental rebuild. Split expenses/refunds, linked partial returns, installment purchases, hard/flexible funding deadlines, persistent CSV batch undo and manual debt payoff scenarios are implemented. Cloud authentication/synchronization, advanced recurring-budget integration, advanced payoff comparisons, scheduled cycle activation, receipt parsing, live price quotes and AI are still in development. The planner returns period-end funding dates. The cash calendar expands weekly/monthly schedules, keeps expected receipts separate from real money and flags overdue bills or account shortages. Failed entries are retained as separate review-only drafts. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
+This is an incremental rebuild. Split expenses/refunds, linked partial returns, installment purchases, hard/flexible funding deadlines, persistent CSV batch undo and manual debt payoff scenarios are implemented. Cloud authentication/synchronization, advanced recurring-budget integration, advanced payoff comparisons, receipt parsing, live price quotes and AI are still in development. The planner returns period-end funding dates. A separate read-only purchase preview checks dated bills/income and unspent spending allowances against account balances and protected reservations. It is conservative and does not automatically optimize purchase dates. The cash calendar expands weekly/monthly schedules, keeps expected receipts separate from real money and flags overdue bills or account shortages. Failed entries are retained as separate review-only drafts. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
 
 Money outside can record a new gift, loan or investment and its cash movement together. Partial returns are linked to that record. Reverse linked returns before correcting an original outgoing payment; original entries stay in the ledger.
 
@@ -56,3 +56,5 @@ node --test --test-isolation=none tests/database.test.mjs
 ```
 
 These tests use synthetic users and an in-memory PostgreSQL engine. They do not connect to Supabase or import personal records; without the optional runtime the SQL suite is skipped. They supplement, rather than replace, live project access-control verification.
+
+Cycle changes take effect at an existing period boundary. A transition period bridges to the new day in the following month, retaining one budget key per month. Earlier assignments and imported historical month keys remain unchanged. Future changes can be cancelled in reverse order; active periods cannot be remapped. Forecasts pause at a transition that lacks its own reviewed budget.
