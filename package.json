@@ -1,0 +1,10 @@
+{
+  "name": "plan-finance",
+  "version": "2.0.0-dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/*.test.mjs",
+    "start": "node scripts/serve.mjs"
+  }
+}

@@ -1,0 +1,11 @@
+finance-backup*.json
+recovery/
+private/
+.env*
+!.env.example
+node_modules/
+.vercel/
+test-results/
+*.log
+IMPLEMENTATION.md
+tests/private-*
