@@ -10,6 +10,8 @@ export interface Workspace {
   [key:string]:unknown;
 }
 export interface StoredWorkspace {state:Workspace|null;revision:number}
+export interface EditDraft {id:string;at?:string;source?:string;type?:string;input?:unknown;reason?:string;[key:string]:unknown}
+export type CommitEdit=(type:string,input:unknown,build:(state:Workspace)=>Workspace)=>Promise<boolean>;
 export interface Scenario {mode:'budget'|'history'|'conservative';extraExpense:number;incomeChange:number;protection:number}
 export interface GoalForecast {id:string;name:string;target:number;funded:number;remaining:number;ready:string|null;deadline:string;late:boolean}
 export interface FundingRow {key:string;date:string;capacity:number;protected:number;pool:number;allocated?:number;shortage?:number}

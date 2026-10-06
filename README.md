@@ -63,7 +63,7 @@ Cycle changes take effect at an existing period boundary. A transition period br
 
 ## Frontend development
 
-The separate `app/react.html` page starts the React/TypeScript migration with overview, scenario comparison and read-only notes. It reads the same origin's validated IndexedDB workspace, makes no API calls and has no financial write controls. The main app continues to provide all editing workflows until frontend parity is verified.
+The separate `app/react.html` page starts the React/TypeScript migration with overview, scenario comparison, account balance checks and editable notes/checklists. It uses the same origin's validated IndexedDB workspace and atomic revision checks. Failed edits retain review-only drafts, available for download; concurrent saves cannot silently replace newer records. It makes no API calls. The main app continues to provide the remaining editing workflows until frontend parity is verified.
 
 ```sh
 npm ci --ignore-scripts
