@@ -162,6 +162,7 @@ export function validateState(s) {
   if(!object(s.reservations)||!object(s.settings))fail('Settings or reservations are missing.');
   for(const key of ['accounts','transactions','categories','budgets','goals','outside','notes','holdings','operations'])unique(s[key],key);
   unique(s.obligations,'obligations');
+  unique(s.imports,'imports');
   const accounts=new Set(s.accounts.map(a=>a.id)),categories=new Set(s.categories.map(c=>c.id)),goals=new Set(s.goals.map(g=>g.id));
   for(const a of s.accounts) {string(a.name,'Account name',300);if(!['asset','liability'].includes(a.kind)||a.currency!==s.currency)fail('Account type/currency is invalid.');if(a.opening!==null)validMoney(a.opening,'Opening balance',true);dateKey(a.baselineDate);if(!Number.isSafeInteger(a.baselineSeq)||a.baselineSeq<0||a.baselineSeq>s.seq)fail('Account baseline is invalid.');}
   const transactionIds=new Set(s.transactions.map(t=>t.id));
@@ -184,8 +185,18 @@ export function validateState(s) {
     }
   }
   const reversals=s.transactions.filter(t=>t.reverses).map(t=>t.reverses);if(new Set(reversals).size!==reversals.length)fail('A transaction has been reversed more than once.');
+  for(const batch of s.imports)if(batch.type==='csv'){
+    if(!Array.isArray(batch.transactionIds)||!batch.transactionIds.length||new Set(batch.transactionIds).size!==batch.transactionIds.length||typeof batch.undone!=='boolean')fail('Invalid CSV import history.');
+    for(const id of batch.transactionIds){const t=s.transactions.find(t=>t.id===id);if(!t||t.source!=='csv'||t.historical||batch.undone&&!reversals.includes(id))fail('CSV import history does not match its transactions.');}
+  }
   for(const b of s.budgets) {if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(b.key)||!object(b.alloc)||!object(b.locks))fail('Invalid budget.');validMoney(b.salary,'Salary');for(const [id,n]of Object.entries(b.alloc)){if(!categories.has(id))fail('Missing budget category.');validMoney(n,'Budget allocation');}}
   for(const g of s.goals) {string(g.name,'Goal name',300);validMoney(g.target,'Goal target');if(g.desired)dateKey(g.desired);if(!Number.isInteger(g.priority)||g.priority<1||g.priority>1000)fail('Invalid goal priority.');if(g.recurringCost!=null)validMoney(g.recurringCost,'Ongoing cost');if(g.unitPrice!=null)validMoney(g.unitPrice,'Price quote');if(g.fees!=null)validMoney(g.fees,'Fees');if(g.quantity!=null&&(!Number.isFinite(g.quantity)||g.quantity<=0))fail('Quantity must be positive.');if(g.quoteDate)dateKey(g.quoteDate);}
+  for(const g of s.goals){
+    if(g.flexible===false&&!g.desired)fail('A hard deadline needs a date.');
+    if(g.purchases&&!Array.isArray(g.purchases))fail('Invalid purchase history.');
+    const purchases=g.purchases||[g.purchase].filter(Boolean),seen=new Set();
+    for(const p of purchases){const t=s.transactions.find(t=>t.id===p.transaction);validMoney(p.amount,'Purchase cost');dateKey(p.date);if(!t||t.kind!=='expense'||t.amount!==p.amount||t.date!==p.date||seen.has(p.transaction))fail('Purchase history does not match the ledger.');seen.add(p.transaction);if(p.complete!=null&&typeof p.complete!=='boolean')fail('Invalid purchase completion flag.');if(p.reversedBy&&!s.transactions.some(t=>t.id===p.reversedBy&&t.reverses===p.transaction))fail('Invalid purchase correction.');}
+  }
   for(const [id,n]of Object.entries(s.reservations)){if(!goals.has(id))fail('Missing reservation goal.');validMoney(n,'Goal reservation');}
   for(const r of s.reconciliations) {if(!accounts.has(r.account))fail('Missing reconciliation account.');dateKey(r.date);validMoney(r.balance,'Balance',true);if(r.difference!==null)validMoney(r.difference,'Difference',true);}
   for(const o of s.outside){validMoney(o.amount,'Outside amount');dateKey(o.date);if(o.returned!=null)validMoney(o.returned,'Returned amount');if((o.returned||0)>o.amount)fail('Returned amount exceeds the original record.');if(!['unclassified','gift','loan','investment','borrowed'].includes(o.kind))fail('Invalid outside classification.');}
@@ -239,19 +250,24 @@ export function periodForecast(s,key,{mode='budget',extraExpense=0,incomeChange=
   return {income,spending,buffer,committed,capacity:income-spending-buffer-extraExpense-committed,confidence:'Budget assumption',budget:b,
     assumptions:[`Salary and budget from ${b.key}.`,'Regular spending is reserved even when not individually logged.','Borrowing and expected repayments are not recurring income.',mode==='conservative'?'Spending increased by 15% for this scenario.':'Future income is not confirmed cash.']};
 }
+export function goalPurchases(g) {return (g.purchases||[g.purchase].filter(Boolean)).filter(p=>!p.reversedBy);}
+export function goalRemaining(g) {return Math.max(0,g.target-goalPurchases(g).reduce((n,p)=>n+p.amount,0));}
 /** Joint allocation: one pool, priority order, no reuse of funds; never spend protected savings. */
 export function planGoals(s,{asOf=today(s.timezone),periods=12,mode='budget',extraExpense=0,incomeChange=0,protection=s.settings.monthlyProtection}={}) {
   dateKey(asOf);validMoney(extraExpense,'Extra expense');validMoney(incomeChange,'Income change',true);validMoney(protection,'Monthly protection');
   const now=summary(s,asOf),start=periodKey(asOf,s.cycleStart);
-  const goals=s.goals.filter(g=>!g.archived&&!g.protected).slice().sort((a,b)=>a.priority-b.priority||a.id.localeCompare(b.id));
-  const results=goals.map(g=>({id:g.id,name:g.name,target:g.target,funded:s.reservations[g.id]||0,remaining:Math.max(0,g.target-(s.reservations[g.id]||0)),ready:null,deadline:g.desired||'',late:false,allocations:[]}));
+  const goals=s.goals.filter(g=>!g.archived&&!g.protected).slice().sort((a,b)=>{
+    const ah=a.flexible===false&&!!a.desired,bh=b.flexible===false&&!!b.desired;
+    return ah&&bh?a.desired.localeCompare(b.desired)||a.priority-b.priority||a.id.localeCompare(b.id):Number(bh)-Number(ah)||a.priority-b.priority||a.id.localeCompare(b.id);
+  });
+  const results=goals.map(g=>({id:g.id,name:g.name,target:goalRemaining(g),funded:now.missing?0:s.reservations[g.id]||0,remaining:Math.max(0,goalRemaining(g)-(now.missing?0:s.reservations[g.id]||0)),ready:null,deadline:g.desired||'',hard:g.flexible===false,late:false,allocations:[]}));
   const rows=[],warnings=[];
   if(now.missing)warnings.push('Account balances need a weekly check. Existing cash is excluded until verified.');
   let pool=Math.max(0,now.available??0);
-  let existingShortfall=Math.max(0,-(now.available??0));
+  let existingShortfall=now.missing?now.protected:Math.max(0,-(now.available??0));
   let ongoingCost=0;
   const distribute=(date,key)=>{for(const g of results){const take=Math.min(pool,g.remaining);g.funded+=take;g.remaining-=take;pool-=take;if(take)g.allocations.push({key,amount:take,date});if(!g.remaining&&!g.ready){g.ready=date;ongoingCost+=s.goals.find(x=>x.id===g.id)?.recurringCost||0;}}};
-  distribute(asOf,'existing');
+  if(!now.missing&&existingShortfall===0)distribute(asOf,'existing');
   for(let i=1;i<=Math.min(60,Math.max(1,periods));i++) {
     const key=addMonths(start,i),forecast=periodForecast(s,key,{mode,extraExpense,incomeChange}),dates=periodDates(key,s.cycleStart);
     const delta=forecast.capacity-protection-ongoingCost-existingShortfall;
@@ -267,7 +283,7 @@ export function planGoals(s,{asOf=today(s.timezone),periods=12,mode='budget',ext
   for(const g of results)g.late=!!g.deadline&&(!g.ready||g.ready>g.deadline);
   if(now.available!==null&&now.available<0)warnings.push('Cash is below existing reservations and reserve. The shortfall is deducted before funding purchases. Review balances and allocations.');
   if(results.some(g=>g.late))warnings.push('At least one desired date cannot be met under these assumptions. Try changing priority, price, spending or income.');
-  return {results,rows,warnings,pool,mode,asOf,assumptions:['Dates are end-of-period funding estimates; check bill timing before buying.','Current period future surplus is excluded to avoid spending money twice.','Protected goals and reserve remain untouched.',...periodForecast(s,addMonths(start,1),{mode}).assumptions]};
+  return {results,rows,warnings,pool,mode,asOf,assumptions:['Dates are end-of-period funding estimates; check bill timing before buying.','Hard deadlines are funded earliest first, then flexible goals follow your priority.','Current period future surplus is excluded to avoid spending money twice.','Protected goals and reserve remain untouched.',...periodForecast(s,addMonths(start,1),{mode}).assumptions]};
 }
 export function cashCalendar(s,{asOf=today(s.timezone),days=60,events=[]}={}) {
   dateKey(asOf);if(!Number.isInteger(days)||days<1||days>730)fail('Calendar range must be 1–730 days.');
@@ -348,10 +364,11 @@ export function reverseTransaction(s,id,reason='Correction') {
   const t=s.transactions.find(t=>t.id===id);if(!t||t.historical||t.kind==='reversal'||s.transactions.some(x=>x.reverses===id))fail('This transaction cannot be reversed.');
   return mutate(s,'reverse',{id,reason},n=>{
     const reversalId=uid();
-    n.transactions.push({id:reversalId,seq:n.seq,kind:'reversal',date:t.date,amount:t.amount,category:t.category,note:reason,postings:t.postings.map(p=>({account:p.account,amount:-p.amount})),reverses:id,historical:false,source:'correction'});
+    n.transactions.push({id:reversalId,seq:n.seq,kind:'reversal',date:t.date,amount:t.amount,account:t.account||'',toAccount:t.toAccount||'',category:t.category,note:reason,postings:t.postings.map(p=>({account:p.account,amount:-p.amount})),reverses:id,historical:false,source:'correction'});
     for(const record of n.outside)for(const returned of record.returns||[])if(returned.transaction===id&&!returned.reversedBy){record.returned-=returned.amount;returned.reversedBy=reversalId;}
-    for(const g of n.goals)if(g.purchase?.transaction===id&&!g.purchase.reversedBy){
-      g.completed=false;g.archived=false;g.purchase.reversedBy=reversalId;
+    for(const g of n.goals)if([...(g.purchases||[]),g.purchase].filter(Boolean).some(p=>p.transaction===id&&!p.reversedBy)){
+      for(const p of [...(g.purchases||[]),g.purchase].filter(Boolean))if(p.transaction===id)p.reversedBy=reversalId;
+      g.completed=goalPurchases(g).some(p=>p.complete!==false);if(g.archiveReason!=='manual')g.archived=g.completed;
       // Restoring a reservation automatically could spend cash already assigned elsewhere.
       // Keep it released and ask the user to review their allocation.
       for(const h of n.holdings)if(h.transaction===id)h.reversedBy=reversalId;
@@ -361,19 +378,23 @@ export function reverseTransaction(s,id,reason='Correction') {
   });
 }
 /** A planned purchase is one operation: cash, goal completion and holdings agree. */
-export function purchaseGoal(s,{id,amount,account,date}) {
+export function purchaseGoal(s,{id,amount,account,date,complete=true,quantity=null}) {
   const g=s.goals.find(g=>g.id===id);dateKey(date);validMoney(amount,'Purchase amount');
   if(!g||g.archived||g.protected)fail('Choose an active purchase goal.');
   if(amount<=0||date>today(s.timezone))fail('Record a positive purchase that has already happened.');
+  if(typeof complete!=='boolean')fail('Choose whether this finishes the purchase.');
+  if(quantity!==null&&(!Number.isFinite(quantity)||quantity<=0))fail('Purchased quantity must be positive.');
+  if(g.kind==='gold'&&!complete&&quantity===null)fail('Enter the actual gold quantity for a partial purchase.');
   const a=s.accounts.find(a=>a.id===account),balance=accountBalance(s,account,date),sum=summary(s,date);
   if(a.kind!=='asset'||balance===null||balance<amount)fail('Verify sufficient cash in this account before buying.');
   if(sum.available===null||amount>sum.available+(s.reservations[id]||0))fail('This purchase would use protected cash or money reserved for another goal.');
   const transaction=uid();
-  return mutate(s,'goal-purchase',{id,amount,account,date},n=>{
+  return mutate(s,'goal-purchase',{id,amount,account,date,complete,quantity},n=>{
     n.transactions.push({id:transaction,seq:n.seq,kind:'expense',amount,date,account,toAccount:'',category:'oneoff',note:`Goal purchase: ${g.name}`,postings:[{account,amount:-amount}],historical:false,source:'goal',goal:id});
-    const goal=n.goals.find(x=>x.id===id);goal.purchase={transaction,amount,date,releasedReservation:n.reservations[id]||0};goal.completed=true;goal.archived=true;n.reservations[id]=0;
-    if(goal.kind==='gold')n.holdings.push({id:uid(),name:goal.name,quantity:goal.quantity,cost:amount,date,goal:id,transaction});
-    if(goal.recurringCost){const key=addMonths(date.slice(0,7),1),[y,m]=key.split('-').map(Number);n.obligations.push({id:uid(),name:`${goal.name}: ongoing cost`,kind:'bill',amount:goal.recurringCost,date:dayAt(y,m-1,Number(date.slice(8))),account,paid:false,recurrence:{unit:'monthly',interval:1,until:''},goal:id,purchaseTransaction:transaction});}
+    const goal=n.goals.find(x=>x.id===id),beforeReservation=n.reservations[id]||0;
+    goal.purchases=[...(goal.purchases||[goal.purchase].filter(Boolean)),{transaction,amount,date,complete,releasedReservation:beforeReservation,quantity}];goal.purchase=goal.purchases.at(-1);goal.completed=complete;goal.archived=complete;if(complete)goal.archiveReason='purchased';n.reservations[id]=complete?0:Math.max(0,beforeReservation-amount);
+    if(goal.kind==='gold'){const remainingQuantity=goal.quantity==null?null:Math.max(0,goal.quantity-n.holdings.filter(h=>h.goal===id&&!h.reversedBy).reduce((total,h)=>total+(h.quantity||0),0));n.holdings.push({id:uid(),name:goal.name,quantity:quantity??(complete&&remainingQuantity>0?remainingQuantity:null),cost:amount,date,goal:id,transaction});}
+    if(complete&&goal.recurringCost){const key=addMonths(date.slice(0,7),1),[y,m]=key.split('-').map(Number);n.obligations.push({id:uid(),name:`${goal.name}: ongoing cost`,kind:'bill',amount:goal.recurringCost,date:dayAt(y,m-1,Number(date.slice(8))),account,paid:false,recurrence:{unit:'monthly',interval:1,until:''},goal:id,purchaseTransaction:transaction});}
   });
 }
 export function reconcile(s,{account,date,balance,note=''}) {
@@ -397,7 +418,7 @@ export function releaseGoal(s,id,amount) {
 }
 export function archiveGoal(s,id) {
   if(!s.goals.some(g=>g.id===id))fail('Goal not found.');
-  return mutate(s,'archive-goal',{id},n=>{n.goals.find(g=>g.id===id).archived=true;n.reservations[id]=0;});
+  return mutate(s,'archive-goal',{id},n=>{const goal=n.goals.find(g=>g.id===id);goal.archived=true;goal.archiveReason='manual';n.reservations[id]=0;});
 }
 export function returnOutside(s,{id,amount,account,date,note=''}) {
   const record=s.outside.find(o=>o.id===id);validMoney(amount,'Return amount');dateKey(date);
@@ -436,15 +457,19 @@ export function csvParse(raw) {
   if(rows.some(r=>r.length!==headers.length))fail('CSV rows have different column counts.');
   return {headers,rows};
 }
-export async function csvPreview(s,raw,{date,amount,note,account,category='oneoff',sign='negative-expense'}) {
+export async function csvPreview(s,raw,{date,amount,note,account,category='oneoff',sign='negative-expense',creditKind='income',kindColumn='',toAccount=''}) {
   const csv=csvParse(raw),di=csv.headers.indexOf(date),ai=csv.headers.indexOf(amount),ni=csv.headers.indexOf(note);
   if(di<0||ai<0)fail('Map the date and amount columns.');
+  if(!['negative-expense','positive-expense'].includes(sign)||!['income','refund'].includes(creditKind))fail('Choose valid sign and received-money mappings.');
+  const ki=kindColumn?csv.headers.indexOf(kindColumn):-1;if(kindColumn&&ki<0)fail('Map the transaction type column.');
   const results=[],seen=new Set(s.transactions.map(t=>t.importKey).filter(Boolean));
   for(const row of csv.rows) {
     try{
       const dateValue=dateKey(row[di].trim()),value=money(row[ai].trim()),text=ni<0?'':row[ni];
-      const kind=sign==='positive-expense'?(value>=0?'expense':'refund'):(value<0?'expense':'income');
-      const record={date:dateValue,amount:Math.abs(value),note:text,kind,account,category,source:'csv'};
+      const kind=ki>=0?row[ki].trim().toLowerCase():sign==='positive-expense'?(value>=0?'expense':'refund'):(value<0?'expense':creditKind);
+      const record={date:dateValue,amount:Math.abs(value),note:text,kind,account,toAccount,category,source:'csv'};
+      // Run the same rules as a manual entry so invalid rows fail during preview.
+      addTransaction(s,record);
       const key=await digest(JSON.stringify([account,dateValue,value,text]));
       const duplicate=seen.has(key);seen.add(key);results.push({record:{...record,importKey:key},duplicate,error:''});
     }catch(e){results.push({record:null,duplicate:false,error:e.message});}
@@ -454,7 +479,14 @@ export async function csvPreview(s,raw,{date,amount,note,account,category='oneof
 export function applyCsv(s,rows) {
   if(rows.some(r=>r.error))fail('Fix invalid rows before importing.');
   let next=s;for(const r of rows)if(!r.duplicate&&!next.transactions.some(t=>t.importKey===r.record.importKey))next=addTransaction(next,r.record);
+  const before=new Set(s.transactions.map(t=>t.id)),transactionIds=next.transactions.filter(t=>!before.has(t.id)).map(t=>t.id);
+  if(transactionIds.length)next=mutate(next,'csv-import',{transactionIds},n=>n.imports.push({id:uid(),type:'csv',transactionIds,at:new Date().toISOString(),undone:false}));
   return next;
+}
+export function undoCsv(s,id) {
+  const batch=s.imports.find(i=>i.id===id&&i.type==='csv');if(!batch||batch.undone)fail('Choose a CSV import that has not been undone.');
+  let next=s;for(const transaction of batch.transactionIds)if(!next.transactions.some(t=>t.reverses===transaction))next=reverseTransaction(next,transaction,'Undo CSV import');
+  return mutate(next,'csv-undo',{id},n=>{const item=n.imports.find(i=>i.id===id);item.undone=true;item.undoneAt=new Date().toISOString();});
 }
 export function expenseTotal(s,key) {
   const reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
