@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -9,6 +9,8 @@ const scopes={
   'goal-add':['goals','reservations'],'goal-edit':['goals'],
   'outside-given':['transactions','outside'],'outside-return':['transactions','outside'],'outside-classify':['outside'],
   'obligation-add':['obligations'],'obligation-paid':['obligations'],
+  'obligation-skip':['obligations'],'obligation-stop':['obligations'],'obligation-replace':['obligations'],
+  'obligation-restore':['obligations'],
   'csv-import':['imports'],'csv-undo':['imports'],
   'budget-set':['budgets'],'category-add':['categories'],'category-archive':['categories'],
   'note-add':['notes'],'note-edit':['notes'],'note-item-toggle':['notes'],'note-archive':['notes'],'note-restore':['notes'],
@@ -50,6 +52,29 @@ export function validateTransitions(current,next,request,asOf){
   for(const old of current.goals){
     const goal=next.goals.find(g=>g.id===old.id);
     if(request.type==='goal-edit'&&!sameJson(without(old,['target','priority','desired','flexible']),without(goal,['target','priority','desired','flexible'])))throw new Error('Goal edits cannot rewrite purchase history or ownership.');
+  }
+  for(const old of current.obligations){
+    const event=next.obligations.find(o=>o.id===old.id);
+    if(sameJson(old,event))continue;
+    if(request.type==='obligation-add')throw new Error('Adding a schedule cannot rewrite existing events.');
+    if(['obligation-stop','obligation-replace'].includes(request.type)){
+      if(old.templateId||old.goal||old.archived||!sameJson(without(old,['cancelAfter','stopReason']),without(event,['cancelAfter','stopReason']))||!event.stopReason?.trim()||!event.cancelAfter||event.cancelAfter<asOf||request.type==='obligation-replace'&&event.cancelAfter<=asOf||old.cancelAfter&&event.cancelAfter>=old.cancelAfter)throw new Error('Only a dated future stop may change an existing ordinary template.');
+    }
+    if(request.type==='obligation-skip'&&(old.paid||old.skipped||event.skipped!==true||!sameJson(without(old,['skipped','skipReason']),without(event,['skipped','skipReason']))))throw new Error('Cancel only an unpaid occurrence without rewriting its schedule.');
+    if(request.type==='obligation-restore'&&(!old.skipped||old.paid||event.skipped!==false||!sameJson(without(old,['skipped']),without(event,['skipped']))))throw new Error('Restore only the original cancelled occurrence.');
+  }
+  const addedEvents=next.obligations.filter(o=>!current.obligations.some(old=>old.id===o.id));
+  if(['obligation-stop','obligation-restore'].includes(request.type)&&addedEvents.length)throw new Error('This schedule review cannot invent another event.');
+  if(request.type==='obligation-replace'){
+    const changedTemplates=current.obligations.filter(old=>!sameJson(old,next.obligations.find(o=>o.id===old.id)));
+    const event=addedEvents[0],old=changedTemplates[0];
+    if(addedEvents.length!==1||changedTemplates.length!==1||event.replacesTemplate!==old.id||event.date!==next.obligations.find(o=>o.id===old.id).cancelAfter)throw new Error('A replacement must retain one prior template and its exact dated boundary.');
+  }
+  for(const event of addedEvents){
+    if(['obligation-add','obligation-replace'].includes(request.type)&&(event.paid||event.transaction||event.templateId||event.skipped))throw new Error('New templates cannot contain invented payment history.');
+    if(request.type==='obligation-skip'){
+      const expected=scheduledEvents(current,{from:event.date,to:event.date}).find(o=>o.id===event.id);if(!expected||expected.paid||expected.skipped||event.skipped!==true||!sameJson(without(expected,['recurrence','skipped','skipReason']),without(event,['recurrence','skipped','skipReason'])))throw new Error('Cancelled occurrence must match the original schedule.');
+    }
   }
   for(const t of next.transactions.filter(t=>!current.transactions.some(old=>old.id===t.id)))if(t.date>asOf)throw new Error('Future payments belong on the calendar, not in actual transactions.');
 }
