@@ -6,10 +6,12 @@ The replacement app lives in `app/`. The original standalone app remains at the 
 
 ## Run locally
 
-Requires Node.js 24+. No dependency installation is needed.
+Requires Node.js 24+. The built static app can run without installing dependencies. Install the pinned dependencies to run the complete tests or edit the typed frontend.
 
 ```sh
 npm start
+# For full tests and frontend development:
+npm ci --ignore-scripts
 npm test
 ```
 
@@ -35,7 +37,7 @@ New records use IndexedDB. Each save atomically updates the workspace, a recover
 
 ## Current limitations
 
-This is an incremental rebuild. Split expenses/refunds, linked partial returns, installment purchases, hard/flexible funding deadlines, persistent CSV batch undo and manual debt payoff scenarios are implemented. Cloud authentication/synchronization, advanced recurring-budget integration, advanced payoff comparisons, receipt parsing, live price quotes and AI are still in development. The planner returns period-end funding dates. A separate read-only purchase preview checks dated bills/income and unspent spending allowances against account balances and protected reservations. It is conservative and does not automatically optimize purchase dates. The cash calendar expands weekly/monthly schedules, keeps expected receipts separate from real money and flags overdue bills or account shortages. Failed entries are retained as separate review-only drafts. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
+This is an incremental rebuild. Split expenses/refunds, linked partial returns, installment purchases, hard/flexible funding deadlines, persistent CSV batch undo and manual debt payoff scenarios and repayment-order comparisons are implemented. Cloud authentication/synchronization, advanced recurring-budget integration, receipt parsing, live price quotes and connected AI are still in development. The planner returns period-end funding dates. A separate read-only purchase preview checks dated bills/income and unspent spending allowances against account balances and protected reservations. It is conservative and does not automatically optimize purchase dates. The cash calendar expands weekly/monthly schedules, keeps expected receipts separate from real money and flags overdue bills or account shortages. Failed entries are retained as separate review-only drafts. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
 
 Money outside can record a new gift, loan or investment and its cash movement together. Partial returns are linked to that record. Reverse linked returns before correcting an original outgoing payment; original entries stay in the ledger.
 
@@ -72,3 +74,11 @@ npm run build:frontend
 The checked-in browser bundle is built from public source only, with runtime dependency licenses alongside it. It uses no external script CDN. Rebuild after frontend or engine changes. Starting the existing static app does not require rebuilding the frontend.
 
 Weekly balance checks retain their original differences. A review can add an explanation without inventing spending. Forgotten transactions dated before the latest checked balance update spending history without changing that balance; for same-day forgotten entries, confirm the balance again if it already included them. Activity supports account/category/date/correction filters and pages of 100 records, with split categories and amounts displayed explicitly.
+
+## Local planning assistant and debt comparisons
+
+The planning assistant calculates the extra income per future period needed to fund a selected goal by a date, using the same shared cash pool and competing goals as the main planner. It shows assumptions and keeps the scenario separate from saved goals. Funding is estimated at period end; the dated cash preview must be checked before a purchase.
+
+Debt comparisons use explicit balances, APRs, minimum payments and one fixed monthly budget. They compare highest-interest-first and smallest-balance-first orders, roll freed minimum payments into the remaining debts, and show estimated interest. Monthly interest rounds exactly to minor units. Daily statement calculations, changing rates, fees and new borrowing are excluded. The comparison does not record payments.
+
+`server/advisor.ts` prepares AI SDK tools for read-only scenarios and a priority proposal that requires explicit review against an unchanged workspace. It removes names, notes and individual transactions from its aggregate summary. No provider, deployed route or model call is configured. Provider access, permanent-user authorization, informed data-transfer consent and durable cost limits remain prerequisites.

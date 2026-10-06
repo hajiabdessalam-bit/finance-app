@@ -337,6 +337,26 @@ export function planGoals(s,{asOf=today(s.timezone),periods=12,mode='budget',ext
   if(results.some(g=>g.late))warnings.push('At least one desired date cannot be met under these assumptions. Try changing priority, price, spending or income.');
   return {results,rows,warnings,pool,mode,asOf,assumptions:['Dates are end-of-period funding estimates; check bill timing before buying.','Hard deadlines are funded earliest first, then flexible goals follow your priority.','Current period future surplus is excluded to avoid spending money twice.','Protected goals and reserve remain untouched.',...periodForecast(s,addMonths(start,1),{mode}).assumptions]};
 }
+/** Minimum additional income under the joint engine's assumptions, in exact minor units.
+ * Treats this goal's requested date as a hard deadline in a scenario only. */
+export function goalIncomePath(s,{id,deadline,asOf=today(s.timezone),periods=60,protection=s.settings.monthlyProtection}={}) {
+  validateState(s);dateKey(deadline);dateKey(asOf);validMoney(protection,'Protected contribution');
+  if(deadline<asOf||!Number.isInteger(periods)||periods<1||periods>60)fail('Choose a future target date and a horizon of 1–60 periods.');
+  const scenario=clone(s),g=scenario.goals.find(g=>g.id===id&&!g.archived&&!g.protected);if(!g)fail('Choose an active purchase goal.');
+  g.desired=deadline;g.flexible=false;
+  const run=increase=>{const plan=planGoals(scenario,{asOf,periods,protection,incomeChange:increase});return {plan,result:plan.results.find(r=>r.id===id)};};
+  const fits=r=>!!r.result.ready&&r.result.ready<=deadline;
+  const base=run(0),details={id,deadline,asOf,horizon:periods,recordsChanged:false,assumptions:[...base.plan.assumptions,'This comparison gives the selected goal a hard deadline. Other earlier hard deadlines still come first.','The result is additional income each future period, not confirmed cash or a recommendation to borrow.','Check purchase timing before paying; a funding date is not a daily cash guarantee.']};
+  if(fits(base))return {...details,feasible:true,additionalIncome:0,ready:base.result.ready,plan:base.plan};
+  const start=workspacePeriod(s,asOf),eligible=[];
+  for(let i=1;i<=periods;i++){const key=addMonths(start,i),dates=workspacePeriodDates(s,key);if(dates.to<=deadline){if(periodForecast(s,key).requiresReview)return {...details,feasible:false,additionalIncome:null,reason:'Review the transition-period budget before relying on this goal date.'};eligible.push(key);}}
+  if(!eligible.length)return {...details,feasible:false,additionalIncome:null,reason:'No future forecast period ends before this date. Use verified existing savings, a lower target or a later date.'};
+  let low=0,high=1000,candidate=run(high);
+  while(!fits(candidate)&&high<1e14){low=high;high=Math.min(1e14,high*2);candidate=run(high);}
+  if(!fits(candidate))return {...details,feasible:false,additionalIncome:null,reason:'The target cannot be met in this horizon within the supported income range.'};
+  while(high-low>1){const middle=Math.floor((low+high)/2),r=run(middle);if(fits(r)){high=middle;candidate=r;}else low=middle;}
+  candidate=run(high);return {...details,feasible:true,additionalIncome:high,ready:candidate.result.ready,plan:candidate.plan};
+}
 export function cashCalendar(s,{asOf=today(s.timezone),days=60,events=[]}={}) {
   dateKey(asOf);if(!Number.isInteger(days)||days<1||days>730)fail('Calendar range must be 1–730 days.');
   const sum=summary(s,asOf);if(sum.cash===null)return {known:false,rows:[],minimum:null,warnings:['Verify every cash account before checking daily liquidity.']};
@@ -541,6 +561,40 @@ export function returnOutside(s,{id,amount,account,date,note=''}) {
     const r=n.outside.find(o=>o.id===id);r.returned=(r.returned||0)+amount;r.returns=[...(r.returns||[]),{id:uid(),amount,date,transaction}];
   });
 }
+export function monthlyInterest(balance,annualRate) {
+  validMoney(balance,'Debt');
+  const text=String(annualRate);if(!/^\d+(\.\d{1,4})?$/.test(text)||Number(text)>100)fail('Interest rate must be 0–100 percent, with at most four decimal places.');
+  const [whole,part='']=text.split('.'),rate=BigInt(whole)*10000n+BigInt(part.padEnd(4,'0'));
+  return Number((BigInt(balance)*rate+6000000n)/12000000n);
+}
+export function debtStrategies({debts,extra=0,periods=600}) {
+  if(!Array.isArray(debts)||!debts.length||debts.length>100||!Number.isInteger(periods)||periods<1||periods>600)fail('Choose 1–100 debts and a horizon of 1–600 months.');
+  unique(debts,'debts');validMoney(extra,'Extra payment');
+  for(const d of debts){string(d.name,'Debt name',300);validMoney(d.balance,'Debt balance');validMoney(d.minimum,'Minimum payment');monthlyInterest(d.balance,d.annualRate);}
+  const monthlyBudget=debts.reduce((n,d)=>n+d.minimum,extra),principal=debts.reduce((n,d)=>n+d.balance,0);
+  if(!Number.isSafeInteger(monthlyBudget)||!Number.isSafeInteger(principal))fail('Debt totals exceed the supported exact range.');
+  return ['avalanche','snowball'].map(strategy=>{
+    const work=clone(debts),rows=[],payoffs=[];let total=0,interest=0,negativeAmortization=false;
+    if(!principal)return {strategy,feasible:true,months:0,total:0,interest:0,monthlyBudget,rows,payoffs,negativeAmortization};
+    if(monthlyBudget<=0)return {strategy,feasible:false,reason:'Set minimum payments or an extra payment above zero.',monthlyBudget,rows,payoffs};
+    for(let month=1;month<=periods;month++){
+      let available=monthlyBudget,charged=0;const paid=new Map(),charges=new Map();
+      for(const d of work.filter(d=>d.balance>0)){const amount=monthlyInterest(d.balance,d.annualRate);d.balance+=amount;charged+=amount;charges.set(d.id,amount);}
+      if(charged>=monthlyBudget)return {strategy,feasible:false,reason:'The monthly budget does not reduce debt after estimated interest.',monthlyBudget,rows,payoffs,interest,total};
+      for(const d of work.filter(d=>d.balance>0)){const amount=Math.min(d.balance,d.minimum,available);d.balance-=amount;available-=amount;paid.set(d.id,amount);}
+      const order=work.filter(d=>d.balance>0).sort((a,b)=>strategy==='avalanche'?Number(b.annualRate)-Number(a.annualRate)||a.balance-b.balance||String(a.id).localeCompare(String(b.id)):a.balance-b.balance||Number(b.annualRate)-Number(a.annualRate)||String(a.id).localeCompare(String(b.id)));
+      for(const d of order){const amount=Math.min(d.balance,available);d.balance-=amount;available-=amount;paid.set(d.id,(paid.get(d.id)||0)+amount);}
+      const payment=monthlyBudget-available;total+=payment;interest+=charged;
+      if(!Number.isSafeInteger(total)||!Number.isSafeInteger(interest)||work.some(d=>!Number.isSafeInteger(d.balance)))fail('Payoff totals exceed the supported exact range.');
+      const byDebt=work.map(d=>({id:d.id,balance:d.balance,paid:paid.get(d.id)||0,interest:charges.get(d.id)||0}));
+      if(byDebt.some(d=>d.interest>d.paid))negativeAmortization=true;
+      for(const d of work)if(d.balance===0&&debts.find(o=>o.id===d.id).balance>0&&!payoffs.some(p=>p.id===d.id))payoffs.push({id:d.id,name:d.name,month});
+      const outstanding=work.reduce((n,d)=>n+d.balance,0);if(!Number.isSafeInteger(outstanding))fail('Outstanding debt exceeds the supported exact range.');rows.push({month,paid:payment,interest:charged,outstanding,byDebt});
+      if(!outstanding)return {strategy,feasible:true,months:month,total,interest,monthlyBudget,rows,payoffs,negativeAmortization};
+    }
+    return {strategy,feasible:false,reason:'Debt is not cleared in the selected monthly horizon.',monthlyBudget,rows,payoffs,total,interest,negativeAmortization};
+  });
+}
 export function debtPayoff({balance,annualRate=0,payment,periods=600}) {
   validMoney(balance,'Debt');validMoney(payment,'Payment');
   if(!Number.isFinite(annualRate)||annualRate<0||annualRate>100)fail('Interest rate must be between 0 and 100 percent.');
@@ -548,7 +602,7 @@ export function debtPayoff({balance,annualRate=0,payment,periods=600}) {
   if(payment<=0)return {months:null,total:0,interest:0,rows:[],feasible:false,reason:'Set a positive payment.'};
   const rows=[];let left=balance,total=0,interest=0;
   for(let i=1;i<=Math.min(600,periods);i++) {
-    const fee=Math.round(left*annualRate/1200);
+    const fee=monthlyInterest(left,annualRate);
     if(fee>=payment)return {months:null,total,interest,rows,feasible:false,reason:'The payment does not cover monthly interest.'};
     const paid=Math.min(payment,left+fee);left=left+fee-paid;total+=paid;interest+=fee;rows.push({month:i,paid,interest:fee,remaining:left});
     if(left===0)return {months:i,total,interest,rows,feasible:true};
