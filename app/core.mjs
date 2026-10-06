@@ -168,6 +168,7 @@ export function validateState(s) {
     string(t.note||'','Transaction note');dateKey(t.date);validMoney(t.amount,'Transaction amount');if(!Array.isArray(t.postings))fail('Missing postings.');
     if(!Number.isSafeInteger(t.seq)||t.seq<0||t.seq>s.seq)fail('Invalid transaction sequence.');
     if(t.category&&!categories.has(t.category))fail('Missing transaction category.');
+    if(t.splits){if(!Array.isArray(t.splits)||t.splits.length<2||!['expense','refund'].includes(t.kind))fail('Invalid split transaction.');let total=0;for(const part of t.splits){if(!categories.has(part.category))fail('Split refers to a missing category.');validMoney(part.amount,'Split amount');if(part.amount<=0)fail('Split amounts must be positive.');total+=part.amount;}if(total!==t.amount)fail('Split amounts must equal the transaction total.');}
     for(const p of t.postings) {if(!accounts.has(p.account))fail('Missing posting account.');validMoney(p.amount,'Posting amount',true);}
     if(!['expense','income','refund','transfer','repayment','borrow','loan-out','loan-return','reversal'].includes(t.kind))fail('Invalid transaction type.');
     if(t.historical){if(t.postings.length||t.seq!==0)fail('Imported historical entries must not post to current balances.');}
@@ -218,7 +219,7 @@ export function periodForecast(s,key,{mode='budget',extraExpense=0,incomeChange=
   const spendCats=s.categories.filter(c=>!['savings','buffer'].includes(c.type));
   const reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
   const recorded=s.transactions.filter(t=>!reversed.has(t.id)&&periodKey(t.date,s.cycleStart)===key);
-  const actualFor=id=>recorded.filter(t=>t.category===id).reduce((n,t)=>n+(t.kind==='expense'?t.amount:t.kind==='refund'?-t.amount:0),0);
+  const actualFor=id=>recorded.reduce((n,t)=>{const amount=t.splits?t.splits.filter(p=>p.category===id).reduce((a,b)=>a+b.amount,0):t.category===id?t.amount:0;return n+(t.kind==='expense'?amount:t.kind==='refund'?-amount:0);},0);
   let spending=spendCats.filter(c=>c.id!=='oneoff').reduce((n,c)=>n+Math.max(b.alloc[c.id]||0,actualFor(c.id)),0),buffer=b.alloc.buffer||0;
   const outside=s.outside.filter(o=>o.kind!=='borrowed'&&periodKey(o.date,s.cycleStart)===key).reduce((n,o)=>n+o.amount,0);
   const oneoff=Math.max(0,actualFor('oneoff'))+outside;
@@ -273,7 +274,16 @@ export function mutate(state,type,input,apply,operationId=uid()) {
   if(state.operations.some(o=>o.id===operationId))return state;
   const next=clone(state);next.seq++;next.version++;
   apply(next);
-  next.operations.push({id:operationId,type,input:clone(input),baseVersion:state.version,version:next.version,seq:next.seq,at:new Date().toISOString(),sync:'pending'});
+  const patches=[];
+  for(const collection of ['accounts','transactions','reconciliations','categories','budgets','goals','obligations','outside','notes','holdings','cycleHistory','imports']) {
+    const previous=new Map(state[collection].map(r=>[String(r.id),r]));
+    for(const record of next[collection])if(!previous.has(String(record.id))||JSON.stringify(previous.get(String(record.id)))!==JSON.stringify(record))patches.push({collection,key:String(record.id),value:clone(record),action:'put'});
+    if(state[collection].some(r=>!next[collection].some(x=>String(x.id)===String(r.id))))fail('Financial records cannot be deleted. Archive or correct them.');
+  }
+  for(const [key,amount]of Object.entries(next.reservations))if(state.reservations[key]!==amount)patches.push({collection:'reservations',key,value:{amount},action:'put'});
+  const profile=s=>({schema:s.schema,id:s.id,currency:s.currency,timezone:s.timezone,cycleStart:s.cycleStart,name:s.name,settings:s.settings,legacy:s.legacy});
+  if(JSON.stringify(profile(state))!==JSON.stringify(profile(next)))patches.push({collection:'preferences',key:'profile',value:clone(profile(next)),action:'put'});
+  next.operations.push({id:operationId,type,input:clone(input),patches,baseVersion:state.version,version:next.version,seq:next.seq,at:new Date().toISOString(),sync:'pending'});
   validateState(next);return next;
 }
 export function addTransaction(s,input,operationId) {
@@ -291,11 +301,15 @@ export function addTransaction(s,input,operationId) {
     if(kind==='borrow'&&(a.kind!=='liability'||to.kind!=='asset'))fail('Borrowing moves money from debt to cash.');
     postings=[{account,amount:-amount},{account:toAccount,amount}];
   } else fail('Unsupported transaction kind.');
-  return mutate(s,'transaction',input,n=>n.transactions.push({id:uid(),seq:n.seq,kind,date,amount,account,toAccount:toAccount||'',category,note,postings,historical:false,source:input.source||'manual',importKey:input.importKey||''}),operationId);
+  return mutate(s,'transaction',input,n=>n.transactions.push({id:uid(),seq:n.seq,kind,date,amount,account,toAccount:toAccount||'',category,note,postings,historical:false,source:input.source||'manual',importKey:input.importKey||'',...(input.splits?{splits:clone(input.splits)}:{})}),operationId);
 }
 export function reverseTransaction(s,id,reason='Correction') {
   const t=s.transactions.find(t=>t.id===id);if(!t||t.historical||t.kind==='reversal'||s.transactions.some(x=>x.reverses===id))fail('This transaction cannot be reversed.');
-  return mutate(s,'reverse',{id,reason},n=>n.transactions.push({id:uid(),seq:n.seq,kind:'reversal',date:t.date,amount:t.amount,category:t.category,note:reason,postings:t.postings.map(p=>({account:p.account,amount:-p.amount})),reverses:id,historical:false,source:'correction'}));
+  return mutate(s,'reverse',{id,reason},n=>{
+    const reversalId=uid();
+    n.transactions.push({id:reversalId,seq:n.seq,kind:'reversal',date:t.date,amount:t.amount,category:t.category,note:reason,postings:t.postings.map(p=>({account:p.account,amount:-p.amount})),reverses:id,historical:false,source:'correction'});
+    for(const record of n.outside)for(const returned of record.returns||[])if(returned.transaction===id&&!returned.reversedBy){record.returned-=returned.amount;returned.reversedBy=reversalId;}
+  });
 }
 export function reconcile(s,{account,date,balance,note=''}) {
   dateKey(date);validMoney(balance,'Balance',true);
@@ -319,6 +333,27 @@ export function releaseGoal(s,id,amount) {
 export function archiveGoal(s,id) {
   if(!s.goals.some(g=>g.id===id))fail('Goal not found.');
   return mutate(s,'archive-goal',{id},n=>{n.goals.find(g=>g.id===id).archived=true;n.reservations[id]=0;});
+}
+export function returnOutside(s,{id,amount,account,date,note=''}) {
+  const record=s.outside.find(o=>o.id===id);validMoney(amount,'Return amount');dateKey(date);
+  if(!record||record.kind==='borrowed')fail('Choose a money-outside record.');
+  if(amount<=0||amount>record.amount-(record.returned||0))fail('Return must not exceed the outstanding amount.');
+  let next=addTransaction(s,{kind:'loan-return',amount,account,date,note:note||`Return: ${record.name}`});
+  return mutate(next,'outside-return',{id,amount,date},n=>{const r=n.outside.find(o=>o.id===id);r.returned=(r.returned||0)+amount;r.returns=[...(r.returns||[]),{id:uid(),amount,date,transaction:n.transactions.at(-1).id}];});
+}
+export function debtPayoff({balance,annualRate=0,payment,periods=600}) {
+  validMoney(balance,'Debt');validMoney(payment,'Payment');
+  if(!Number.isFinite(annualRate)||annualRate<0||annualRate>100)fail('Interest rate must be between 0 and 100 percent.');
+  if(balance===0)return {months:0,total:0,interest:0,rows:[],feasible:true};
+  if(payment<=0)return {months:null,total:0,interest:0,rows:[],feasible:false,reason:'Set a positive payment.'};
+  const rows=[];let left=balance,total=0,interest=0;
+  for(let i=1;i<=Math.min(600,periods);i++) {
+    const fee=Math.round(left*annualRate/1200);
+    if(fee>=payment)return {months:null,total,interest,rows,feasible:false,reason:'The payment does not cover monthly interest.'};
+    const paid=Math.min(payment,left+fee);left=left+fee-paid;total+=paid;interest+=fee;rows.push({month:i,paid,interest:fee,remaining:left});
+    if(left===0)return {months:i,total,interest,rows,feasible:true};
+  }
+  return {months:null,total,interest,rows,feasible:false,reason:'Not repaid within the 600-month limit.'};
 }
 export function csvParse(raw) {
   if(typeof raw!=='string'||raw.length>5e6)fail('CSV is empty or too large.');
@@ -359,6 +394,21 @@ export function applyCsv(s,rows) {
 export function expenseTotal(s,key) {
   const reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
   return s.transactions.filter(t=>!reversed.has(t.id)&&periodKey(t.date,s.cycleStart)===key).reduce((n,t)=>n+(t.kind==='expense'?t.amount:t.kind==='refund'?-t.amount:0),0);
+}
+export function spendingInsights(s,key=periodKey(today(s.timezone),s.cycleStart)) {
+  const b=s.budgets.find(b=>b.key===key),reversed=new Set(s.transactions.filter(t=>t.reverses).map(t=>t.reverses));
+  const tx=s.transactions.filter(t=>!reversed.has(t.id)&&['expense','refund'].includes(t.kind)&&periodKey(t.date,s.cycleStart)===key),out=[];
+  for(const category of s.categories.filter(c=>!['savings','buffer'].includes(c.type))) {
+    const contributing=tx.filter(t=>t.splits?t.splits.some(p=>p.category===category.id):t.category===category.id);
+    const actual=contributing.reduce((n,t)=>{const value=t.splits?t.splits.filter(p=>p.category===category.id).reduce((a,b)=>a+b.amount,0):t.amount;return n+(t.kind==='refund'?-value:value);},0),budget=b?.alloc[category.id]||0;
+    if(actual>budget&&category.id!=='oneoff')out.push({kind:'over-budget',category:category.id,title:category.name,amount:actual-budget,evidence:contributing.map(t=>t.id)});
+  }
+  const unclassified=tx.filter(t=>t.category==='oneoff'&&!t.splits);
+  if(unclassified.length)out.push({kind:'review',category:'oneoff',title:'Categorize recorded spending',count:unclassified.length,evidence:unclassified.map(t=>t.id)});
+  if(!tx.length)out.push({kind:'missing',title:'No recorded expenses in this period',evidence:[]});
+  const unresolved=s.reconciliations.filter(r=>r.status==='unresolved');
+  if(unresolved.length)out.push({kind:'balance-review',title:'Investigate balance differences',count:unresolved.length,evidence:unresolved.map(r=>r.id)});
+  return out;
 }
 export function csvExport(s) {
   const escape=v=>'"'+String(v??'').replaceAll('"','""')+'"';

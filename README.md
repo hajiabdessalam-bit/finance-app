@@ -35,7 +35,7 @@ New records use IndexedDB. Each save atomically updates the workspace, a recover
 
 ## Current limitations
 
-This is an incremental rebuild. Cloud authentication/synchronization, full recurring obligations, split entries, advanced payoff scenarios, scheduled cycle activation, receipt parsing, live price quotes and AI are still in development. Partial returns are currently logged as transactions; linking them to original outside records is pending. The planner returns period-end funding dates and the cash calendar uses explicitly entered events.
+This is an incremental rebuild. Split expenses/refunds, linked partial returns and manual debt payoff scenarios are implemented. Cloud authentication/synchronization, full recurring obligations, advanced payoff comparisons, scheduled cycle activation, receipt parsing, live price quotes and AI are still in development. The planner returns period-end funding dates and the cash calendar uses explicitly entered events. The draft database schema and transport-independent sync protocol are preparation; no cloud database is connected yet.
 
 AI provider keys must remain server-side. OpenCode Go documents coding-agent usage, so a subscription should not be assumed to permit finance-chat traffic. The core planner works without AI.
 
