@@ -1056,8 +1056,9 @@ async function validateBootstrap(request, destination) {
 }
 
 // server/supabase-adapter.mjs
+import { Buffer } from "node:buffer";
 var UUID3 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThis.fetch }) {
+function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThis.fetch, now = Date.now, timeoutMs = 15e3 }) {
   if (typeof window !== "undefined") throw new Error("The private database adapter must run on the server.");
   let base;
   try {
@@ -1067,6 +1068,7 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
   }
   if (base.protocol !== "https:" || !/^[a-z0-9-]+\.supabase\.co$/.test(base.hostname) || base.username || base.password || base.search || base.hash || base.pathname !== "/" || base.port) throw new Error("Use the configured HTTPS Supabase project endpoint.");
   if (typeof publishableKey !== "string" || !/^sb_publishable_[A-Za-z0-9_-]+$/.test(publishableKey) || typeof secretKey !== "string" || !/^sb_secret_[A-Za-z0-9_-]+$/.test(secretKey)) throw new Error("Configure separate publishable and server secret keys.");
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 15e3) throw new Error("Configure a bounded private request deadline.");
   const actor = (id) => {
     if (!UUID3.test(id || "")) throw new Error("A verified actor is required.");
     return id;
@@ -1076,8 +1078,21 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
     return id;
   };
   async function request(path, { key = secretKey, token, body } = {}) {
-    try {
-      const response = await fetchImpl(new URL(path, base).href, { method: body === void 0 ? "GET" : "POST", headers: { apikey: key, ...token ? { Authorization: "Bearer " + token } : {}, ...body === void 0 ? {} : { "Content-Type": "application/json" } }, ...body === void 0 ? {} : { body: JSON.stringify(body) }, redirect: "error", signal: AbortSignal.timeout(15e3) });
+    const controller = new AbortController();
+    let timer;
+    const expired = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new Error("Private request timed out."));
+      }, timeoutMs);
+    });
+    const execute = async () => {
+      const response = await fetchImpl(new URL(path, base).href, { method: body === void 0 ? "GET" : "POST", headers: { apikey: key, ...token ? { Authorization: "Bearer " + token } : {}, ...body === void 0 ? {} : { "Content-Type": "application/json" } }, ...body === void 0 ? {} : { body: JSON.stringify(body) }, redirect: "error", signal: controller.signal });
+      if (controller.signal.aborted) {
+        void response.body?.cancel().catch(() => {
+        });
+        controller.signal.throwIfAborted();
+      }
       if (!response.ok) {
         if (token && (response.status === 401 || response.status === 403)) return null;
         throw new Error("Remote request failed.");
@@ -1086,16 +1101,28 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
       if (!reader) throw new Error("No response body.");
       const chunks = [];
       let size = 0;
-      while (true) {
-        const part = await reader.read();
-        if (part.done) break;
-        size += part.value.byteLength;
-        if (size > 1e7) {
-          await reader.cancel();
-          throw new Error("Response is too large.");
+      const cancel = () => {
+        void reader.cancel().catch(() => {
+        });
+      };
+      controller.signal.addEventListener("abort", cancel, { once: true });
+      try {
+        while (true) {
+          const part = await reader.read();
+          if (part.done) break;
+          size += part.value.byteLength;
+          if (size > 1e7) {
+            void reader.cancel().catch(() => {
+            });
+            throw new Error("Response is too large.");
+          }
+          chunks.push(part.value);
         }
-        chunks.push(part.value);
+      } finally {
+        controller.signal.removeEventListener("abort", cancel);
+        reader.releaseLock();
       }
+      controller.signal.throwIfAborted();
       const buffer = new Uint8Array(size);
       let offset = 0;
       for (const chunk of chunks) {
@@ -1103,8 +1130,13 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
         offset += chunk.byteLength;
       }
       return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer));
+    };
+    try {
+      return await Promise.race([execute(), expired]);
     } catch {
       throw new Error("Supabase could not confirm the request. No edit has been acknowledged.");
+    } finally {
+      clearTimeout(timer);
     }
   }
   return {
@@ -1113,6 +1145,17 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
       if (typeof token !== "string" || !token || token.length > 1e4 || /\s/.test(token)) return null;
       const user = await request("/auth/v1/user", { key: publishableKey, token });
       if (!user || !UUID3.test(user.id || "") || user.is_anonymous !== false) return null;
+      let claims;
+      try {
+        const parts = token.split(".");
+        if (parts.length !== 3 || parts.some((p) => !p || !/^[A-Za-z0-9_-]+$/.test(p))) return null;
+        claims = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.from(parts[1], "base64url")));
+      } catch {
+        return null;
+      }
+      if (!claims || claims.sub !== user.id || claims.iss !== base.origin + "/auth/v1" || claims.role !== "authenticated" || claims.is_anonymous !== false || !UUID3.test(claims.session_id || "") || !Number.isSafeInteger(claims.exp) || claims.exp * 1e3 <= now()) return null;
+      const active = await request("/rest/v1/rpc/plan_session_active", { body: { p_owner: user.id, p_session: claims.session_id } });
+      if (active !== true || claims.exp * 1e3 <= now()) return null;
       return { id: user.id, is_anonymous: false };
     },
     store: {
@@ -1300,7 +1343,15 @@ function createSyncHttpHandler({ origin, verifySession, store, destination, admi
         response.headers.set("retry-after", String(retry));
         return response;
       }
-      const input = command(await readJson(request, bodyTimeoutMs)), service = syncService({ verifySession: async () => actor, store, destination });
+      const input = command(await readJson(request, bodyTimeoutMs));
+      let current;
+      try {
+        current = await verifySession(token);
+      } catch {
+        throw new Rejected(503, "sign_in_unavailable");
+      }
+      if (!current || current.id !== actor.id || current.is_anonymous !== false) throw new Rejected(401, "sign_in_required");
+      const service = syncService({ verifySession: async () => actor, store, destination });
       let result;
       try {
         result = input.action === "read" ? await service.read({ token, workspace: input.workspace }) : await service[input.action]({ token, request: input.request });

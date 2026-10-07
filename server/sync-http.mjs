@@ -47,7 +47,11 @@ export function createSyncHttpHandler({origin,verifySession,store,destination,ad
       try{admission=await admit({owner:actor.id});}catch{throw new Rejected(503,'sync_unavailable');}
       if(!admission||typeof admission.allowed!=='boolean')throw new Rejected(503,'sync_unavailable');
       if(!admission.allowed){const retry=Number.isInteger(admission.retryAfterSeconds)&&admission.retryAfterSeconds>=1&&admission.retryAfterSeconds<=3600?admission.retryAfterSeconds:60,response=reply(429,{error:'rate_limited',retryAfterSeconds:retry});response.headers.set('retry-after',String(retry));return response;}
-      const input=command(await readJson(request,bodyTimeoutMs)),service=syncService({verifySession:async()=>actor,store,destination});
+      const input=command(await readJson(request,bodyTimeoutMs));
+      // Reading a slow body must not keep a session authorized after logout.
+      let current;try{current=await verifySession(token);}catch{throw new Rejected(503,'sign_in_unavailable');}
+      if(!current||current.id!==actor.id||current.is_anonymous!==false)throw new Rejected(401,'sign_in_required');
+      const service=syncService({verifySession:async()=>actor,store,destination});
       let result;
       try{result=input.action==='read'?await service.read({token,workspace:input.workspace}):await service[input.action]({token,request:input.request});}catch{return reply(422,{error:'review_required',message:'The request was not confirmed. Read and review records before retrying.'});}
       const output=JSON.stringify({action:input.action,result});
