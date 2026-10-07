@@ -10,3 +10,15 @@ test('provider rejection and transport failure never retry or expose raw errors'
 test('truncated answers, wrong models and excess billable reasoning/output fail verification',async()=>{for(const mutate of [d=>d.choices[0].finish_reason='length',d=>d.model='another-model',d=>d.usage.completion_tokens_details.reasoning_tokens=19,d=>{d.usage.completion_tokens=101;d.usage.total_tokens=143;},d=>d.choices[0].message.tool_calls=[{}]]){const data=receipt();mutate(data);const f=fixture({data});await assert.rejects(f.provider(args),/complete text|usage|reasoning/);assert.equal(f.calls.length,1);}});
 test('token usage alone remains unconfirmed until a trusted charge verifier settles it',async()=>{const f=fixture({confirmCharge:async value=>{assert.equal(value.usage.completion_tokens,18);return 35;}});assert.equal((await f.provider(args)).chargedMicroUsd,35);const invalid=fixture({confirmCharge:()=>1.5});await assert.rejects(invalid.provider(args),/charge/);});
 test('oversized provider responses are bounded without exposing their content',async()=>{const data=receipt();data.choices[0].message.content='x'.repeat(200001);const f=fixture({data});await assert.rejects(f.provider(args),/could not be verified/);});
+test('malformed UTF-8 cannot silently corrupt a displayed provider answer',async()=>{
+  const text=JSON.stringify(receipt()).replace('Synthetic answer','REPLACE'),parts=text.split('REPLACE'),before=new TextEncoder().encode(parts[0]),after=new TextEncoder().encode(parts[1]),bytes=new Uint8Array(before.length+1+after.length);bytes.set(before);bytes[before.length]=255;bytes.set(after,before.length+1);
+  const provider=createZenTextProvider({apiKey:'synthetic',countInputTokens:()=>42,fetchImpl:async()=>new Response(bytes)});await assert.rejects(provider(args),/could not be verified/);
+});
+test('one deadline covers token counting, network, streamed answer and charge verification without retries',async()=>{
+  let release,calls=0;const delayed=createZenTextProvider({apiKey:'synthetic',timeoutMs:5,countInputTokens:()=>new Promise(resolve=>release=resolve),fetchImpl:async()=>{calls++;return Response.json(receipt());}});
+  await assert.rejects(delayed(args),/timed out/);release(42);await Promise.resolve();assert.equal(calls,0);
+  let cancelled=false;const stream=createZenTextProvider({apiKey:'synthetic',timeoutMs:5,countInputTokens:()=>42,fetchImpl:async()=>{calls++;return new Response(new ReadableStream({pull(){return new Promise(()=>{});},cancel(){cancelled=true;}}));}});
+  await assert.rejects(stream(args),/timed out/);assert.equal(cancelled,true);assert.equal(calls,1);
+  const charge=createZenTextProvider({apiKey:'synthetic',timeoutMs:5,countInputTokens:()=>42,fetchImpl:async()=>{calls++;return Response.json(receipt());},confirmCharge:()=>new Promise(()=>{})});
+  await assert.rejects(charge(args),/timed out/);assert.equal(calls,2);
+});
