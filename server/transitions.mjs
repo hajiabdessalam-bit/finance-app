@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary,scheduledEvents,workspacePeriod,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction,addSchedule,replaceSchedule,classifyOutside} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents,workspacePeriod,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction,addSchedule,replaceSchedule,classifyOutside,addCategory,toggleCategoryArchive} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -138,6 +138,16 @@ export function validateTransitions(current,next,request,asOf){
     assertEngineReplay(current,next,classifyOutside(current,{id:edited[0].id,kind:edited[0].kind}));
   }
 
+  if(request.type==='category-add'){
+    const added=next.categories.filter(c=>!current.categories.some(old=>old.id===c.id));
+    if(added.length!==1)throw new Error('Add one spending category per operation.');
+    assertEngineReplay(current,next,addCategory(current,{name:added[0].name,type:added[0].type}));
+  }
+  if(request.type==='category-archive'){
+    const changed=next.categories.filter(c=>!sameJson(c,current.categories.find(old=>old.id===c.id)));
+    if(changed.length!==1)throw new Error('Archive or restore one existing category per operation.');
+    assertEngineReplay(current,next,toggleCategoryArchive(current,changed[0].id));
+  }
   if(request.type==='budget-set'){
     const edits=next.budgets.filter(b=>!sameJson(b,current.budgets.find(old=>old.id===b.id)));if(edits.length!==1)throw new Error('Review one period budget per operation.');
     const b=edits[0],old=current.budgets.find(old=>old.id===b.id);

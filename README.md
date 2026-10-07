@@ -138,3 +138,5 @@ The prepared private HTTP sync handler pins one HTTPS app origin and accepts onl
 React Records now previews local JSON backups and retained recovery copies before an explicit replacement. The preview binds complete current and selected versions to integrity digests; concurrent edits reject the restore. Atomic storage retains the previous full state, queues and drafts permanently and holds future sync. Recovery history paginates locally and its audit download remains review-only.
 
 The main interface also uses the shared digest-bound restore review, pins the reviewed revision during the atomic save, and invalidates its preview after another local save. Backup file size is checked before reading it.
+
+Both interfaces share ordinary category creation and recoverable archival. Archived categories retain transaction evidence, allocations and reports; built-in and saving-intention categories remain available. Cloud validation replays each category command and rejects attempts to rewrite existing names, meanings or budget allocations.
