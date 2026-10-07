@@ -26,11 +26,12 @@ function command(body){
 /** Pin one HTTPS origin. Bearer identity is server-confirmed before reading finance input.
  * No cookie auth, CORS wildcard, redirect, logging or automatic retry is performed here.
  * Configure a rate limit and private store before attaching this handler to a route. */
-export function createSyncHttpHandler({origin,verifySession,store,destination,bodyTimeoutMs=10000}){
+export function createSyncHttpHandler({origin,verifySession,store,destination,admit,bodyTimeoutMs=10000}){
   let pinned;try{pinned=new URL(origin);}catch{throw new Error('Configure the exact private HTTPS app origin.');}
   if(pinned.protocol!=='https:'||pinned.origin!==origin||pinned.username||pinned.password)throw new Error('Configure the exact private HTTPS app origin.');
   if(!Number.isInteger(bodyTimeoutMs)||bodyTimeoutMs<1||bodyTimeoutMs>10000)throw new Error('Invalid request read timeout.');
   syncService({verifySession,store,destination}); // Reject incomplete wiring before receiving requests.
+  if(typeof admit!=='function')throw new Error('Configure a trusted durable account rate limit before attaching this route.');
   return async request=>{
     try{
       const url=new URL(request.url);
@@ -42,7 +43,11 @@ export function createSyncHttpHandler({origin,verifySession,store,destination,bo
       const token=authorization.slice(7);let user;
       try{user=await verifySession(token);}catch{throw new Rejected(503,'sign_in_unavailable');}
       if(!user||!UUID.test(user.id||'')||user.is_anonymous!==false)throw new Rejected(401,'sign_in_required');
-      const input=command(await readJson(request,bodyTimeoutMs)),service=syncService({verifySession:async()=>user,store,destination});
+      const actor={id:user.id,is_anonymous:false};let admission;
+      try{admission=await admit({owner:actor.id});}catch{throw new Rejected(503,'sync_unavailable');}
+      if(!admission||typeof admission.allowed!=='boolean')throw new Rejected(503,'sync_unavailable');
+      if(!admission.allowed){const retry=Number.isInteger(admission.retryAfterSeconds)&&admission.retryAfterSeconds>=1&&admission.retryAfterSeconds<=3600?admission.retryAfterSeconds:60,response=reply(429,{error:'rate_limited',retryAfterSeconds:retry});response.headers.set('retry-after',String(retry));return response;}
+      const input=command(await readJson(request,bodyTimeoutMs)),service=syncService({verifySession:async()=>actor,store,destination});
       let result;
       try{result=input.action==='read'?await service.read({token,workspace:input.workspace}):await service[input.action]({token,request:input.request});}catch{return reply(422,{error:'review_required',message:'The request was not confirmed. Read and review records before retrying.'});}
       const output=JSON.stringify({action:input.action,result});
