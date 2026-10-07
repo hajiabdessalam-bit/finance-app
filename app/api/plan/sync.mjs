@@ -1235,10 +1235,8 @@ function syncService({ verifySession, store, destination }) {
   };
 }
 
-// server/sync-http.mjs
-var UUID5 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// server/private-http.mjs
 var MAX_BODY = 2e6;
-var MAX_RESPONSE = 4e6;
 var Rejected = class extends Error {
   constructor(status, code) {
     super(code);
@@ -1295,6 +1293,10 @@ async function readJson(request, timeoutMs) {
     clearTimeout(timer);
   }
 }
+
+// server/sync-http.mjs
+var UUID5 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+var MAX_RESPONSE = 4e6;
 function command(body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new Rejected(400, "invalid_request");
   const keys = Object.keys(body), read = body.action === "read", write = ["apply", "bootstrap"].includes(body.action);

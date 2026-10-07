@@ -35,3 +35,18 @@ test('uncertain charge keeps its reservation and saved history cannot be redirec
 test('history failure retains a confirmed paid answer and does not repeat the provider',async()=>{
   const f=await fixture();f.failSave();const review=await preview(f),result=await ask(f,review);assert.equal(result.status,'complete');assert.equal(result.historySaved,false);assert.equal(result.text,'Synthetic answer');assert.equal(f.calls.at(-1)[1].status,'complete');assert.equal((await ask(f,review)).status,'review');assert.equal(f.calls.filter(c=>c[0]==='generate').length,1);
 });
+
+test('private history verifies ownership and bounded final text without sending history to a model or requiring fresh prices',async()=>{
+ const f=await fixture(),requestId=crypto.randomUUID(),reads=[];
+ let page={messages:[{requestId,question:'Past question',answer:'Final answer',at:'2026-10-07T00:00:00Z',reasoning_content:'PRIVATE HIDDEN'}],nextCursor:requestId};
+ const service=await advisorService({...f.dependencies,now:()=>Date.parse(config.priceCheckedAt)+86400001,conversations:{...f.dependencies.conversations,read:async input=>{reads.push(C.clone(input));return page;}}});
+ const result=await service.history({token:'verified',workspace:f.state().id,limit:1});assert.equal(result.messages[0].answer,'Final answer');assert.equal(JSON.stringify(result).includes('PRIVATE HIDDEN'),false);assert.equal(f.calls.length,0);
+ assert.deepEqual(reads[0],{owner,workspace:f.state().id,before:null,limit:1});
+ await assert.rejects(service.history({token:'unverified',workspace:f.state().id}),/permanent/);
+ await assert.rejects(service.history({token:'verified',workspace:'foreign'}),/owned/);
+ await assert.rejects(service.history({token:'verified',workspace:f.state().id,limit:51}),/bounded/);assert.equal(reads.length,1);
+ for(const bad of [{messages:[page.messages[0],page.messages[0]],nextCursor:null},{messages:page.messages,nextCursor:crypto.randomUUID()},{messages:[{...page.messages[0],answer:'x'.repeat(100001)}],nextCursor:null},{messages:[{...page.messages[0],at:'bad'}],nextCursor:null}]){
+  page=bad;await assert.rejects(service.history({token:'verified',workspace:f.state().id}),/could not be verified/);
+ }
+ assert.equal(f.calls.length,0);
+});

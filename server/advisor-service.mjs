@@ -25,6 +25,20 @@ export async function advisorService({verifySession,store,ledger,conversations,g
     return {...review,digest:await digest(canonicalJson(review))};
   }
   return {
+    history:async({token,workspace,before=null,limit=20})=>{
+      const owner=await actor(token);
+      if(typeof conversations.read!=='function'||typeof workspace!=='string'||!workspace||workspace.length>200||before!==null&&!UUID.test(before)||!Number.isInteger(limit)||limit<1||limit>50)throw new Error('Choose a bounded private history page.');
+      const snapshot=await store.read(owner,workspace);
+      if(!snapshot||snapshot.workspace!==workspace||snapshot.version<1)throw new Error('Review the owned private workspace first.');
+      const page=await conversations.read({owner,workspace,before,limit});
+      if(!page||!Array.isArray(page.messages)||page.messages.length>limit||page.nextCursor!==null&&!UUID.test(page.nextCursor||''))throw new Error('Private history could not be verified.');
+      const seen=new Set();const messages=page.messages.map(message=>{
+        if(!message||!UUID.test(message.requestId||'')||seen.has(message.requestId)||typeof message.question!=='string'||!message.question.trim()||new TextEncoder().encode(message.question).byteLength>20000||typeof message.answer!=='string'||!message.answer.trim()||new TextEncoder().encode(message.answer).byteLength>100000||typeof message.at!=='string'||!Number.isFinite(Date.parse(message.at)))throw new Error('Private history could not be verified.');
+        seen.add(message.requestId);return {requestId:message.requestId,question:message.question,answer:message.answer,at:message.at};
+      });
+      if(page.nextCursor!==null&&messages.at(-1)?.requestId!==page.nextCursor)throw new Error('Private history could not be verified.');
+      return {workspace,messages,nextCursor:page.nextCursor,recordsChanged:false};
+    },
     preview:async({token,workspace,prompt})=>prepare(await actor(token),workspace,prompt,crypto.randomUUID()),
     ask:async({token,review,reviewDigest,confirmed=false})=>{
       const selected=clone(review);if(confirmed!==true)throw new Error('Review this question, exact summary, provider and maximum cost before sending.');
