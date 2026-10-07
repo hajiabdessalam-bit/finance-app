@@ -122,3 +122,5 @@ React activity also supports two-category spending/refund splits, category and c
 React accounts include unverified account creation, paginated full balance-check history, expected/observed balances and retained difference explanations with optional supporting entry links. Explanations do not create spending transactions.
 
 React preferences support protected cash, future saving allocations, timezone and dated financial-cycle changes with retained cancellation history. Earlier period boundaries stay intact.
+
+React Records provides full digest-protected JSON backup downloads, safe transaction CSV exports, and paste-based CSV mapping with row review, duplicate detection, stale-preview rejection and retained batch undo. Reviews paginate at 100 rows and accept up to 2,000 rows per import. Restore and retained sync recovery remain available through the main app. No export/import enables cloud upload.

@@ -11,7 +11,7 @@ export interface OutsideRecord {id:string;name:string;kind:string;amount:number;
 export interface Workspace {
   schema:2;id:string;version:number;seq:number;currency:string;timezone:string;cycleStart:number;name:string;
   accounts:Account[];transactions:Transaction[];budgets:Budget[];categories:Category[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];obligations:Obligation[];outside:OutsideRecord[];
-  cycleHistory:{id:string;start:number;effective:string;status:string}[];reservations:Record<string,number>;settings:{reserve:number;monthlyProtection:number;forecastPeriods:number};
+  imports:{id:string;type?:string;at?:string;undone?:boolean;transactionIds?:string[]}[];cycleHistory:{id:string;start:number;effective:string;status:string}[];reservations:Record<string,number>;settings:{reserve:number;monthlyProtection:number;forecastPeriods:number};
   [key:string]:unknown;
 }
 export interface StoredWorkspace {state:Workspace|null;revision:number}
