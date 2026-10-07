@@ -40,3 +40,16 @@ test('a timed-out login cannot activate a late session or expose its credential'
   let release,session=null;const controller=privateSession({...config,timeoutMs:5,clientFactory:()=>({auth:{onAuthStateChange(){},getSession:async()=>({data:{session}}),getUser:async()=>({data:{user}}),signOut:async()=>({error:null}),signInWithPassword:async()=>{await new Promise(resolve=>release=resolve);session={access_token:'late-synthetic-token',expires_at:100,user:{id:owner}};return {error:null};}}})});
   await assert.rejects(controller.signIn({email:'sample@example.test',password:'synthetic-only'}),/verified/);release();await Promise.resolve();await assert.rejects(controller.token(),/verified/);
 });
+
+test('creating an account cannot activate cloud access, and late signup stays signed out',async()=>{
+ const f=fixture();let release;
+ f.auth.signUp=async()=>({data:{session:{access_token:'signup-token'}},error:null});
+ assert.deepEqual(await f.controller.createAccount({email:'sample@example.test',password:'synthetic-password'}),{confirmationRequired:true});
+ await assert.rejects(f.controller.token(),/verified/);
+ await f.controller.signIn({email:'sample@example.test',password:'synthetic-password'});
+ assert.equal(await f.controller.identity(),owner);
+ f.auth.signUp=async()=>{await new Promise(resolve=>release=resolve);return {error:null};};
+ const pending=f.controller.createAccount({email:'sample@example.test',password:'synthetic-password'});
+ await Promise.resolve();await f.controller.signOut();release();
+ await assert.rejects(pending,/verified/);await assert.rejects(f.controller.token(),/verified/);
+});

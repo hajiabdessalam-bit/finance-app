@@ -21,6 +21,15 @@ export function privateSession({url,publishableKey,clientFactory=createClient,fe
     return {id:user.id,token};
   }
   return {
+    createAccount:({email,password})=>bounded(async()=>{
+      if(typeof email!=='string'||!email.includes('@')||email.length>320||typeof password!=='string'||password.length<12||new TextEncoder().encode(password).length>4096||typeof client.auth.signUp!=='function')throw denied();
+      const ticket=++action;active=false;epoch++;
+      const result=await client.auth.signUp({email:email.trim(),password});
+      if(result?.error||ticket!==action)throw denied();
+      // Account creation never grants a usable finance session. Sign in after
+      // confirming the email; verified() still checks the permanent server user.
+      return {confirmationRequired:true};
+    }),
     signIn:({email,password})=>bounded(async()=>{
       if(typeof email!=='string'||!email.includes('@')||email.length>320||typeof password!=='string'||!password||new TextEncoder().encode(password).length>4096)throw denied();
       const ticket=++action;active=false;
