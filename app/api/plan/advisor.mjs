@@ -314,14 +314,15 @@ function validateState(s) {
     if (g.flexible === false && !g.desired) fail("A hard deadline needs a date.");
     if (g.purchases && !Array.isArray(g.purchases)) fail("Invalid purchase history.");
     const purchases = g.purchases || [g.purchase].filter(Boolean), seen = /* @__PURE__ */ new Set();
+    if (g.purchases && g.purchase && (!purchases.length || ["transaction", "amount", "date", "complete", "quantity", "releasedReservation", "reversedBy"].some((key) => g.purchase[key] !== purchases.at(-1)[key]))) fail("Latest purchase does not match its retained history.");
     for (const p of purchases) {
       const t = s.transactions.find((t2) => t2.id === p.transaction);
       validMoney(p.amount, "Purchase cost");
       dateKey(p.date);
-      if (!t || t.kind !== "expense" || t.amount !== p.amount || t.date !== p.date || seen.has(p.transaction)) fail("Purchase history does not match the ledger.");
+      if (!t || t.historical || t.source !== "goal" || t.goal !== g.id || t.kind !== "expense" || t.amount !== p.amount || t.date !== p.date || seen.has(p.transaction)) fail("Purchase history does not match the ledger.");
       seen.add(p.transaction);
       if (p.complete != null && typeof p.complete !== "boolean") fail("Invalid purchase completion flag.");
-      if (p.reversedBy && !s.transactions.some((t2) => t2.id === p.reversedBy && t2.reverses === p.transaction)) fail("Invalid purchase correction.");
+      if ((p.reversedBy || null) !== (s.transactions.find((t2) => t2.reverses === p.transaction)?.id || null)) fail("Invalid purchase correction.");
     }
   }
   for (const [id, n] of Object.entries(s.reservations)) {
@@ -350,8 +351,8 @@ function validateState(s) {
   for (const o of s.outside) {
     if (o.transaction) {
       const t = s.transactions.find((t2) => t2.id === o.transaction);
-      if (!t || t.historical || t.amount !== o.amount || t.date !== o.date || t.account !== o.account || t.kind !== (o.kind === "gift" ? "expense" : "loan-out")) fail("Outside payment does not match its cash entry.");
-      if (o.reversedBy && !s.transactions.some((t2) => t2.id === o.reversedBy && t2.reverses === o.transaction)) fail("Invalid outside payment correction.");
+      if (!t || t.historical || t.source !== "outside" || t.outside !== o.id || t.amount !== o.amount || t.date !== o.date || t.account !== o.account || t.kind !== (o.kind === "gift" ? "expense" : "loan-out")) fail("Outside payment does not match its cash entry.");
+      if ((o.reversedBy || null) !== (s.transactions.find((t2) => t2.reverses === o.transaction)?.id || null)) fail("Invalid outside payment correction.");
     }
     if (o.returns) {
       if (!Array.isArray(o.returns)) fail("Invalid return history.");
@@ -359,10 +360,9 @@ function validateState(s) {
       let total = 0;
       for (const r of o.returns) {
         const t = s.transactions.find((t2) => t2.id === r.transaction);
-        if (!t || t.kind !== "loan-return" || t.amount !== r.amount || t.date !== r.date) fail("Outside return does not match its cash entry.");
-        if (r.reversedBy) {
-          if (!s.transactions.some((t2) => t2.id === r.reversedBy && t2.reverses === r.transaction)) fail("Invalid outside return correction.");
-        } else total += r.amount;
+        if (!t || t.historical || t.source !== "outside" || t.outside !== o.id || t.kind !== "loan-return" || t.amount !== r.amount || t.date !== r.date) fail("Outside return does not match its cash entry.");
+        if ((r.reversedBy || null) !== (s.transactions.find((t2) => t2.reverses === r.transaction)?.id || null)) fail("Invalid outside return correction.");
+        if (!r.reversedBy) total += r.amount;
       }
       if (o.transaction && total !== (o.returned || 0)) fail("Outstanding outside balance does not match its returns.");
     }
@@ -389,6 +389,10 @@ function validateState(s) {
     validMoney(h.cost, "Holding cost");
     dateKey(h.date);
     if (h.quantity != null && (!Number.isFinite(h.quantity) || h.quantity <= 0)) fail("Invalid holding quantity.");
+    if (h.goal || h.transaction) {
+      const g = s.goals.find((g2) => g2.id === h.goal), t = s.transactions.find((t2) => t2.id === h.transaction), p = (g?.purchases || [g?.purchase].filter(Boolean)).find((p2) => p2.transaction === h.transaction);
+      if (!g || g.kind !== "gold" || !p || !t || t.goal !== g.id || t.amount !== h.cost || t.date !== h.date || (h.reversedBy || null) !== (p.reversedBy || null) || p.quantity != null && h.quantity !== p.quantity) fail("Gold holding does not match its exact purchase history.");
+    }
   }
   for (const c of s.categories) {
     string(c.name, "Category name", 300);
@@ -652,6 +656,8 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
         controller.signal.throwIfAborted();
       }
       if (!response.ok) {
+        void response.body?.cancel().catch(() => {
+        });
         if (token && (response.status === 401 || response.status === 403)) return null;
         throw new Error("Remote request failed.");
       }

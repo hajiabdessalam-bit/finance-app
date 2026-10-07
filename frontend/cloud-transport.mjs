@@ -21,9 +21,11 @@ export function privateCloudTransport({origin,currentOrigin=globalThis.location?
     if(typeof token!=='string'||!/^[A-Za-z0-9._~-]{1,10000}$/.test(token)){clearTimeout(timer);throw new Error('Sign in before reading or sending cloud records.');}
     const execute=(async()=>{
       const response=await fetchImpl(origin+'/api/plan/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
-      if(![200,409].includes(response.status)||response.redirected||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||''))throw new Error('unconfirmed');
+      if(controller.signal.aborted){void response.body?.cancel().catch(()=>{});controller.signal.throwIfAborted();}
+      if(![200,409].includes(response.status)||response.redirected||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')){void response.body?.cancel().catch(()=>{});throw new Error('unconfirmed');}
       reader=response.body?.getReader();if(!reader)throw new Error('empty');const chunks=[];let size=0;
-      for(;;){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>MAX_OUTPUT){void reader.cancel().catch(()=>{});throw new Error('oversized');}chunks.push(part.value);}
+      try{for(;;){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>MAX_OUTPUT){void reader.cancel().catch(()=>{});throw new Error('oversized');}chunks.push(part.value);}}finally{reader.releaseLock();reader=null;}
+      controller.signal.throwIfAborted();
       const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
       const payload=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
       if(!payload||payload.action!==action||Object.keys(payload).sort().join(',')!=='action,result')throw new Error('invalid response');
@@ -36,7 +38,7 @@ export function privateCloudTransport({origin,currentOrigin=globalThis.location?
         if(!result||Object.keys(result).sort().join(',')!=='status,version'||!statuses.includes(result.status)||!Number.isSafeInteger(result.version)||result.version<0||(response.status===409)!==(result.status==='conflict'))throw new Error('invalid result');
         if(action==='apply'&&(result.status==='applied'&&result.version!==input.request.expectedVersion+1||result.status==='duplicate'&&result.version<=input.request.expectedVersion)||action==='bootstrap'&&(result.version<1||result.status==='initialized'&&result.version!==1))throw new Error('invalid version');
       }
-      return clone(result);
+      controller.signal.throwIfAborted();return clone(result);
     })();
     try{return await Promise.race([execute,expired]);}catch{throw new Error('Cloud did not confirm this request. Keep local edits and read/review records before retrying.');}finally{clearTimeout(timer);}
   }

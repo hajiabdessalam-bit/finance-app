@@ -17,7 +17,7 @@ export function supabaseAdapter({url,publishableKey,secretKey,fetchImpl=globalTh
     const execute=async()=>{
       const response=await fetchImpl(new URL(path,base).href,{method:body===undefined?'GET':'POST',headers:{apikey:key,...(token?{Authorization:'Bearer '+token}:{}),...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)}),redirect:'error',signal:controller.signal});
       if(controller.signal.aborted){void response.body?.cancel().catch(()=>{});controller.signal.throwIfAborted();}
-      if(!response.ok){if(token&&(response.status===401||response.status===403))return null;throw new Error('Remote request failed.');}
+      if(!response.ok){void response.body?.cancel().catch(()=>{});if(token&&(response.status===401||response.status===403))return null;throw new Error('Remote request failed.');}
       const reader=response.body?.getReader();if(!reader)throw new Error('No response body.');const chunks=[];let size=0;
       const cancel=()=>{void reader.cancel().catch(()=>{});};controller.signal.addEventListener('abort',cancel,{once:true});
       try{while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>10_000_000){void reader.cancel().catch(()=>{});throw new Error('Response is too large.');}chunks.push(part.value);}}
