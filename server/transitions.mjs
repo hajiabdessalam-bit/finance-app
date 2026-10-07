@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary,scheduledEvents,workspacePeriod,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction,addSchedule,replaceSchedule,classifyOutside,addCategory,toggleCategoryArchive} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents,workspacePeriod,addTransaction,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction,addSchedule,replaceSchedule,classifyOutside,addCategory,toggleCategoryArchive} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -102,6 +102,12 @@ export function validateTransitions(current,next,request,asOf){
   }
 
   const addedTransactions=next.transactions.filter(t=>!current.transactions.some(old=>old.id===t.id));
+  if(request.type==='transaction'){
+    const t=addedTransactions[0];
+    if(addedTransactions.length!==1||!['manual','csv'].includes(t.source))throw new Error('Record one ordinary manual or imported transaction per operation.');
+    if(t.date>asOf)throw new Error('Future payments belong on the calendar, not in actual transactions.');
+    assertEngineReplay(current,next,addTransaction(current,{kind:t.kind,date:t.date,amount:t.amount,account:t.account,toAccount:t.toAccount,category:t.category,note:t.note,source:t.source,importKey:t.importKey,...(t.splits?{splits:t.splits}:{})}));
+  }
   if(request.type==='reverse'){
     const t=addedTransactions[0];if(addedTransactions.length!==1||t.kind!=='reversal')throw new Error('A reversal must correct exactly one original transaction.');
     assertEngineReplay(current,next,reverseTransaction(current,t.reverses,t.note));
