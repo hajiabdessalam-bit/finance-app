@@ -4,6 +4,8 @@ import {privateSession} from './private-session.mjs';
 import {privateCloudTransport} from './cloud-transport.mjs';
 import {privateCloudReview} from './cloud-review.mjs';
 import {privateQueueSender} from './cloud-send.mjs';
+import {privateAdvisorTransport} from './advisor-transport.mjs';
+import {privateAdvisorReview} from './advisor-review.mjs';
 export function privateCloud({db,origin,currentOrigin,projectUrl,publishableKey,verifiedConfiguration=false,fetchImpl=globalThis.fetch}){
   // This UI readiness attestation is not authorization. The server independently
   // verifies its configuration, current user, ownership and every operation.
@@ -14,6 +16,7 @@ export function privateCloud({db,origin,currentOrigin,projectUrl,publishableKey,
   const sameActor=async()=>{if(!actor||await session.identity()!==actor)throw new Error('Sign-in changed. Keep local records and prepare a fresh review.');};
   const transport={read:async workspace=>{await sameActor();const result=await base.read(workspace);await sameActor();return result;},apply:async request=>{await sameActor();return base.apply(request);}};
   const comparison=privateCloudReview({db,transport}),sender=privateQueueSender({db,transport,sessionIdentity:session.identity});
+  const advisor=privateAdvisorReview({db,transport:privateAdvisorTransport({origin,currentOrigin,tokenProvider:session.token,fetchImpl}),cloudReader:transport,sessionIdentity:session.identity});
   const signed=run=>exclusive(async()=>{actor=await session.identity();return run(actor);});
   return {
     signIn:credentials=>exclusive(()=>session.signIn(credentials)),
@@ -22,7 +25,10 @@ export function privateCloud({db,origin,currentOrigin,projectUrl,publishableKey,
     compare:()=>signed(async id=>({actor:id,...await comparison.compare()})),
     adopt:(review,options)=>{const selected=clone(review),confirmed=clone(options);return signed(async id=>{if(selected.actor!==id)throw new Error('Prepare a comparison for the current signed-in account.');return comparison.adopt(selected,confirmed);});},
     previewPending:()=>signed(()=>sender.preview()),
-    sendPending:(review,options)=>{const selected=clone(review),confirmed=clone(options);return signed(()=>sender.send(selected,confirmed));}
+    sendPending:(review,options)=>{const selected=clone(review),confirmed=clone(options);return signed(()=>sender.send(selected,confirmed));},
+    prepareQuestion:prompt=>signed(()=>advisor.preview(prompt)),
+    askQuestion:(review,options)=>{const selected=clone(review),confirmed=clone(options);return signed(()=>advisor.ask(selected,confirmed));},
+    savedAnswers:options=>{const selected=clone(options??{});return signed(()=>advisor.history(selected));}
     // First upload remains a separate reviewed controller. This composition cannot
     // initialize cloud records or retry a previously denied backup upload.
   };
