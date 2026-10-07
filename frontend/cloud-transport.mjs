@@ -20,7 +20,7 @@ export function privateCloudTransport({origin,currentOrigin=globalThis.location?
     catch{clearTimeout(timer);throw new Error('Sign-in could not be confirmed. Keep local records and try signing in again before comparing cloud records.');}
     if(typeof token!=='string'||!/^[A-Za-z0-9._~-]{1,10000}$/.test(token)){clearTimeout(timer);throw new Error('Sign in before reading or sending cloud records.');}
     const execute=(async()=>{
-      const response=await fetchImpl(origin+'/api/plan/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
+      const response=await fetchImpl(origin+'/api/plan/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body,credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
       if(controller.signal.aborted){void response.body?.cancel().catch(()=>{});controller.signal.throwIfAborted();}
       if(![200,409].includes(response.status)||response.redirected||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')){void response.body?.cancel().catch(()=>{});throw new Error('unconfirmed');}
       reader=response.body?.getReader();if(!reader)throw new Error('empty');const chunks=[];let size=0;

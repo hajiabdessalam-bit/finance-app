@@ -28,7 +28,7 @@ export function privateAdvisorTransport({origin,currentOrigin=globalThis.locatio
   const expired=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();void reader?.cancel().catch(()=>{});reject(new Error('AI request timed out.'));},timeoutMs);});
   const execute=async()=>{
    const token=await tokenProvider();controller.signal.throwIfAborted();if(typeof token!=='string'||!/^[A-Za-z0-9._~-]{1,10000}$/.test(token))throw new Error('Unverified sign-in.');
-   const response=await fetchImpl(origin+'/api/plan/advisor',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
+   const response=await fetchImpl(origin+'/api/plan/advisor',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body,credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
    if(controller.signal.aborted){void response.body?.cancel().catch(()=>{});controller.signal.throwIfAborted();}
    if(response.status!==200||response.redirected||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')){void response.body?.cancel().catch(()=>{});throw new Error('Unconfirmed answer.');}
    reader=response.body?.getReader();if(!reader)throw new Error('Missing response.');const chunks=[];let size=0;

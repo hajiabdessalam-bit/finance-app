@@ -7,7 +7,7 @@ async function connection(origin){
  if(new URL(origin).protocol!=='https:')throw new Error('The private connection is available in the live HTTPS app.');
  const controller=new AbortController();let timer;
  try{
-  config=await Promise.race([(async()=>{const response=await fetch(origin+'/api/plan/config',{credentials:'omit',cache:'no-store',redirect:'error',signal:controller.signal});if(!response.ok)throw Error();const text=await response.text();if(text.length>4096)throw Error();const value=JSON.parse(text);if(!value||Object.keys(value).sort().join(',')!=='aiEnabled,projectUrl,publishableKey'||typeof value.aiEnabled!=='boolean')throw Error();return value;})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error());},15000);})]);
+  config=await Promise.race([(async()=>{const response=await fetch(origin+'/api/plan/config',{credentials:'same-origin',cache:'no-store',redirect:'error',signal:controller.signal});if(!response.ok)throw Error();const text=await response.text();if(text.length>4096)throw Error();const value=JSON.parse(text);if(!value||Object.keys(value).sort().join(',')!=='aiEnabled,projectUrl,publishableKey'||typeof value.aiEnabled!=='boolean')throw Error();return value;})(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error());},15000);})]);
  }catch{throw new Error('The private connection is still being set up. Your records remain on this device.');}finally{clearTimeout(timer);}
 }
 export async function mountPrivate({host,db,onBusy=()=>{},onRefresh=async()=>{}}){

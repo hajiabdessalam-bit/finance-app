@@ -23,7 +23,7 @@ test('inert advisor transport connects exact aggregate review, explicit question
  const result=await f.transport.ask(review,{confirmed:true,reviewDigest:review.digest});assert.equal(result.text,'Synthetic answer');assert.equal(result.chargedMicroUsd,20);assert.equal(f.generations(),1);
  assert.equal((await f.transport.ask(review,{confirmed:true,reviewDigest:review.digest})).status,'review');assert.equal(f.generations(),1);
  assert.equal((await f.transport.history({workspace:f.state.id})).messages.length,0);assert.equal(f.generations(),1);assert.deepEqual(f.state,before);
- for(const call of f.calls){assert.equal(call.url,origin+'/api/plan/advisor');assert.equal(call.options.credentials,'omit');assert.equal(call.options.redirect,'error');assert.equal(call.options.cache,'no-store');assert.equal(Object.hasOwn(JSON.parse(call.options.body),'owner'),false);assert.equal(call.options.body.includes('PRIVATE'),false);}
+ for(const call of f.calls){assert.equal(call.url,origin+'/api/plan/advisor');assert.equal(call.options.credentials,'same-origin');assert.equal(call.options.redirect,'error');assert.equal(call.options.cache,'no-store');assert.equal(Object.hasOwn(JSON.parse(call.options.body),'owner'),false);assert.equal(call.options.body.includes('PRIVATE'),false);}
 });
 test('captured reviewed question cannot change while verified credentials are pending',async()=>{
  const f=await fixture(),review=await f.transport.preview(f.state.id,'Original question');let resolve,requested=false;
