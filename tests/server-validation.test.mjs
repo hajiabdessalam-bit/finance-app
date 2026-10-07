@@ -5,6 +5,23 @@ import {diffEntities} from '../app/sync.mjs';
 import {validateOperation} from '../server/validation.mjs';
 
 function example(){const before=fresh(),after=mutate(before,'note-add',{},n=>n.notes.push({id:'n',title:'中文 العربية',body:'Private note',items:[]}));return {before,after,request:{workspace:before.id,operationId:crypto.randomUUID(),expectedVersion:0,type:'note-add',patches:diffEntities(before,after)}};}
+
+test('note commands preserve other notes, checklist identity and archived progress',()=>{
+  const before=fresh();before.notes=[{id:'one',title:'One',body:'',items:[{id:'i',text:'Task',done:false},{id:'j',text:'Other',done:true}]},{id:'two',title:'Two',body:'',items:[]}];
+  const check=(type,apply)=>{const after=mutate(before,type,{},apply);return validateOperation(before,{workspace:before.id,operationId:crypto.randomUUID(),expectedVersion:before.version,type,patches:diffEntities(before,after)});};
+  assert.doesNotThrow(()=>check('note-edit',n=>{n.notes[0].title='Edited';n.notes[0].updated=123;}));
+  assert.doesNotThrow(()=>check('note-item-toggle',n=>{n.notes[0].items[0].done=true;}));
+  assert.doesNotThrow(()=>check('note-archive',n=>{n.notes[0].archived=true;}));
+  assert.throws(()=>check('note-edit',n=>{n.notes[0].title='Edited';n.notes[1].title='Unrelated';}),/one existing note/);
+  assert.throws(()=>check('note-edit',n=>{n.notes[0].items[0].done=true;}),/retain checklist/);
+  assert.throws(()=>check('note-item-toggle',n=>{n.notes[0].items[0].done=true;n.notes[0].items[0].text='Rewritten';}),/text or identity/);
+  assert.throws(()=>check('note-item-toggle',n=>{n.notes[0].items[0].done=true;n.notes[0].items[1].done=false;}),/one checklist item/);
+  assert.throws(()=>check('note-archive',n=>{n.notes[0].archived=true;n.notes[0].body='Rewritten';}),/retains all text/);
+  assert.throws(()=>check('note-add',n=>{n.notes.push({id:'new',title:'New',body:'',items:[]});n.notes[0].title='Changed';}),/earlier notes/);
+  before.notes[0].archived=true;
+  assert.throws(()=>check('note-item-toggle',n=>{n.notes[0].items[0].done=true;}),/active note/);
+  assert.doesNotThrow(()=>check('note-restore',n=>{n.notes[0].archived=false;}));
+});
 test('server validator accepts a valid complete candidate without mutating the trusted snapshot',()=>{const {before,after,request}=example(),old=clone(before);const next=validateOperation(before,request);assert.deepEqual(next.notes,after.notes);assert.equal(next.seq,1);assert.equal(next.version,1);assert.deepEqual(before,old);});
 test('server validator rejects wrong owner workspace, stale versions and envelope injection',()=>{const {before,request}=example();assert.throws(()=>validateOperation(before,{...request,workspace:'another'}),/workspace/);assert.throws(()=>validateOperation(before,{...request,expectedVersion:1}),/conflict/);assert.throws(()=>validateOperation(before,{...request,owner:'attacker'}),/envelope/);assert.throws(()=>validateOperation(before,{...request,operationId:'retry'}),/ID/);});
 test('server validator rejects invalid financial records and reused sequences',()=>{const {before,request}=example();assert.throws(()=>validateOperation(before,{...request,patches:request.patches.filter(p=>p.collection!=='preferences')}),/sequence/);assert.throws(()=>validateOperation(before,{...request,patches:[...request.patches,{collection:'goals',key:'g',action:'put',value:{id:'g',name:'Bad target',target:-1,priority:1}}]}),/target/);});

@@ -155,5 +155,26 @@ export function validateTransitions(current,next,request,asOf){
     if(old&&(!sameJson(without(old,['salary','alloc','revision','status','source']),without(b,['salary','alloc','revision','status','source']))||Object.keys(old.alloc).some(id=>!Object.hasOwn(b.alloc,id))))throw new Error('Budget changes retain identity, locks and category allocations; set an allocation to zero explicitly.');
     if(b.revision!==(Number.isSafeInteger(old?.revision)?old.revision:0)+1||b.status!=='planned'||b.source!=='manual')throw new Error('Budget changes need an explicit reviewed revision.');
   }
+  if(request.type.startsWith('note-')){
+    const added=next.notes.filter(note=>!current.notes.some(old=>old.id===note.id)),edited=next.notes.filter(note=>current.notes.some(old=>old.id===note.id)&&!sameJson(note,current.notes.find(old=>old.id===note.id)));
+    if(request.type==='note-add'){
+      if(added.length!==1||edited.length||added[0].archived||(added[0].items||[]).some(item=>item.done))throw new Error('Add one new note without rewriting earlier notes or checklist progress.');
+    }else{
+      if(added.length||edited.length!==1)throw new Error('Change one existing note per operation.');
+      const note=edited[0],old=current.notes.find(n=>n.id===note.id);
+      if(request.type==='note-edit'){
+        if(!sameJson(without(old,['title','body','goal','updated']),without(note,['title','body','goal','updated'])))throw new Error('Note edits retain checklist progress and archive history.');
+      }else if(request.type==='note-item-toggle'){
+        if(old.archived||!sameJson(without(old,['items']),without(note,['items']))||(old.items||[]).length!==(note.items||[]).length)throw new Error('Toggle one existing item of an active note.');
+        const changes=(note.items||[]).filter((item,index)=>!sameJson(item,old.items[index]));
+        if(changes.length!==1)throw new Error('Toggle one checklist item per operation.');
+        const index=note.items.indexOf(changes[0]),item=changes[0],previous=old.items[index];
+        if(item.done!==!previous.done||!sameJson(without(previous,['done']),without(item,['done'])))throw new Error('A checklist toggle cannot rewrite item text or identity.');
+      }else{
+        if(request.type==='note-archive'?old.archived||note.archived!==true:!old.archived||note.archived!==false)throw new Error('Archive or restore the selected note once.');
+        if(!sameJson(without(old,['archived']),without(note,['archived'])))throw new Error('Archiving a note retains all text and checklist progress.');
+      }
+    }
+  }
   for(const t of next.transactions.filter(t=>!current.transactions.some(old=>old.id===t.id)))if(t.date>asOf)throw new Error('Future payments belong on the calendar, not in actual transactions.');
 }
