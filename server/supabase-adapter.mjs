@@ -1,5 +1,6 @@
 /** Server-only adapter preparation. No credentials or network calls at module load. */
 import {validateEnvelope} from './validation.mjs';
+import {validateBootstrap} from './bootstrap.mjs';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function supabaseAdapter({url,publishableKey,secretKey,fetchImpl=globalThis.fetch}){
   if(typeof window!=='undefined')throw new Error('The private database adapter must run on the server.');
@@ -19,6 +20,11 @@ export function supabaseAdapter({url,publishableKey,secretKey,fetchImpl=globalTh
   return {
     async verifySession(token){if(typeof token!=='string'||!token||token.length>10000||/\s/.test(token))return null;const user=await request('/auth/v1/user',{key:publishableKey,token});if(!user||!UUID.test(user.id||'')||user.is_anonymous!==false)return null;return {id:user.id,is_anonymous:false};},
     store:{
+      bootstrap:async(owner,command)=>{
+        // Repeat payload validation at the private write boundary. No client owner is used.
+        const checked=await validateBootstrap({workspace:command.workspace,requestId:command.requestId,records:command.records,review:{confirmed:true,destination:base.origin,payloadDigest:command.payloadDigest}},base.origin);
+        return request('/rest/v1/rpc/plan_bootstrap_validated_workspace',{body:{p_owner:actor(owner),p_workspace:checked.workspace,p_request:checked.requestId,p_digest:checked.payloadDigest,p_records:checked.records}});
+      },
       read:(owner,workspace)=>request('/rest/v1/rpc/plan_read_validated_workspace',{body:{p_owner:actor(owner),p_workspace:workspace}}),
       apply:(owner,command)=>{validateEnvelope(command);return request('/rest/v1/rpc/plan_apply_validated_operation',{body:{p_owner:actor(owner),p_workspace:command.workspace,p_operation:command.operationId,p_expected_version:command.expectedVersion,p_kind:command.type,p_patches:command.patches}});}
     },
