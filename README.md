@@ -120,3 +120,5 @@ Outside gifts, loans and investments save one linked cash entry; partial actual 
 React activity also supports two-category spending/refund splits, category and correction filters, and atomic reviewed replacements for ordinary unsplit spending, income or refunds. Linked and split records retain the explained reversal workflow. Incomplete splits are retained as unapplied drafts.
 
 React accounts include unverified account creation, paginated full balance-check history, expected/observed balances and retained difference explanations with optional supporting entry links. Explanations do not create spending transactions.
+
+React preferences support protected cash, future saving allocations, timezone and dated financial-cycle changes with retained cancellation history. Earlier period boundaries stay intact.
