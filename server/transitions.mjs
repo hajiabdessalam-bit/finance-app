@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary,scheduledEvents} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents,reverseTransaction,recordScheduled,purchaseGoal,returnOutside} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -8,7 +8,7 @@ const scopes={
   reserve:['reservations'],release:['reservations'],'archive-goal':['goals','reservations'],
   'goal-add':['goals','reservations'],'goal-edit':['goals'],
   'outside-given':['transactions','outside'],'outside-return':['transactions','outside'],'outside-classify':['outside'],
-  'obligation-add':['obligations'],'obligation-paid':['obligations'],
+  'obligation-add':['obligations'],'obligation-paid':['transactions','obligations'],
   'obligation-skip':['obligations'],'obligation-stop':['obligations'],'obligation-replace':['obligations'],
   'obligation-restore':['obligations'],
   'csv-import':['imports'],'csv-undo':['imports'],
@@ -18,6 +18,25 @@ const scopes={
 };
 const changed=(a,b,keys)=>keys.some(k=>!sameJson(a[k],b[k]));
 const without=(record,keys)=>Object.fromEntries(Object.entries(record).filter(([key])=>!keys.includes(key)));
+
+const entityCollections=['accounts','transactions','reconciliations','categories','budgets','goals','obligations','outside','notes','holdings','cycleHistory','imports'];
+/** Replay the authoritative engine using trusted existing records. Only generated
+ * identifiers may differ; amounts, dates and every linked record must agree. */
+function assertEngineReplay(current,next,expected){
+  const ids=new Map(),references=new Set(['id','transaction','reversedBy','purchaseTransaction','outside','goal','corrects']);
+  for(const collection of entityCollections){
+    const oldIds=new Set(current[collection].map(r=>r.id)),wanted=expected[collection].filter(r=>!oldIds.has(r.id)),actual=next[collection].filter(r=>!oldIds.has(r.id));
+    if(wanted.length!==actual.length)throw new Error('Linked financial records do not match the authoritative operation.');
+    wanted.forEach((r,i)=>ids.set(r.id,actual[i].id));
+  }
+  const oldReturnIds=new Set(current.outside.flatMap(o=>(o.returns||[]).map(r=>r.id))),wantedReturns=expected.outside.flatMap(o=>o.returns||[]).filter(r=>!oldReturnIds.has(r.id)),actualReturns=next.outside.flatMap(o=>o.returns||[]).filter(r=>!oldReturnIds.has(r.id));
+  if(wantedReturns.length!==actualReturns.length)throw new Error('Linked return records do not match the authoritative operation.');
+  wantedReturns.forEach((r,i)=>ids.set(r.id,actualReturns[i].id));
+  const normalize=(value,key='')=>Array.isArray(value)?value.map(v=>normalize(v)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,normalize(v,k)])):references.has(key)&&ids.has(value)?ids.get(value):value;
+  for(const collection of entityCollections)if(!sameJson(normalize(expected[collection]),next[collection]))throw new Error('Linked financial records do not match the authoritative operation.');
+  if(!sameJson(expected.reservations,next.reservations))throw new Error('Linked financial reservations do not match the authoritative operation.');
+}
+
 export function validateTransitions(current,next,request,asOf){
   const scope=scopes[request.type];
   if(!scope)throw new Error('Unsupported sync operation type.');
@@ -76,5 +95,26 @@ export function validateTransitions(current,next,request,asOf){
       const expected=scheduledEvents(current,{from:event.date,to:event.date}).find(o=>o.id===event.id);if(!expected||expected.paid||expected.skipped||event.skipped!==true||!sameJson(without(expected,['recurrence','skipped','skipReason']),without(event,['recurrence','skipped','skipReason'])))throw new Error('Cancelled occurrence must match the original schedule.');
     }
   }
+
+  const addedTransactions=next.transactions.filter(t=>!current.transactions.some(old=>old.id===t.id));
+  if(request.type==='reverse'){
+    const t=addedTransactions[0];if(addedTransactions.length!==1||t.kind!=='reversal')throw new Error('A reversal must correct exactly one original transaction.');
+    assertEngineReplay(current,next,reverseTransaction(current,t.reverses,t.note));
+  }
+  if(request.type==='obligation-paid'){
+    const changedEvents=next.obligations.filter(o=>!sameJson(o,current.obligations.find(old=>old.id===o.id))),event=changedEvents[0];
+    if(addedTransactions.length!==1||changedEvents.length!==1||!event?.paid||!event.paidDate||event.transaction!==addedTransactions[0].id)throw new Error('A scheduled payment requires one atomic cash entry and occurrence.');
+    assertEngineReplay(current,next,recordScheduled(current,event.id,event.paidDate));
+  }
+  if(request.type==='goal-purchase'){
+    const t=addedTransactions[0],goal=next.goals.find(g=>g.id===t?.goal),purchase=goal?.purchase;
+    if(addedTransactions.length!==1||!purchase||purchase.transaction!==t.id)throw new Error('A goal purchase requires its exact linked expense.');
+    assertEngineReplay(current,next,purchaseGoal(current,{id:goal.id,amount:t.amount,account:t.account,date:t.date,complete:purchase.complete,quantity:purchase.quantity??null}));
+  }
+  if(request.type==='outside-return'){
+    const t=addedTransactions[0];if(addedTransactions.length!==1||!t.outside)throw new Error('An outside return requires one linked receipt.');
+    assertEngineReplay(current,next,returnOutside(current,{id:t.outside,amount:t.amount,account:t.account,date:t.date,note:t.note}));
+  }
+
   for(const t of next.transactions.filter(t=>!current.transactions.some(old=>old.id===t.id)))if(t.date>asOf)throw new Error('Future payments belong on the calendar, not in actual transactions.');
 }

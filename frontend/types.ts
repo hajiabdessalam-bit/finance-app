@@ -3,9 +3,11 @@ export interface NoteItem {id?:string;text?:string;t?:string;body?:string;done?:
 export interface Note {id:string;title?:string;body?:string;items?:NoteItem[];archived?:boolean;goal?:string}
 export interface Goal {id:string;name:string;target:number;priority:number;archived?:boolean;protected?:boolean;desired?:string;recurringCost?:number;kind?:string;[key:string]:unknown}
 export interface Reconciliation {id:string;account:string;date:string;balance:number;difference:number|null;status:'matched'|'unresolved'|'reviewed';note?:string}
+export interface Transaction {id:string;seq:number;kind:string;date:string;amount:number;account:string;toAccount?:string;category?:string;note?:string;source?:string;historical?:boolean;reverses?:string;splits?:{category:string;amount:number}[]}
+export interface Category {id:string;name:string;type:string;archived?:boolean}
 export interface Workspace {
   schema:2;id:string;version:number;seq:number;currency:string;timezone:string;cycleStart:number;name:string;
-  accounts:Account[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];
+  accounts:Account[];transactions:Transaction[];categories:Category[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];
   reservations:Record<string,number>;settings:{reserve:number;monthlyProtection:number;forecastPeriods:number};
   [key:string]:unknown;
 }
