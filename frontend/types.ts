@@ -1,7 +1,8 @@
 export interface Account {id:string;name:string;kind:'asset'|'liability';currency:string;opening:number|null;baselineDate:string;baselineSeq:number;verified?:boolean;limit?:number}
 export interface NoteItem {id?:string;text?:string;t?:string;body?:string;done?:boolean}
 export interface Note {id:string;title?:string;body?:string;items?:NoteItem[];archived?:boolean;goal?:string}
-export interface Goal {id:string;name:string;target:number;priority:number;archived?:boolean;protected?:boolean;desired?:string;recurringCost?:number;kind?:string;[key:string]:unknown}
+export interface Goal {id:string;name:string;target:number;priority:number;archived?:boolean;protected?:boolean;desired?:string;recurringCost?:number;kind?:string;quantity?:number|null;unitPrice?:number|null;fees?:number;quoteDate?:string;[key:string]:unknown}
+export interface Holding {id:string;name:string;cost:number;date:string;quantity?:number|null;goal?:string;transaction?:string;reversedBy?:string}
 export interface Reconciliation {id:string;account:string;date:string;balance:number;difference:number|null;status:'matched'|'unresolved'|'reviewed';note?:string;expected?:number|null;review?:{note:string;transactions:string[];at:string}}
 export interface Transaction {id:string;seq:number;kind:string;date:string;amount:number;account:string;toAccount?:string;category?:string;note?:string;source?:string;historical?:boolean;reverses?:string;corrects?:string;splits?:{category:string;amount:number}[]}
 export interface Category {id:string;name:string;type:string;archived?:boolean}
@@ -10,7 +11,7 @@ export interface Obligation {id:string;name:string;kind:'bill'|'income';amount:n
 export interface OutsideRecord {id:string;name:string;kind:string;amount:number;date:string;account?:string;due?:string;note?:string;returned?:number;transaction?:string;reversedBy?:string;source?:string;returns?:{id:string;amount:number;date:string;transaction:string;reversedBy?:string}[]}
 export interface Workspace {
   schema:2;id:string;version:number;seq:number;currency:string;timezone:string;cycleStart:number;name:string;
-  accounts:Account[];transactions:Transaction[];budgets:Budget[];categories:Category[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];obligations:Obligation[];outside:OutsideRecord[];
+  accounts:Account[];transactions:Transaction[];budgets:Budget[];categories:Category[];notes:Note[];goals:Goal[];holdings:Holding[];reconciliations:Reconciliation[];obligations:Obligation[];outside:OutsideRecord[];
   imports:{id:string;type?:string;at?:string;undone?:boolean;transactionIds?:string[]}[];cycleHistory:{id:string;start:number;effective:string;status:string}[];reservations:Record<string,number>;settings:{reserve:number;monthlyProtection:number;forecastPeriods:number};
   [key:string]:unknown;
 }
