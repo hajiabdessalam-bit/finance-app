@@ -4,6 +4,19 @@ import {supabaseAdapter} from '../server/supabase-adapter.mjs';
 import * as C from '../app/core.mjs';
 import * as S from '../app/sync.mjs';
 const owner='11111111-1111-4111-8111-111111111111',config={url:'https://synthetic-project.supabase.co',publishableKey:'sb_publishable_SYNTHETIC',secretKey:'sb_secret_SYNTHETIC'};
+
+test('malformed UTF-8 cannot silently rewrite financial text in a database response',async()=>{
+ const start=new TextEncoder().encode('{"name":"'),end=new TextEncoder().encode('"}'),bytes=new Uint8Array(start.length+1+end.length);bytes.set(start);bytes[start.length]=255;bytes.set(end,start.length+1);
+ const adapter=supabaseAdapter({...config,fetchImpl:async()=>new Response(bytes)});await assert.rejects(adapter.store.read(owner,'w'),/could not confirm/);
+});
+
+test('private conversation adapter bounds final text and page cursors, never authenticates with its server key as a bearer',async()=>{
+ const calls=[],adapter=supabaseAdapter({...config,fetchImpl:async(url,options)=>{calls.push({url,options});return Response.json({status:'saved'});}}),requestId=crypto.randomUUID(),input={owner,requestId,workspace:'w',question:'Synthetic 中文',answer:'Final answer'};
+ assert.equal(calls.length,0);await adapter.conversations.save(input);await adapter.conversations.read({owner,workspace:'w',before:requestId,limit:10});
+ assert.deepEqual(JSON.parse(calls[0].options.body),{p_owner:owner,p_request:requestId,p_workspace:'w',p_question:input.question,p_answer:input.answer});assert.deepEqual(JSON.parse(calls[1].options.body),{p_owner:owner,p_workspace:'w',p_before:requestId,p_limit:10});
+ for(const call of calls){assert.equal(call.options.headers.apikey,config.secretKey);assert.equal(call.options.headers.Authorization,undefined);}
+ assert.throws(()=>adapter.conversations.save({...input,question:'中'.repeat(6667)}),/bounded final answer/);assert.throws(()=>adapter.conversations.save({...input,answer:'x'.repeat(100001)}),/bounded final answer/);assert.throws(()=>adapter.conversations.read({owner,workspace:'w',limit:51}),/bounded/);assert.throws(()=>adapter.conversations.read({owner,workspace:'w',before:'not-a-cursor'}),/bounded/);assert.equal(calls.length,2);
+});
 test('identity uses the publishable key and user JWT, while private RPCs use only the secret API key',async()=>{const calls=[],adapter=supabaseAdapter({...config,fetchImpl:async(url,options)=>{calls.push({url,options});return Response.json(url.includes('/auth/')?{id:owner,is_anonymous:false,email:'not-retained@example.test'}:{workspace:'synthetic'});}});assert.deepEqual(await adapter.verifySession('synthetic-jwt'),{id:owner,is_anonymous:false});await adapter.store.read(owner,'synthetic');assert.equal(calls[0].options.headers.apikey,config.publishableKey);assert.equal(calls[0].options.headers.Authorization,'Bearer synthetic-jwt');assert.equal(calls[1].options.headers.apikey,config.secretKey);assert.equal(Object.hasOwn(calls[1].options.headers,'Authorization'),false);assert.equal(calls[1].options.redirect,'error');assert.deepEqual(JSON.parse(calls[1].options.body),{p_owner:owner,p_workspace:'synthetic'});});
 test('invalid endpoints or misplaced keys cannot send credentials',()=>{let calls=0;const fetchImpl=()=>{calls++;};for(const url of ['http://synthetic-project.supabase.co','https://evil.example','https://user:pass@synthetic-project.supabase.co','https://synthetic-project.supabase.co/redirect'])assert.throws(()=>supabaseAdapter({...config,url,fetchImpl}),/endpoint/);assert.throws(()=>supabaseAdapter({...config,secretKey:config.publishableKey,fetchImpl}),/keys/);assert.equal(calls,0);});
 test('unverified auth and anonymous users never become permanent actors',async()=>{for(const response of [Response.json({id:owner,is_anonymous:true}),Response.json({id:owner}),new Response('denied',{status:401})]){const adapter=supabaseAdapter({...config,fetchImpl:async()=>response});assert.equal(await adapter.verifySession('synthetic-jwt'),null);}});

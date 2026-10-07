@@ -1042,6 +1042,10 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
     if (!UUID3.test(id || "")) throw new Error("A verified actor is required.");
     return id;
   };
+  const conversationWorkspace = (id) => {
+    if (typeof id !== "string" || !id || id.length > 200) throw new Error("Choose the admitted private workspace.");
+    return id;
+  };
   async function request(path, { key = secretKey, token, body } = {}) {
     try {
       const response = await fetchImpl(new URL(path, base).href, { method: body === void 0 ? "GET" : "POST", headers: { apikey: key, ...token ? { Authorization: "Bearer " + token } : {}, ...body === void 0 ? {} : { "Content-Type": "application/json" } }, ...body === void 0 ? {} : { body: JSON.stringify(body) }, redirect: "error", signal: AbortSignal.timeout(15e3) });
@@ -1069,7 +1073,7 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
         buffer.set(chunk, offset);
         offset += chunk.byteLength;
       }
-      return JSON.parse(new TextDecoder().decode(buffer));
+      return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer));
     } catch {
       throw new Error("Supabase could not confirm the request. No edit has been acknowledged.");
     }
@@ -1091,6 +1095,16 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
       apply: (owner, command2) => {
         validateEnvelope(command2);
         return request("/rest/v1/rpc/plan_apply_validated_operation", { body: { p_owner: actor(owner), p_workspace: command2.workspace, p_operation: command2.operationId, p_expected_version: command2.expectedVersion, p_kind: command2.type, p_patches: command2.patches } });
+      }
+    },
+    conversations: {
+      save: ({ owner, requestId, workspace, question, answer }) => {
+        if (!UUID3.test(requestId || "") || typeof question !== "string" || !question.trim() || new TextEncoder().encode(question).byteLength > 2e4 || typeof answer !== "string" || !answer.trim() || new TextEncoder().encode(answer).byteLength > 1e5) throw new Error("Use the admitted question and bounded final answer.");
+        return request("/rest/v1/rpc/plan_ai_save_conversation", { body: { p_owner: actor(owner), p_request: requestId, p_workspace: conversationWorkspace(workspace), p_question: question, p_answer: answer } });
+      },
+      read: ({ owner, workspace, before = null, limit = 20 }) => {
+        if (before !== null && !UUID3.test(before) || !Number.isInteger(limit) || limit < 1 || limit > 50) throw new Error("Choose a bounded private conversation history page.");
+        return request("/rest/v1/rpc/plan_ai_read_conversations", { body: { p_owner: actor(owner), p_workspace: conversationWorkspace(workspace), p_before: before, p_limit: limit } });
       }
     },
     ledger: {
