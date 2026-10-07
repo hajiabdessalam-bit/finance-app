@@ -13,10 +13,12 @@ export function privateCloudTransport({origin,currentOrigin=globalThis.location?
     input=clone(input);
     const body=JSON.stringify({action,...input});
     if(new TextEncoder().encode(body).byteLength>MAX_INPUT)throw new Error('This cloud request is too large. Keep it locally and review a smaller operation.');
-    const token=await tokenProvider();
-    if(typeof token!=='string'||!/^[A-Za-z0-9._~-]{1,10000}$/.test(token))throw new Error('Sign in before reading or sending cloud records.');
     const controller=new AbortController();let timer,reader;
     const expired=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();void reader?.cancel().catch(()=>{});reject(new Error('timeout'));},timeoutMs);});
+    let token;
+    try{token=await Promise.race([Promise.resolve().then(()=>tokenProvider()),expired]);}
+    catch{clearTimeout(timer);throw new Error('Sign-in could not be confirmed. Keep local records and try signing in again before comparing cloud records.');}
+    if(typeof token!=='string'||!/^[A-Za-z0-9._~-]{1,10000}$/.test(token)){clearTimeout(timer);throw new Error('Sign in before reading or sending cloud records.');}
     const execute=(async()=>{
       const response=await fetchImpl(origin+'/api/plan/sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
       if(![200,409].includes(response.status)||response.redirected||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||''))throw new Error('unconfirmed');
