@@ -6,6 +6,7 @@ var fail = (message) => {
 };
 var object = (v) => v && typeof v === "object" && !Array.isArray(v);
 var own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+var sameJsonValue = (a, b) => a === b || (Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((v, i) => sameJsonValue(v, b[i])) : object(a) && object(b) && Object.keys(a).length === Object.keys(b).length && Object.keys(a).every((k) => own(b, k) && sameJsonValue(a[k], b[k])));
 function money(value) {
   const text = String(value).trim();
   if (!/^-?\d+(\.\d{1,2})?$/.test(text)) fail("Enter an amount with no more than two decimal places.");
@@ -414,7 +415,7 @@ function validateState(s) {
   for (const key of ["reserve", "monthlyProtection"]) validMoney(s.settings[key], "Reserve");
   if (s.legacy?.raw) {
     readLegacy(JSON.stringify(s.legacy.raw));
-    if (s.legacy.rawText && JSON.stringify(JSON.parse(s.legacy.rawText)) !== JSON.stringify(s.legacy.raw)) fail("Preserved original backup differs from its records.");
+    if (s.legacy.rawText && !sameJsonValue(JSON.parse(s.legacy.rawText), s.legacy.raw)) fail("Preserved original backup differs from its records.");
   }
   return s;
 }
