@@ -1,9 +1,9 @@
 import {useEffect,useState,useRef} from 'react';
-import {openStore,loadStore,loadDrafts} from '../app/storage.mjs';
+import {openStore,loadStore,loadDrafts,snapshots,syncRecovery,restoreReviewedBackup,saveDraft} from '../app/storage.mjs';
 import {saveEdit} from '../app/edit-session.mjs';
 import {installOffline} from '../app/offline.mjs';
 import {verifiedWorkspace} from './domain';
-import type {Workspace,StoredWorkspace,EditDraft,CommitEdit} from './types';
+import type {Workspace,StoredWorkspace,EditDraft,CommitEdit,RecoveryControls} from './types';
 
 let storagePromise:Promise<IDBDatabase>|undefined;
 const storage=()=>storagePromise??=(openStore() as Promise<IDBDatabase>).catch(e=>{storagePromise=undefined;throw e;});
@@ -26,5 +26,16 @@ export function useWorkspace(){
     }catch(e){setError(e instanceof Error?e.message:'The edit could not be saved.');const draft=(e as {draft?:EditDraft}).draft;if(draft)setDrafts(items=>[...items,draft]);return false;}
     finally{busyRef.current=false;setBusy(false);}
   };
-  return {state,error,loading,busy,drafts,saved,offlineStatus,commit,refresh:()=>{if(!busyRef.current)setGeneration(n=>n+1);}};
+  const recovery:RecoveryControls={
+    load:async()=>{const db=await storage(),[copies,audit]=await Promise.all([snapshots(db),syncRecovery(db)]);return {copies:copies as Awaited<ReturnType<RecoveryControls['load']>>['copies'],audit:audit as Awaited<ReturnType<RecoveryControls['load']>>['audit']};},
+    restore:async review=>{
+      if(busyRef.current||loading||!rowRef.current.state)return false;
+      busyRef.current=true;setBusy(true);setError('');setSaved('');
+      const row=rowRef.current,previousWorkspace=row.state?.id;
+      try{const db=await storage(),result=await restoreReviewedBackup(db,review,{expectedRevision:row.revision,reviewDigest:review.digest,confirmed:true});rowRef.current={state:verifiedWorkspace(result.state),revision:result.revision};setState(rowRef.current.state);setSaved('Reviewed restore saved on this device. The previous full version and drafts are retained.');return true;}
+      catch(e){const reason=e instanceof Error?e.message:'The restore could not be saved.',draft:EditDraft={id:crypto.randomUUID(),at:new Date().toISOString(),source:'react',type:'local-restore',baseRevision:row.revision,workspace:previousWorkspace,input:review,reason};setDrafts(items=>[...items,draft]);try{await saveDraft(await storage(),draft);setError(reason+' The unapplied restore review was retained as a separate draft.');}catch{setError(reason+' Draft storage also failed. Download the draft before closing.');}return false;}
+      finally{busyRef.current=false;setBusy(false);}
+    }
+  };
+  return {state,error,loading,busy,drafts,saved,offlineStatus,commit,recovery,refresh:()=>{if(!busyRef.current)setGeneration(n=>n+1);}};
 }

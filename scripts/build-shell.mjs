@@ -1,7 +1,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const app=new URL('../app/',import.meta.url),frontend=new URL('../frontend/',import.meta.url);
-const files=['style.css','ui.mjs','core.mjs','storage.mjs','sync.mjs','edit-session.mjs','offline.mjs','report.mjs','react/main.js','react/LICENSES.txt'];
+const files=['style.css','ui.mjs','core.mjs','storage.mjs','sync.mjs','edit-session.mjs','offline.mjs','report.mjs','backup.mjs','react/main.js','react/LICENSES.txt'];
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const source=await Promise.all(files.map(async name=>({name,bytes:await readFile(new URL(name,app))})));
 const native=await readFile(new URL('native-shell.html',frontend),'utf8'),react=await readFile(new URL('react-shell.html',frontend),'utf8');
