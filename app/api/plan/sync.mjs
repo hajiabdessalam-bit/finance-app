@@ -391,6 +391,14 @@ function validateState(s) {
       if (!g || g.kind !== "gold" || !p || !t || t.goal !== g.id || t.amount !== h.cost || t.date !== h.date || (h.reversedBy || null) !== (p.reversedBy || null) || p.quantity != null && h.quantity !== p.quantity) fail("Gold holding does not match its exact purchase history.");
     }
   }
+  const paidEntries = /* @__PURE__ */ new Set();
+  for (const event of s.obligations) if (event.paid || event.transaction) {
+    const t = s.transactions.find((t2) => t2.id === event.transaction), kind = event.kind === "income" ? "income" : event.debtAccount ? "repayment" : "expense";
+    if (!event.paid || !event.transaction || !event.paidDate) fail("Paid schedule needs its exact cash entry.");
+    dateKey(event.paidDate);
+    if (!t || t.historical || t.source !== "scheduled" || t.kind !== kind || t.amount !== Math.abs(event.amount) || t.account !== event.account || (t.toAccount || "") !== (event.debtAccount || "") || t.date !== event.paidDate || t.date < event.date || t.category !== (event.budgetCategory || "oneoff") || reversals.includes(t.id) || paidEntries.has(t.id)) fail("Scheduled payment does not match its exact cash entry.");
+    paidEntries.add(t.id);
+  }
   for (const c of s.categories) {
     string(c.name, "Category name", 300);
     if (!["fixed", "variable", "savings", "buffer"].includes(c.type)) fail("Invalid category type.");

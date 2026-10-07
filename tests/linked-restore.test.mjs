@@ -27,3 +27,15 @@ test('restored outside repayments cannot be reused by another record or hide a c
  const reversed=C.reverseTransaction(state,state.outside[0].returns[0].transaction);C.validateState(C.clone(reversed));
  bad(reversed,n=>{delete n.outside[0].returns[0].reversedBy;n.outside[0].returned=3000;},/Invalid outside return correction/);
 });
+
+test('restored paid bills require exact scheduled cash evidence and cannot reuse another paid occurrence',()=>{
+ const initial=base();initial.obligations=[{id:'bill',name:'Synthetic bill',kind:'bill',date:'2026-10-06',amount:100,account:'bank',paid:false}];
+ const paid=C.recordScheduled(initial,'bill','2026-10-06');C.validateState(JSON.parse(JSON.stringify(paid)));
+ bad(initial,n=>{n.obligations[0].paid=true;},/exact cash entry/);
+ bad(paid,n=>{n.obligations[0].amount++;},/Scheduled payment/);
+ bad(paid,n=>{n.obligations[0].paidDate='2026-10-07';},/Scheduled payment/);
+ bad(paid,n=>{n.obligations.push({...n.obligations[0],id:'second-bill'});},/Scheduled payment/);
+ const reversed=C.reverseTransaction(paid,paid.transactions.at(-1).id);C.validateState(JSON.parse(JSON.stringify(reversed)));
+ bad(reversed,n=>{n.obligations[0].paid=true;n.obligations[0].transaction=paid.transactions.at(-1).id;},/Scheduled payment/);
+ const paidAgain=C.recordScheduled(reversed,'bill','2026-10-06');C.validateState(JSON.parse(JSON.stringify(paidAgain)));
+});
