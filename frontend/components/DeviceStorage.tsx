@@ -1,0 +1,11 @@
+import {useEffect,useState} from 'react';
+import {storageHealth} from '../../app/storage.mjs';
+type Health={usage:number|null;quota:number|null;persisted:boolean|null}|null;
+export function DeviceStorage(){
+  const [health,setHealth]=useState<Health>(null),[working,setWorking]=useState(false),[message,setMessage]=useState('');
+  useEffect(()=>{let current=true;void storageHealth().then(result=>{if(current)setHealth(result as Health);});return()=>{current=false;};},[]);
+  const check=async()=>{setWorking(true);try{setHealth(await storageHealth() as Health);setMessage('Browser storage information refreshed. Your records have not changed.');}finally{setWorking(false);}};
+  const retain=async()=>{setWorking(true);try{const kept=await navigator.storage.persist();setHealth(await storageHealth() as Health);setMessage(kept?'The browser granted retention against automatic storage cleanup. Keep independent backups as well.':'The browser did not grant retention. Keep an independent downloaded backup.');}catch{setMessage('The browser could not confirm retention. Your existing records are unchanged; keep an independent backup.');}finally{setWorking(false);}};
+  const percent=health?.quota&&health.usage!==null?Math.min(100,Math.round(health.usage/health.quota*100)):null;
+  return <section className="card"><h2>Protect your device’s records</h2><p>Records and recovery copies share this browser’s storage. Download a full backup to a separate location; clearing browser data or losing this device can remove all local copies.</p><p>Browser retention: {health?.persisted===true?'Granted':health?.persisted===false?'Not granted':'Not confirmed'}. {percent!==null?'Estimated browser storage used: '+percent+'%.':'Storage estimate unavailable.'}</p>{percent!==null&&percent>=90&&<p role="alert" className="negative">Browser storage is nearly full. Download an independent backup before making more edits.</p>}<div className="row"><button className="button quiet" disabled={working} onClick={()=>void check()}>Check device storage</button>{typeof navigator.storage?.persist==='function'&&health?.persisted!==true&&<button className="button quiet" disabled={working} onClick={()=>void retain()}>Ask browser to retain local records</button>}</div><p role="status">{working?'Checking browser storage…':message}</p></section>;
+}
