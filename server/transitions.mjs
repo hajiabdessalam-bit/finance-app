@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary,scheduledEvents,workspacePeriod,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents,workspacePeriod,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction,addSchedule,replaceSchedule,classifyOutside} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -83,11 +83,16 @@ export function validateTransitions(current,next,request,asOf){
     if(request.type==='obligation-restore'&&(!old.skipped||old.paid||event.skipped!==false||!sameJson(without(old,['skipped']),without(event,['skipped']))))throw new Error('Restore only the original cancelled occurrence.');
   }
   const addedEvents=next.obligations.filter(o=>!current.obligations.some(old=>old.id===o.id));
+  if(request.type==='obligation-add'){
+    const event=addedEvents[0];if(addedEvents.length!==1)throw new Error('Add one expected schedule at a time.');
+    assertEngineReplay(current,next,addSchedule(current,{name:event.name,kind:event.kind,amount:Math.abs(event.amount),date:event.date,account:event.account,debtAccount:event.debtAccount||'',budgetCategory:event.budgetCategory||'',recurrence:event.recurrence||null}));
+  }
   if(['obligation-stop','obligation-restore'].includes(request.type)&&addedEvents.length)throw new Error('This schedule review cannot invent another event.');
   if(request.type==='obligation-replace'){
     const changedTemplates=current.obligations.filter(old=>!sameJson(old,next.obligations.find(o=>o.id===old.id)));
     const event=addedEvents[0],old=changedTemplates[0];
     if(addedEvents.length!==1||changedTemplates.length!==1||event.replacesTemplate!==old.id||event.date!==next.obligations.find(o=>o.id===old.id).cancelAfter)throw new Error('A replacement must retain one prior template and its exact dated boundary.');
+    assertEngineReplay(current,next,replaceSchedule(current,{id:old.id,effective:event.date,reason:next.obligations.find(o=>o.id===old.id).stopReason,name:event.name,kind:event.kind,amount:event.amount,account:event.account,debtAccount:event.debtAccount||'',budgetCategory:event.budgetCategory||'',recurrence:event.recurrence||null},asOf));
   }
   for(const event of addedEvents){
     if(['obligation-add','obligation-replace'].includes(request.type)&&(event.paid||event.transaction||event.templateId||event.skipped))throw new Error('New templates cannot contain invented payment history.');
@@ -130,6 +135,7 @@ export function validateTransitions(current,next,request,asOf){
   if(request.type==='outside-classify'){
     const edited=next.outside.filter(o=>!sameJson(o,current.outside.find(old=>old.id===o.id)));
     if(edited.length!==1||!current.outside.some(o=>o.id===edited[0].id)||!sameJson(without(current.outside.find(o=>o.id===edited[0].id),['kind']),without(edited[0],['kind'])))throw new Error('Classification cannot rewrite the original outside record.');
+    assertEngineReplay(current,next,classifyOutside(current,{id:edited[0].id,kind:edited[0].kind}));
   }
 
   if(request.type==='budget-set'){

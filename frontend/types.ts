@@ -6,9 +6,11 @@ export interface Reconciliation {id:string;account:string;date:string;balance:nu
 export interface Transaction {id:string;seq:number;kind:string;date:string;amount:number;account:string;toAccount?:string;category?:string;note?:string;source?:string;historical?:boolean;reverses?:string;splits?:{category:string;amount:number}[]}
 export interface Category {id:string;name:string;type:string;archived?:boolean}
 export interface Budget {id:string;key:string;salary:number;alloc:Record<string,number>;locks:Record<string,boolean>;[key:string]:unknown}
+export interface Obligation {id:string;name:string;kind:'bill'|'income';amount:number;date:string;account:string;debtAccount?:string;budgetCategory?:string;paid?:boolean;skipped?:boolean;skipReason?:string;stopReason?:string;paidDate?:string;transaction?:string;templateId?:string;archived?:boolean;goal?:string;cancelAfter?:string;recurrence?:{unit:'monthly'|'weekly';interval:number;until?:string}}
+export interface OutsideRecord {id:string;name:string;kind:string;amount:number;date:string;account?:string;due?:string;note?:string;returned?:number;transaction?:string;reversedBy?:string;source?:string;returns?:{id:string;amount:number;date:string;transaction:string;reversedBy?:string}[]}
 export interface Workspace {
   schema:2;id:string;version:number;seq:number;currency:string;timezone:string;cycleStart:number;name:string;
-  accounts:Account[];transactions:Transaction[];budgets:Budget[];categories:Category[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];
+  accounts:Account[];transactions:Transaction[];budgets:Budget[];categories:Category[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];obligations:Obligation[];outside:OutsideRecord[];
   reservations:Record<string,number>;settings:{reserve:number;monthlyProtection:number;forecastPeriods:number};
   [key:string]:unknown;
 }
