@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary,scheduledEvents,reverseTransaction,recordScheduled,purchaseGoal,returnOutside} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -114,6 +114,22 @@ export function validateTransitions(current,next,request,asOf){
   if(request.type==='outside-return'){
     const t=addedTransactions[0];if(addedTransactions.length!==1||!t.outside)throw new Error('An outside return requires one linked receipt.');
     assertEngineReplay(current,next,returnOutside(current,{id:t.outside,amount:t.amount,account:t.account,date:t.date,note:t.note}));
+  }
+
+
+  if(request.type==='outside-given'){
+    const addedOutside=next.outside.filter(o=>!current.outside.some(old=>old.id===o.id)),o=addedOutside[0];
+    if(addedTransactions.length!==1||addedOutside.length!==1||o.transaction!==addedTransactions[0].id)throw new Error('Outgoing money requires one exact linked record and cash entry.');
+    assertEngineReplay(current,next,giveOutside(current,{name:o.name,kind:o.kind,amount:o.amount,account:o.account,date:o.date,note:o.note||'',due:o.due||''}));
+  }
+  if(request.type==='transaction-correct'){
+    const reversal=addedTransactions.find(t=>t.kind==='reversal'),replacement=addedTransactions.find(t=>t.kind!=='reversal');
+    if(addedTransactions.length!==2||!reversal||!replacement||replacement.corrects!==reversal.reverses)throw new Error('A replacement requires one linked reversal and one corrected entry.');
+    assertEngineReplay(current,next,correctTransaction(current,{id:reversal.reverses,reason:reversal.note,replacement:{kind:replacement.kind,date:replacement.date,amount:replacement.amount,account:replacement.account,category:replacement.category||'',note:replacement.note||'',...(replacement.splits?{splits:replacement.splits}:{})}}));
+  }
+  if(request.type==='outside-classify'){
+    const edited=next.outside.filter(o=>!sameJson(o,current.outside.find(old=>old.id===o.id)));
+    if(edited.length!==1||!current.outside.some(o=>o.id===edited[0].id)||!sameJson(without(current.outside.find(o=>o.id===edited[0].id),['kind']),without(edited[0],['kind'])))throw new Error('Classification cannot rewrite the original outside record.');
   }
 
   for(const t of next.transactions.filter(t=>!current.transactions.some(old=>old.id===t.id)))if(t.date>asOf)throw new Error('Future payments belong on the calendar, not in actual transactions.');
