@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary,scheduledEvents,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents,workspacePeriod,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -132,5 +132,12 @@ export function validateTransitions(current,next,request,asOf){
     if(edited.length!==1||!current.outside.some(o=>o.id===edited[0].id)||!sameJson(without(current.outside.find(o=>o.id===edited[0].id),['kind']),without(edited[0],['kind'])))throw new Error('Classification cannot rewrite the original outside record.');
   }
 
+  if(request.type==='budget-set'){
+    const edits=next.budgets.filter(b=>!sameJson(b,current.budgets.find(old=>old.id===b.id)));if(edits.length!==1)throw new Error('Review one period budget per operation.');
+    const b=edits[0],old=current.budgets.find(old=>old.id===b.id);
+    if(b.key<workspacePeriod(current,asOf))throw new Error('Historical budget intentions cannot be rewritten.');
+    if(old&&(!sameJson(without(old,['salary','alloc','revision','status','source']),without(b,['salary','alloc','revision','status','source']))||Object.keys(old.alloc).some(id=>!Object.hasOwn(b.alloc,id))))throw new Error('Budget changes retain identity, locks and category allocations; set an allocation to zero explicitly.');
+    if(b.revision!==(Number.isSafeInteger(old?.revision)?old.revision:0)+1||b.status!=='planned'||b.source!=='manual')throw new Error('Budget changes need an explicit reviewed revision.');
+  }
   for(const t of next.transactions.filter(t=>!current.transactions.some(old=>old.id===t.id)))if(t.date>asOf)throw new Error('Future payments belong on the calendar, not in actual transactions.');
 }

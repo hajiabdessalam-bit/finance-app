@@ -5,9 +5,10 @@ export interface Goal {id:string;name:string;target:number;priority:number;archi
 export interface Reconciliation {id:string;account:string;date:string;balance:number;difference:number|null;status:'matched'|'unresolved'|'reviewed';note?:string}
 export interface Transaction {id:string;seq:number;kind:string;date:string;amount:number;account:string;toAccount?:string;category?:string;note?:string;source?:string;historical?:boolean;reverses?:string;splits?:{category:string;amount:number}[]}
 export interface Category {id:string;name:string;type:string;archived?:boolean}
+export interface Budget {id:string;key:string;salary:number;alloc:Record<string,number>;locks:Record<string,boolean>;[key:string]:unknown}
 export interface Workspace {
   schema:2;id:string;version:number;seq:number;currency:string;timezone:string;cycleStart:number;name:string;
-  accounts:Account[];transactions:Transaction[];categories:Category[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];
+  accounts:Account[];transactions:Transaction[];budgets:Budget[];categories:Category[];notes:Note[];goals:Goal[];reconciliations:Reconciliation[];
   reservations:Record<string,number>;settings:{reserve:number;monthlyProtection:number;forecastPeriods:number};
   [key:string]:unknown;
 }
