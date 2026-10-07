@@ -623,6 +623,15 @@ function purchaseGoal(s, { id, amount, account, date, complete = true, quantity 
     }
   });
 }
+function archiveGoal(s, id) {
+  if (!s.goals.some((g) => g.id === id)) fail("Goal not found.");
+  return mutate(s, "archive-goal", { id }, (n) => {
+    const goal = n.goals.find((g) => g.id === id);
+    goal.archived = true;
+    goal.archiveReason = "manual";
+    n.reservations[id] = 0;
+  });
+}
 function classifyOutside(s, { id, kind }) {
   const record = s.outside.find((o) => o.id === id);
   if (!record || record.transaction || record.reversedBy || record.kind === "borrowed" || !["unclassified", "gift", "loan", "investment"].includes(kind)) fail("Review an unlinked historical outside record; linked payments and borrowing keep their original meaning.");
@@ -855,6 +864,20 @@ function validateTransitions(current, next, request, asOf) {
   for (const old of current.goals) {
     const goal = next.goals.find((g) => g.id === old.id);
     if (request.type === "goal-edit" && !sameJson(without(old, ["target", "priority", "desired", "flexible"]), without(goal, ["target", "priority", "desired", "flexible"]))) throw new Error("Goal edits cannot rewrite purchase history or ownership.");
+  }
+  const addedGoals = next.goals.filter((g) => !current.goals.some((old) => old.id === g.id)), editedGoals = next.goals.filter((g) => current.goals.some((old) => old.id === g.id) && !sameJson(g, current.goals.find((old) => old.id === g.id)));
+  if (request.type === "goal-add") {
+    const g = addedGoals[0];
+    if (addedGoals.length !== 1 || editedGoals.length || g.archived || g.completed || g.purchase || (g.purchases || []).length || g.archiveReason || next.reservations[g.id] !== 0 || !sameJson(without(next.reservations, [g.id]), current.reservations)) throw new Error("Add one new goal without invented purchases or reserved savings.");
+  }
+  if (request.type === "goal-edit" && (addedGoals.length || editedGoals.length !== 1)) throw new Error("Edit one existing goal without inventing another goal.");
+  if (request.type === "archive-goal") {
+    if (addedGoals.length || editedGoals.length !== 1) throw new Error("Archive one existing goal while retaining its history.");
+    assertEngineReplay(current, next, archiveGoal(current, editedGoals[0].id));
+  }
+  if (["reserve", "release"].includes(request.type)) {
+    const deltas = Object.keys(next.reservations).filter((id) => next.reservations[id] !== current.reservations[id]);
+    if (deltas.length !== 1 || !current.goals.some((g) => g.id === deltas[0] && !g.archived) || (request.type === "reserve" ? next.reservations[deltas[0]] <= current.reservations[deltas[0]] : next.reservations[deltas[0]] >= current.reservations[deltas[0]])) throw new Error("Reserve or release a positive amount for one existing active goal.");
   }
   for (const old of current.obligations) {
     const event = next.obligations.find((o) => o.id === old.id);

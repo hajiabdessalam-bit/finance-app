@@ -26,4 +26,17 @@ test('ordinary cloud entries cannot forge linked purposes, sources or additional
 });
 test('goal editing cannot rewrite purchase ownership or add invented reserved funds',()=>{const before=fixture();assert.throws(()=>check(before,C.mutate(before,'goal-edit',{},n=>n.goals[0].kind='gold'),'goal-edit'),/ownership/);assert.throws(()=>check(before,C.mutate(before,'goal-add',{},n=>{n.goals.push({id:'new',name:'New',target:1,priority:1});n.reservations.new=1;}),'goal-add'),/available cash/);});
 
+test('goal commands cannot invent progress, rewrite archives or move another reservation',()=>{
+  const before=fixture();before.goals.push({id:'h',name:'Second',target:1000,priority:2,archived:false});before.reservations.h=500;
+  const add=()=>C.mutate(before,'goal-add',{},n=>{n.goals.push({id:'new',name:'New',target:100,priority:3,archived:false});n.reservations.new=0;});
+  assert.equal(check(before,add(),'goal-add').goals.length,3);
+  for(const edit of [n=>n.goals[2].completed=true,n=>n.goals[0].name='Rewritten']){const forged=add();edit(forged);assert.throws(()=>check(before,forged,'goal-add'),/one new goal/);}
+  assert.equal(check(before,C.archiveGoal(before,'h'),'archive-goal').reservations.h,0);
+  const forgedArchive=C.archiveGoal(before,'h');forgedArchive.goals[1].name='Rewritten';assert.throws(()=>check(before,forgedArchive,'archive-goal'),/authoritative operation/);
+  assert.equal(check(before,C.reserveGoal(before,'g',100),'reserve').reservations.g,100);
+  assert.equal(check(before,C.releaseGoal(before,'h',100),'release').reservations.h,400);
+  const moved=C.mutate(before,'reserve',{},n=>{n.reservations.g=100;n.reservations.h=400;});assert.throws(()=>check(before,moved,'reserve'),/one existing active goal/);
+  const fakeEdit=C.mutate(before,'goal-edit',{},n=>n.goals.push({id:'invented',name:'Invented',target:1,priority:1}));assert.throws(()=>check(before,fakeEdit,'goal-edit'),/one existing goal/);
+});
+
 test('cloud budget edits retain category allocations and cannot replace historical plans',()=>{const before=fixture(),key=C.workspacePeriod(before,asOf);before.categories=[{id:'food',name:'Food',type:'variable'}];before.budgets=[{id:'original',key,salary:10000,alloc:{food:1000},locks:{food:true}}];const after=C.setBudget(before,{key,salary:11000,alloc:{food:900}});assert.equal(check(before,after,'budget-set').budgets[0].alloc.food,900);const dropped=C.clone(after);delete dropped.budgets[0].alloc.food;assert.throws(()=>check(before,dropped,'budget-set'),/retain identity/);const past=C.clone(before);past.budgets[0].key=C.addMonths(key,-1);const forged=C.mutate(past,'budget-set',{},n=>{n.budgets[0].salary=12000;n.budgets[0].revision=1;n.budgets[0].status='planned';n.budgets[0].source='manual';});assert.throws(()=>check(past,forged,'budget-set'),/Historical/);});

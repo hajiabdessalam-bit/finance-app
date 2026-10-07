@@ -1,5 +1,5 @@
 /** Financial transition checks for the private sync boundary. */
-import {accountBalance,summary,scheduledEvents,workspacePeriod,addTransaction,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction,addSchedule,replaceSchedule,classifyOutside,addCategory,toggleCategoryArchive} from '../app/core.mjs';
+import {accountBalance,summary,scheduledEvents,workspacePeriod,addTransaction,reverseTransaction,recordScheduled,purchaseGoal,returnOutside,giveOutside,correctTransaction,addSchedule,replaceSchedule,classifyOutside,addCategory,toggleCategoryArchive,archiveGoal} from '../app/core.mjs';
 import {sameJson} from '../app/sync.mjs';
 const scopes={
   'account-add':['accounts'],reconcile:['accounts','reconciliations'],'balance-review':['reconciliations'],
@@ -71,6 +71,20 @@ export function validateTransitions(current,next,request,asOf){
   for(const old of current.goals){
     const goal=next.goals.find(g=>g.id===old.id);
     if(request.type==='goal-edit'&&!sameJson(without(old,['target','priority','desired','flexible']),without(goal,['target','priority','desired','flexible'])))throw new Error('Goal edits cannot rewrite purchase history or ownership.');
+  }
+  const addedGoals=next.goals.filter(g=>!current.goals.some(old=>old.id===g.id)),editedGoals=next.goals.filter(g=>current.goals.some(old=>old.id===g.id)&&!sameJson(g,current.goals.find(old=>old.id===g.id)));
+  if(request.type==='goal-add'){
+    const g=addedGoals[0];
+    if(addedGoals.length!==1||editedGoals.length||g.archived||g.completed||g.purchase||(g.purchases||[]).length||g.archiveReason||next.reservations[g.id]!==0||!sameJson(without(next.reservations,[g.id]),current.reservations))throw new Error('Add one new goal without invented purchases or reserved savings.');
+  }
+  if(request.type==='goal-edit'&&(addedGoals.length||editedGoals.length!==1))throw new Error('Edit one existing goal without inventing another goal.');
+  if(request.type==='archive-goal'){
+    if(addedGoals.length||editedGoals.length!==1)throw new Error('Archive one existing goal while retaining its history.');
+    assertEngineReplay(current,next,archiveGoal(current,editedGoals[0].id));
+  }
+  if(['reserve','release'].includes(request.type)){
+    const deltas=Object.keys(next.reservations).filter(id=>next.reservations[id]!==current.reservations[id]);
+    if(deltas.length!==1||!current.goals.some(g=>g.id===deltas[0]&&!g.archived)||(request.type==='reserve'?next.reservations[deltas[0]]<=current.reservations[deltas[0]]:next.reservations[deltas[0]]>=current.reservations[deltas[0]]))throw new Error('Reserve or release a positive amount for one existing active goal.');
   }
   for(const old of current.obligations){
     const event=next.obligations.find(o=>o.id===old.id);
