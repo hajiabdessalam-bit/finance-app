@@ -52,7 +52,7 @@ export function supabaseAdapter({url,publishableKey,secretKey,fetchImpl=globalTh
         const checked=await validateBootstrap({workspace:command.workspace,requestId:command.requestId,records:command.records,review:{confirmed:true,destination:base.origin,payloadDigest:command.payloadDigest}},base.origin);
         return request('/rest/v1/rpc/plan_bootstrap_validated_workspace',{body:{p_owner:actor(owner),p_workspace:checked.workspace,p_request:checked.requestId,p_digest:checked.payloadDigest,p_records:checked.records}});
       },
-      read:(owner,workspace)=>request('/rest/v1/rpc/plan_read_validated_workspace',{body:{p_owner:actor(owner),p_workspace:workspace}}),
+      read:async(owner,workspace)=>{if(workspace==='@latest'){workspace=await request('/rest/v1/rpc/plan_latest_workspace',{body:{p_owner:actor(owner)}});if(!workspace)return null;}return request('/rest/v1/rpc/plan_read_validated_workspace',{body:{p_owner:actor(owner),p_workspace:workspace}});},
       apply:(owner,command)=>{validateEnvelope(command);return request('/rest/v1/rpc/plan_apply_validated_operation',{body:{p_owner:actor(owner),p_workspace:command.workspace,p_operation:command.operationId,p_expected_version:command.expectedVersion,p_kind:command.type,p_patches:command.patches}});}
     },
     conversations:{

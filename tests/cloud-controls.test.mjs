@@ -35,3 +35,6 @@ test('unverified configuration and altered account-bound comparisons cannot init
   await assert.rejects(f.controller.adopt({...review,actor:'22222222-2222-4222-8222-222222222222'},{confirmed:true,reviewDigest:review.review.digest}),/current signed-in account/);
   assert.deepEqual(await D.loadStore(f.db),row);assert.equal(typeof f.controller.bootstrap,'undefined');assert.ok(!f.calls.includes('apply'));
 }));
+
+test('an empty new device discovers and adopts the owned cloud workspace without uploading',async()=>{const previous=globalThis.indexedDB;globalThis.indexedDB=new IDBFactory();const db=await D.openStore();try{const {privateCloudReview}=await import('../frontend/cloud-review.mjs');const state=C.fresh();const snapshot={workspace:state.id,version:1,records:S.entities(state).map(r=>({...r,version:1})),operations:[]};const review=privateCloudReview({db,transport:{read:async id=>{assert.ok(id==='@latest'||id===state.id);return snapshot;}}});const result=await review.compare();assert.equal(result.newDevice,true);await review.adopt(result,{confirmed:true,reviewDigest:result.review.digest});assert.equal((await D.loadSyncContext(db)).baseline.workspace,state.id);}finally{db.close();globalThis.indexedDB=previous;}});
+

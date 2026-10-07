@@ -44,6 +44,10 @@ export function budgetedAdvisor({ledger,generate,configuration,configurationHash
     try{response=await generate({summary:JSON.parse(serialized),prompt,maxInputTokens:configuration.maxInputTokens,maxOutputTokens:configuration.maxOutputTokens,maxSteps:configuration.maxSteps});}
     catch{await ledger.settle({owner,requestId,status:'uncertain',chargedMicroUsd:null});throw new Error('The provider did not confirm a result. Its budget reservation is held for review.');}
     const charged=response?.chargedMicroUsd;
+    if(charged===null&&response?.result){
+      await ledger.settle({owner,requestId,status:'uncertain',chargedMicroUsd:null});
+      return {status:'complete',result:response.result,chargedMicroUsd:null};
+    }
     if(!Number.isSafeInteger(charged)||charged<0||charged>1e12){await ledger.settle({owner,requestId,status:'uncertain',chargedMicroUsd:null});throw new Error('The provider did not confirm its complete charge. Its reservation is held for review.');}
     await ledger.settle({owner,requestId,status:charged>reservedMicroUsd?'overrun':'complete',chargedMicroUsd:charged});
     if(charged>reservedMicroUsd)throw new Error('The provider exceeded its configured bound. Further requests require price and budget review.');

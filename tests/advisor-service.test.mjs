@@ -29,7 +29,7 @@ test('changed records, altered question, foreign identity and expired quote cann
   await assert.rejects(advisorService({...f.dependencies,configuration:{...config,apiKey:'should-never-be-returned'}}),/credentials/);
 });
 test('uncertain charge keeps its reservation and saved history cannot be redirected by later review mutation',async()=>{
-  const uncertain=await fixture();uncertain.setCharge(null);await assert.rejects(ask(uncertain,await preview(uncertain)),/complete charge/);assert.equal(uncertain.calls.at(-1)[1].status,'uncertain');assert.equal(uncertain.saved.length,0);
+  const uncertain=await fixture();uncertain.setCharge(null);const pending=await ask(uncertain,await preview(uncertain));assert.equal(pending.status,'complete');assert.equal(pending.chargedMicroUsd,null);assert.equal(uncertain.calls.at(-1)[1].status,'uncertain');assert.equal(uncertain.saved.length,1);
   const f=await fixture(),review=await preview(f),workspace=review.workspace;f.onGenerate(async()=>{review.workspace='different-workspace';review.prompt='Changed later';});const result=await ask(f,review);assert.equal(result.workspace,workspace);assert.equal(f.saved[0].workspace,workspace);assert.equal(f.saved[0].question,'Explain my goal assumptions.');
 });
 test('history failure retains a confirmed paid answer and does not repeat the provider',async()=>{

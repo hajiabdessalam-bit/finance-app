@@ -18,7 +18,7 @@ export function syncService({verifySession,store,destination}){
       if(!result||!['initialized','duplicate','conflict'].includes(result.status)||!Number.isSafeInteger(result.version)||result.version<1||result.status==='initialized'&&result.version!==1)throw new Error('The database did not confirm the first upload. Read and review cloud records before continuing.');
       return {status:result.status,version:result.version};
     },
-    async read({token,workspace:id}){const owner=await actor(token),snapshot=await store.read(owner,workspace(id));if(!snapshot)return null;if(snapshot.workspace!==id)throw new Error('The store returned a different workspace.');hydrateSnapshot(snapshot);const result=clone(snapshot);const legacy=result.records.find(r=>r.collection==='preferences'&&r.key==='profile')?.value?.legacy;if(legacy?.rawText)legacy.raw=JSON.parse(legacy.rawText);return result;},
+    async read({token,workspace:id}){const owner=await actor(token),snapshot=await store.read(owner,workspace(id));if(!snapshot)return null;if(id!=='@latest'&&snapshot.workspace!==id)throw new Error('The store returned a different workspace.');hydrateSnapshot(snapshot);const result=clone(snapshot);const legacy=result.records.find(r=>r.collection==='preferences'&&r.key==='profile')?.value?.legacy;if(legacy?.rawText)legacy.raw=JSON.parse(legacy.rawText);return result;},
     async apply({token,request}){
       const owner=await actor(token);validateEnvelope(request);const command=clone(request),snapshot=await store.read(owner,command.workspace);
       if(!snapshot)throw new Error('Review and initialize this workspace before sending incremental edits.');

@@ -32,7 +32,7 @@ export function privateCloudTransport({origin,currentOrigin=globalThis.location?
       const result=payload.result;
       if(action==='read'){
         if(response.status!==200)throw new Error('invalid read');
-        if(result!==null){if(result?.workspace!==input.workspace)throw new Error('different workspace');hydrateSnapshot(result);}
+        if(result!==null){if(input.workspace!=='@latest'&&result?.workspace!==input.workspace)throw new Error('different workspace');hydrateSnapshot(result);}
       }else{
         const statuses=action==='bootstrap'?['initialized','duplicate','conflict']:['applied','duplicate','conflict'];
         if(!result||Object.keys(result).sort().join(',')!=='status,version'||!statuses.includes(result.status)||!Number.isSafeInteger(result.version)||result.version<0||(response.status===409)!==(result.status==='conflict'))throw new Error('invalid result');

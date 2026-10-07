@@ -1178,7 +1178,13 @@ function supabaseAdapter({ url, publishableKey, secretKey, fetchImpl = globalThi
         const checked = await validateBootstrap({ workspace: command2.workspace, requestId: command2.requestId, records: command2.records, review: { confirmed: true, destination: base.origin, payloadDigest: command2.payloadDigest } }, base.origin);
         return request("/rest/v1/rpc/plan_bootstrap_validated_workspace", { body: { p_owner: actor(owner), p_workspace: checked.workspace, p_request: checked.requestId, p_digest: checked.payloadDigest, p_records: checked.records } });
       },
-      read: (owner, workspace) => request("/rest/v1/rpc/plan_read_validated_workspace", { body: { p_owner: actor(owner), p_workspace: workspace } }),
+      read: async (owner, workspace) => {
+        if (workspace === "@latest") {
+          workspace = await request("/rest/v1/rpc/plan_latest_workspace", { body: { p_owner: actor(owner) } });
+          if (!workspace) return null;
+        }
+        return request("/rest/v1/rpc/plan_read_validated_workspace", { body: { p_owner: actor(owner), p_workspace: workspace } });
+      },
       apply: (owner, command2) => {
         validateEnvelope(command2);
         return request("/rest/v1/rpc/plan_apply_validated_operation", { body: { p_owner: actor(owner), p_workspace: command2.workspace, p_operation: command2.operationId, p_expected_version: command2.expectedVersion, p_kind: command2.type, p_patches: command2.patches } });
@@ -1226,7 +1232,7 @@ function syncService({ verifySession, store, destination }) {
     async read({ token, workspace: id }) {
       const owner = await actor(token), snapshot = await store.read(owner, workspace(id));
       if (!snapshot) return null;
-      if (snapshot.workspace !== id) throw new Error("The store returned a different workspace.");
+      if (id !== "@latest" && snapshot.workspace !== id) throw new Error("The store returned a different workspace.");
       hydrateSnapshot(snapshot);
       const result = clone(snapshot);
       const legacy = result.records.find((r) => r.collection === "preferences" && r.key === "profile")?.value?.legacy;

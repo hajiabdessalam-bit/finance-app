@@ -1,7 +1,7 @@
 /** Explicit read/review/adoption preparation. No startup requests or uploads. */
 import {clone} from '../app/core.mjs';
-import {prepareRemoteReview,verifyRemoteReview,sameJson} from '../app/sync.mjs';
-import {loadStore,adoptReviewedRemote} from '../app/storage.mjs';
+import {prepareRemoteReview,verifyRemoteReview,sameJson,hydrateSnapshot} from '../app/sync.mjs';
+import {loadStore,saveStore,adoptReviewedRemote} from '../app/storage.mjs';
 
 export function privateCloudReview({db,transport}){
   if(!db||typeof transport?.read!=='function')throw new Error('Configure private local storage and an authenticated cloud reader.');
@@ -13,10 +13,16 @@ export function privateCloudReview({db,transport}){
   return {
     compare:()=>exclusive(async()=>{
       const before=await loadStore(db);
-      if(!before.state)throw new Error('Open a local workspace before comparing cloud records.');
-      const snapshot=await transport.read(before.state.id);
+      const snapshot=await transport.read(before.state?.id||'@latest');
       const after=await loadStore(db);
       if(after.revision!==before.revision||!sameJson(after.state,before.state))throw new Error('Local records changed during the read. Compare again; all local edits are retained.');
+      if(!before.state){
+        if(!snapshot)throw new Error('No saved cloud records exist for this account yet.');
+        const remote=hydrateSnapshot(snapshot);
+        const revision=await saveStore(db,remote,before.revision);
+        const review=await prepareRemoteReview(remote,snapshot);
+        return {kind:'comparison',revision,review,newDevice:true};
+      }
       if(snapshot===null)return {kind:'empty',workspace:before.state.id,revision:before.revision,requiresFirstUploadReview:true};
       const review=await prepareRemoteReview(before.state,snapshot);
       return {kind:'comparison',revision:before.revision,review};
