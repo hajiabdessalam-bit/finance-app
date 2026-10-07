@@ -1,6 +1,7 @@
 import {useState,type FormEvent} from 'react';
 import type {Workspace,Scenario} from '../types';
 import {PlanningChecks} from './PlanningChecks';
+import {SpendingPath} from './SpendingPath';
 import {engine,forecast,cashLabel} from '../domain';
 export function Planner({state}:{state:Workspace}){
   const [scenario,setScenario]=useState<Scenario>({mode:'budget',extraExpense:0,incomeChange:0,protection:state.settings.monthlyProtection}),[error,setError]=useState('');
@@ -10,5 +11,5 @@ export function Planner({state}:{state:Workspace}){
     {result.warnings.map(w=><div className="notice" key={w}>{w.replace(/(\d+) minor units/g,(_,n:string)=>cashLabel(state,Number(n)))}</div>)}
     <section className="card"><h2>Your goals, together</h2><div className="tablewrap"><table><thead><tr><th>Goal</th><th>Remaining target</th><th>Forecast funding</th><th>Desired date</th></tr></thead><tbody>{result.results.map(g=><tr key={g.id}><td>{g.name}</td><td>{cashLabel(state,g.target)}</td><td>{g.ready||'Not achievable in this horizon'}</td><td className={g.late?'negative':''}>{g.deadline||'Flexible'}</td></tr>)}</tbody></table></div>{!result.results.length&&<p>Add a purchase goal in Goals to start.</p>}</section>
     <section className="card"><h2>Why these dates?</h2><ul className="list">{result.assumptions.map(a=><li key={a}>{a}</li>)}</ul></section>
-  <PlanningChecks key={state.id+'-'+state.version+'-'+state.seq} state={state}/></>;
+  <SpendingPath key={'spending-'+state.id+'-'+state.version+'-'+state.seq} state={state}/><PlanningChecks key={state.id+'-'+state.version+'-'+state.seq} state={state}/></>;
 }
