@@ -1,0 +1,42 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import * as C from '../app/core.mjs';
+import {diffEntities} from '../app/sync.mjs';
+import {validateOperation} from '../server/validation.mjs';
+const asOf='2026-10-07';
+const check=(before,after,type)=>validateOperation(before,{workspace:before.id,operationId:crypto.randomUUID(),expectedVersion:before.version,type,patches:diffEntities(before,after)},{asOf});
+function fixture(){const s=C.fresh();s.seq=1;s.accounts=[{id:'cash',name:'Cash',kind:'asset',currency:s.currency,opening:10000,baselineDate:'2026-10-01',baselineSeq:1,verified:true}];s.goals=[{id:'g',name:'Purchase',target:20000,priority:1,kind:'purchase',archived:false}];s.reservations.g=0;return s;}
+test('valid balance checks and explanatory reviews preserve original evidence',()=>{const before=fixture(),checked=C.reconcile(before,{account:'cash',date:asOf,balance:11000,note:'Statement'}),accepted=check(before,checked,'reconcile');assert.equal(accepted.reconciliations[0].difference,1000);const reviewed=C.reviewReconciliation(accepted,{id:accepted.reconciliations[0].id,note:'Entry timing difference'});assert.equal(check(accepted,reviewed,'balance-review').reconciliations[0].difference,1000);});
+test('a note cannot alter cash, reservations, settings or record a future actual entry',()=>{const before=fixture();for(const apply of [n=>n.accounts[0].opening=999999,n=>n.reservations.g=1,n=>n.settings.reserve=0+1,n=>n.transactions.push({id:'t',seq:n.seq,kind:'income',date:'2026-10-08',amount:100,account:'cash',postings:[{account:'cash',amount:100}],historical:false})]){const forged=C.mutate(before,'note-add',{},apply);assert.throws(()=>check(before,forged,'note-add'),/cannot change/);}});
+test('reconciliation cannot forge the expected difference, status or baseline date',()=>{const before=fixture(),checked=C.reconcile(before,{account:'cash',date:asOf,balance:11000});for(const apply of [n=>n.reconciliations[0].expected=0,n=>n.reconciliations[0].difference=0,n=>n.reconciliations[0].status='matched',n=>{n.accounts[0].baselineDate='2026-10-08';n.reconciliations[0].date='2026-10-08';}]){const forged=C.clone(checked);apply(forged);assert.throws(()=>check(before,forged,'reconcile'),/evidence/);}});
+test('reviewing a balance cannot erase the original mismatch',()=>{const before=C.reconcile(fixture(),{account:'cash',date:asOf,balance:11000}),after=C.reviewReconciliation(before,{id:before.reconciliations[0].id,note:'Reviewed'});after.reconciliations[0].difference=0;assert.throws(()=>check(before,after,'balance-review'),/immutable/);});
+test('goal reservations use existing cash and cannot consume protected money',()=>{const before=fixture();before.settings.reserve=5000;assert.equal(check(before,C.reserveGoal(before,'g',5000),'reserve').reservations.g,5000);const forged=C.mutate(before,'reserve',{},n=>n.reservations.g=5001);assert.throws(()=>check(before,forged,'reserve'),/available cash/);before.accounts[0].opening=null;assert.throws(()=>check(before,C.mutate(before,'reserve',{},n=>n.reservations.g=1),'reserve'),/available cash/);});
+test('new accounts need an explicit check rather than a supplied opening balance',()=>{const before=fixture(),add=C.mutate(before,'account-add',{},n=>n.accounts.push({id:'new',name:'New',kind:'asset',currency:n.currency,opening:null,baselineDate:asOf,baselineSeq:n.seq}));assert.equal(check(before,add,'account-add').accounts.length,2);add.accounts[1].opening=10000;add.accounts[1].verified=true;assert.throws(()=>check(before,add,'account-add'),/without a verified/);});
+test('future actual transactions are rejected while legitimate backdated entries remain valid',()=>{const before=fixture(),make=date=>{const next=C.addTransaction(before,{kind:'expense',date:asOf,amount:100,account:'cash'});next.transactions[0].date=date;return next;};assert.throws(()=>check(before,make('2026-10-08'),'transaction'),/Future payments/);assert.equal(C.accountBalance(check(before,make('2026-09-30'),'transaction'),'cash',asOf),10000);});
+
+test('ordinary cloud entries cannot forge linked purposes, sources or additional cash entries',()=>{
+  const before=fixture();before.categories=[{id:'food',name:'Food',type:'variable'},{id:'travel',name:'Travel',type:'variable'}];
+  const make=()=>C.addTransaction(before,{kind:'expense',date:asOf,amount:100,account:'cash',source:'csv',importKey:'reviewed-row',splits:[{category:'food',amount:60},{category:'travel',amount:40}]});
+  assert.equal(check(before,make(),'transaction').transactions[0].importKey,'reviewed-row');
+  for(const edit of [t=>t.goal='g',t=>t.outside='invented',t=>t.corrects='invented',t=>t.source='goal',t=>t.source='correction']){
+    const forged=make();edit(forged.transactions[0]);assert.throws(()=>check(before,forged,'transaction'),/authoritative operation|ordinary manual/);
+  }
+  const extra=C.mutate(before,'transaction',{},n=>{const first=make().transactions[0];n.transactions.push(first,{...first,id:'extra'});});
+  assert.throws(()=>check(before,extra,'transaction'),/one ordinary/);
+});
+test('goal editing cannot rewrite purchase ownership or add invented reserved funds',()=>{const before=fixture();assert.throws(()=>check(before,C.mutate(before,'goal-edit',{},n=>n.goals[0].kind='gold'),'goal-edit'),/ownership/);assert.throws(()=>check(before,C.mutate(before,'goal-add',{},n=>{n.goals.push({id:'new',name:'New',target:1,priority:1});n.reservations.new=1;}),'goal-add'),/available cash/);});
+
+test('goal commands cannot invent progress, rewrite archives or move another reservation',()=>{
+  const before=fixture();before.goals.push({id:'h',name:'Second',target:1000,priority:2,archived:false});before.reservations.h=500;
+  const add=()=>C.mutate(before,'goal-add',{},n=>{n.goals.push({id:'new',name:'New',target:100,priority:3,archived:false});n.reservations.new=0;});
+  assert.equal(check(before,add(),'goal-add').goals.length,3);
+  for(const edit of [n=>n.goals[2].completed=true,n=>n.goals[0].name='Rewritten']){const forged=add();edit(forged);assert.throws(()=>check(before,forged,'goal-add'),/one new goal/);}
+  assert.equal(check(before,C.archiveGoal(before,'h'),'archive-goal').reservations.h,0);
+  const forgedArchive=C.archiveGoal(before,'h');forgedArchive.goals[1].name='Rewritten';assert.throws(()=>check(before,forgedArchive,'archive-goal'),/authoritative operation/);
+  assert.equal(check(before,C.reserveGoal(before,'g',100),'reserve').reservations.g,100);
+  assert.equal(check(before,C.releaseGoal(before,'h',100),'release').reservations.h,400);
+  const moved=C.mutate(before,'reserve',{},n=>{n.reservations.g=100;n.reservations.h=400;});assert.throws(()=>check(before,moved,'reserve'),/one existing active goal/);
+  const fakeEdit=C.mutate(before,'goal-edit',{},n=>n.goals.push({id:'invented',name:'Invented',target:1,priority:1}));assert.throws(()=>check(before,fakeEdit,'goal-edit'),/one existing goal/);
+});
+
+test('cloud budget edits retain category allocations and cannot replace historical plans',()=>{const before=fixture(),key=C.workspacePeriod(before,asOf);before.categories=[{id:'food',name:'Food',type:'variable'}];before.budgets=[{id:'original',key,salary:10000,alloc:{food:1000},locks:{food:true}}];const after=C.setBudget(before,{key,salary:11000,alloc:{food:900}});assert.equal(check(before,after,'budget-set').budgets[0].alloc.food,900);const dropped=C.clone(after);delete dropped.budgets[0].alloc.food;assert.throws(()=>check(before,dropped,'budget-set'),/retain identity/);const past=C.clone(before);past.budgets[0].key=C.addMonths(key,-1);const forged=C.mutate(past,'budget-set',{},n=>{n.budgets[0].salary=12000;n.budgets[0].revision=1;n.budgets[0].status='planned';n.budgets[0].source='manual';});assert.throws(()=>check(past,forged,'budget-set'),/Historical/);});
