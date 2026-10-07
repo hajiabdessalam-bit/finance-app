@@ -18,6 +18,7 @@ export function supabaseAdapter({url,publishableKey,secretKey,fetchImpl=globalTh
     }catch{throw new Error('Supabase could not confirm the request. No edit has been acknowledged.');}
   }
   return {
+    admit:({owner})=>request('/rest/v1/rpc/plan_sync_admit',{body:{p_owner:actor(owner)}}),
     async verifySession(token){if(typeof token!=='string'||!token||token.length>10000||/\s/.test(token))return null;const user=await request('/auth/v1/user',{key:publishableKey,token});if(!user||!UUID.test(user.id||'')||user.is_anonymous!==false)return null;return {id:user.id,is_anonymous:false};},
     store:{
       bootstrap:async(owner,command)=>{
