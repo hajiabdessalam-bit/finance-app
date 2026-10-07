@@ -11,6 +11,8 @@ const base=`./assets/${fingerprint}`;
 const release=new URL(`assets/${fingerprint}/`,app);await mkdir(new URL('react/',release),{recursive:true});
 for(const file of source)await writeFile(new URL(file.name,release),file.bytes);
 await writeFile(new URL('index.html',app),native.replaceAll('%ASSET_BASE%',base));
+// Online account entry deliberately bypasses old cached document policies.
+await writeFile(new URL('account.html',app),native.replaceAll('%ASSET_BASE%',base));
 await writeFile(new URL('react.html',app),react.replaceAll('%ASSET_BASE%',base));
 const entries=[];
 for(const name of ['index.html','react.html','manifest.json','icon.svg',...files.map(name=>`assets/${fingerprint}/${name}`)])entries.push({path:`./${name}`,sha256:hash(await readFile(new URL(name,app)))});
