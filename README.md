@@ -118,3 +118,5 @@ React calendar and outside-money views now share the native finance engine. Sche
 Outside gifts, loans and investments save one linked cash entry; partial actual returns reduce the outstanding principal. Correcting the original requires reversing active returns first. Historical classification keeps original values and cannot recast borrowing or erase an actual return’s loan/investment meaning. Rejected form parsing stays within the save boundary and retains the draft and inputs.
 
 React activity also supports two-category spending/refund splits, category and correction filters, and atomic reviewed replacements for ordinary unsplit spending, income or refunds. Linked and split records retain the explained reversal workflow. Incomplete splits are retained as unapplied drafts.
+
+React accounts include unverified account creation, paginated full balance-check history, expected/observed balances and retained difference explanations with optional supporting entry links. Explanations do not create spending transactions.
