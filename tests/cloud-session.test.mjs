@@ -53,3 +53,14 @@ test('creating an account cannot activate cloud access, and late signup stays si
  await Promise.resolve();await f.controller.signOut();release();
  await assert.rejects(pending,/verified/);await assert.rejects(f.controller.token(),/verified/);
 });
+
+test('account failures explain known validation and email delivery problems without leaking server errors',async()=>{
+ const f=fixture();let calls=0;f.auth.signUp=async()=>{calls++;return {error:{code:'email_address_not_authorized',message:'PRIVATE SERVER CONTENT'}};};
+ await assert.rejects(f.controller.createAccount({email:'sample@example.test',password:'short'}),/12 characters/);assert.equal(calls,0);
+ await assert.rejects(f.controller.createAccount({email:'sample@example.test',password:'synthetic-password'}),error=>error.message.includes('project owner')&&!error.message.includes('PRIVATE'));
+ f.auth.signUp=async()=>({error:{code:'over_email_send_rate_limit',message:'PRIVATE SERVER CONTENT'}});
+ await assert.rejects(f.controller.createAccount({email:'sample@example.test',password:'synthetic-password'}),/Wait a few minutes/);
+ f.auth.signUp=async()=>({error:{code:'unrecognized',message:'PRIVATE SERVER CONTENT'}});
+ await assert.rejects(f.controller.createAccount({email:'sample@example.test',password:'synthetic-password'}),error=>error.message.includes('did not finish')&&!error.message.includes('PRIVATE'));
+ await assert.rejects(f.controller.token(),/verified/);
+});
